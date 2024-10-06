@@ -15,8 +15,8 @@ export interface IPendingUser extends Document {
 }
 
 const pendingUserSchema = new Schema<IPendingUser>({
-  email: { type: String, required: true, unique: true },
-  phoneNumber: { type: String, required: true, unique: true },
+  email: { type: String, required: true },
+  phoneNumber: { type: String, required: true },
   password: { type: String, required: true },
   role: { type: String, enum: ["user", "creator"], required: true },
   firstName: String,

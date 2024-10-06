@@ -2,44 +2,105 @@ import bcrypt from "bcrypt";
 import User from "../models/usersModel";
 import { IUser } from "../models/usersModel";
 import { generateToken } from "../utils/jwtUtils";
+import { generateOTP, sendOTP } from "../utils/otputils";
+import PendingUser from "../models/pendingUserModel";
+import { Request, Response } from "express";
 
 export class CreatorService {
-  async createCreator(creatorData: {
+  async initiateSignUp(creatorData: {
     email: string;
     phoneNumber: string;
     password: string;
     creatorName: string;
     industry: string;
-  }): Promise<IUser> {
+  }): Promise<{ message: string; pendingUserId: string }> {
     const { email, phoneNumber, password, creatorName, industry } = creatorData;
 
+    // Check if the creator already exists in the User collection
     const existingCreator = await User.findOne({ email });
+
     if (existingCreator) {
-      throw new Error("Creator already exists");
+      throw new Error("Creator already exists with this email.");
+    }
+
+    // Check for duplicates in the PendingUser collection
+    const existingPendingCreator = await PendingUser.find({ email });
+
+    if (existingPendingCreator.length > 0) {
+      // If duplicates are found, delete all of them
+      await PendingUser.deleteMany({ email });
+      console.log(`Deleted duplicate pending signups for ${email}`);
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const otp = generateOTP();
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // OTP expires in 10 minutes
 
-    const newCreator = new User({
+    // Create and save the new pending creator
+    const pendingCreator = new PendingUser({
       email,
       phoneNumber,
       password: hashedPassword,
       role: "creator",
-      creator_name: creatorName,
+      creatorName,
       industry,
+      otp,
+      otpExpires,
+    });
+
+    await pendingCreator.save();
+    await sendOTP(email, otp);
+    console.log(`The OTP for ${email} is ${otp}`);
+
+    return {
+      message: "OTP sent for verification",
+      pendingUserId: pendingCreator.id,
+    };
+  }
+
+  async verifyOTPAndCreateCreator(
+    pendingUserId: string,
+    otp: string
+  ): Promise<IUser> {
+    const pendingCreator = await PendingUser.findById(pendingUserId);
+    if (!pendingCreator) {
+      throw new Error("Invalid or expired signup request");
+    }
+
+    if (pendingCreator.otp !== otp) {
+      throw new Error("Invalid OTP");
+    }
+
+    if (pendingCreator.otpExpires < new Date()) {
+      throw new Error("OTP has expired");
+    }
+
+    // Check if phoneNumber is null or empty, and handle accordingly
+    const phoneNumber = pendingCreator.phoneNumber || undefined;
+
+    const newCreator = new User({
+      email: pendingCreator.email,
+      phoneNumber: phoneNumber,
+      password: pendingCreator.password,
+      role: "creator",
+      creator_name: pendingCreator.creatorName,
+      industry: pendingCreator.industry,
       created_at: new Date(),
       wallets: [],
       days_active: 0,
     });
 
     await newCreator.save();
+    await PendingUser.deleteOne({ _id: pendingUserId });
 
     return newCreator;
   }
 
   async signIn(
     email: string,
-    password: string
+    password: string,
+    res: Response,
+    req: Request
   ): Promise<{ user: IUser; token: string }> {
     const user = await User.findOne({ email });
 
@@ -47,23 +108,116 @@ export class CreatorService {
       throw new Error("Email not registered");
     }
 
-    // Check if the user's role is 'creator'
     if (user.role !== "creator") {
-      // Return an error for role mismatch
       throw new Error("User is not authorized as a creator");
     }
 
-    // Validate the password
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      // Return a specific error if the password is wrong
       throw new Error("Incorrect password");
     }
 
     const token = generateToken(user.id, user.role);
 
+    res.cookie("user", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 3 * 24 * 60 * 60 * 1000,
+      sameSite: "strict",
+    });
+
+    console.log("Cookie set. Response headers:", res.getHeaders());
+    console.log("All cookies before signIN:", req.cookies);
+
     return { user, token };
+  }
+
+  async sendOTPForForgotPassword(email: string, res: Response): Promise<void> {
+    const user = await User.findOne({ email });
+    if (!user) {
+      throw new Error("Email not registered");
+    }
+
+    if (user.role !== "user") {
+      throw new Error("Creator is not authorized as a user");
+    }
+
+    const otp = generateOTP();
+    console.log(`the Forgot OTP is ${otp}`);
+
+    res.cookie("resetOTP", otp, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // Changed this line
+      maxAge: 10 * 60 * 1000, // 10 minutes
+      sameSite: "strict",
+    });
+
+    console.log("Cookie set:", {
+      name: "resetOTP",
+      value: otp,
+      options: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 10 * 60 * 1000,
+        sameSite: "strict",
+      },
+    });
+
+    console.log("Response headers:", res.getHeaders());
+
+    await sendOTP(user.email, otp);
+  }
+
+  async verifyOTPAndSignIn(
+    email: string,
+    otp: string,
+    res: Response,
+    req: Request
+  ): Promise<{ user: IUser; token: string }> {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      throw new Error("Email not registered");
+    }
+
+    if (user.role !== "creator") {
+      throw new Error("User is not authorized as a creator");
+    }
+
+    console.log("All cookies:", req.cookies);
+    console.log("resetOTP cookie:", req.cookies.resetOTP);
+
+    const storedOTP = req.cookies.resetOTP;
+
+    if (!storedOTP) {
+      console.log("OTP not found in cookies");
+      throw new Error("No OTP found");
+    }
+
+    if (otp !== storedOTP) {
+      console.log("OTP mismatch. Provided:", otp, "Stored:", storedOTP);
+      throw new Error("Invalid OTP");
+    }
+
+    res.clearCookie("resetOTP");
+
+    const token = generateToken(user.id, user.role);
+    res.cookie("user", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 3 * 24 * 60 * 60 * 1000,
+      sameSite: "strict",
+    });
+    return { user, token };
+  }
+
+  async Logout(res: Response): Promise<void> {
+    res.clearCookie("user", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
   }
 }
 

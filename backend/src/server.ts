@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import routes from "../src/routes/index";
 import userRoutes from "./routes/userRoutes";
 import creatorRoutes from "./routes/creatorRoutes";
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 
@@ -13,6 +14,7 @@ const port: string | undefined = process.env.PORT;
 
 const app: Express = express();
 app.use(express.json());
+app.use(cookieParser());
 
 app.use("/user", userRoutes);
 app.use("/creator", creatorRoutes);

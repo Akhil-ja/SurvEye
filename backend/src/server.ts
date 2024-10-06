@@ -20,10 +20,6 @@ app.use("/user", userRoutes);
 app.use("/creator", creatorRoutes);
 app.use("/", routes);
 
-app.get("/", (req: Request, res: Response) => {
-  res.send("hello");
-});
-
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });

@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import User from "../models/usersModel";
 import { IUser } from "../models/usersModel";
 import { generateToken } from "../utils/jwtUtils";
-import { generateOTP, sendOTP } from "../utils/otputils";
+import { generateOTP, sendOTP } from "../utils/otpUtils";
 import PendingUser from "../models/pendingUserModel";
 import { Request, Response } from "express";
 
@@ -122,13 +122,13 @@ export class CreatorService {
 
     res.cookie("user", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: false,
       maxAge: 3 * 24 * 60 * 60 * 1000,
       sameSite: "strict",
     });
 
     console.log("Cookie set. Response headers:", res.getHeaders());
-    console.log("All cookies before signIN:", req.cookies);
+    console.log("All cookies after signIn:", req.cookies);
 
     return { user, token };
   }

@@ -3,7 +3,7 @@ import User from "../models/usersModel";
 import { IUser } from "../models/usersModel";
 import { generateToken } from "../utils/jwtUtils";
 import PendingUser from "../models/pendingUserModel";
-import { generateOTP, sendOTP } from "../utils/otputils";
+import { generateOTP, sendOTP } from "../utils/otpUtils";
 import { Request, Response } from "express";
 
 export class UserService {

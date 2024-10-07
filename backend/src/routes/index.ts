@@ -4,8 +4,7 @@ import userRoutes from "./userRoutes";
 
 const router = Router();
 
-// Define the main routes for User and Creator
-router.use("/creator", creatorRoutes); // Prefix with /creator
-router.use("/user", userRoutes); // Prefix with /creator
+router.use("/creator", creatorRoutes);
+router.use("/user", userRoutes);
 
 export default router;

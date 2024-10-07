@@ -3,6 +3,7 @@ import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import { Button } from "@/components/ui/button";
+import { LinkContainer } from "react-router-bootstrap";
 
 export default function CustomAppBar() {
   return (
@@ -10,8 +11,8 @@ export default function CustomAppBar() {
       <AppBar
         position="static"
         sx={{
-          backgroundColor: "transparent",
-          boxShadow: "none", // Optional: removes the default shadow
+          backgroundColor: "#EA580A",
+          boxShadow: "0 2px 20px rgba(0, 0, 0, 0.2)",
         }}
       >
         <Toolbar sx={{ justifyContent: "space-between" }}>
@@ -30,10 +31,15 @@ export default function CustomAppBar() {
 
           {/* Wrap the buttons in a Box or div */}
           <Box sx={{ display: "flex", gap: 2 }}>
-            {/* Login Button */}
-            <Button variant="outline" style={{ color: "black" }}>
-              Login
-            </Button>
+            <LinkContainer to={"/signin"}>
+              <Button
+                variant="outline"
+                className="signin-button"
+                style={{ color: "black" }}
+              >
+                Login
+              </Button>
+            </LinkContainer>
           </Box>
         </Toolbar>
       </AppBar>

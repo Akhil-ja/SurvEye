@@ -6,15 +6,18 @@ import {
   Route,
   RouterProvider,
 } from "react-router-dom";
+
+import LandingPage from "./screens/landingPage.jsx";
+import LoginScreen from "./screens/loginScreen.jsx"; // Uppercase component name
 import App from "./App.jsx";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./index.css";
-import LandingPage from "./screens/landingPage.jsx";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<App />}>
       <Route index element={<LandingPage />} />
+      <Route path="/signin" element={<LoginScreen />} />
     </Route>
   )
 );

@@ -25,8 +25,6 @@ export const initiateSignUp = async (
       role,
       firstName,
       lastName,
-      creatorName,
-      industry,
       dateOfBirth,
     });
 

@@ -8,7 +8,9 @@ import {
 } from "react-router-dom";
 
 import LandingPage from "./screens/landingPage.jsx";
-import LoginScreen from "./screens/loginScreen.jsx"; // Uppercase component name
+import LoginScreen from "./screens/signinScreen.jsx";
+import CreatorRegisterScreen from "./screens/creatorSignupScreen.jsx";
+import UserRegisterScreen from "./screens/userSignupScreen.jsx";
 import App from "./App.jsx";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./index.css";
@@ -18,6 +20,8 @@ const router = createBrowserRouter(
     <Route path="/" element={<App />}>
       <Route index element={<LandingPage />} />
       <Route path="/signin" element={<LoginScreen />} />
+      <Route path="/creator/signup" element={<CreatorRegisterScreen />} />
+      <Route path="/user/signup" element={<UserRegisterScreen />} />
     </Route>
   )
 );

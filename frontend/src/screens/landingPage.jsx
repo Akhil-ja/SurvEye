@@ -45,8 +45,12 @@ const LandingPage = () => {
         </div>
 
         <div className="w-1/2">
-          <div className="bg-gray-100 h-96 flex items-center justify-center rounded-lg">
-            <p className="text-gray-400">Placeholder for survey image</p>
+          <div className="bg-gray-100 h-100 flex items-center justify-center rounded-lg">
+            <img
+              src="/images/Hero.jpeg"
+              alt="Survey"
+              className="w-full h-full object-cover rounded-lg" // Fill the container
+            />
           </div>
         </div>
       </main>

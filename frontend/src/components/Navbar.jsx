@@ -1,7 +1,6 @@
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
-import Typography from "@mui/material/Typography";
 import { Button } from "@/components/ui/button";
 import { LinkContainer } from "react-router-bootstrap";
 
@@ -16,20 +15,14 @@ export default function CustomAppBar() {
         }}
       >
         <Toolbar sx={{ justifyContent: "space-between" }}>
-          {/* Wrap the logo in a Box to center it */}
           <Box sx={{ flexGrow: 1, display: "flex", justifyContent: "center" }}>
-            <Typography
-              variant="h6"
-              noWrap
-              component="div"
-              sx={{ cursor: "pointer" }}
-              color="black"
-            >
-              Customized Logo
-            </Typography>
+            <img
+              src="/images/Logo.png"
+              alt="Customized Logo"
+              style={{ cursor: "pointer", maxWidth: "100%", height: "80px" }}
+            />
           </Box>
 
-          {/* Wrap the buttons in a Box or div */}
           <Box sx={{ display: "flex", gap: 2 }}>
             <LinkContainer to={"/signin"}>
               <Button

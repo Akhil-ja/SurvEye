@@ -1,9 +1,14 @@
-import { Button } from "@/components/ui/button";
+import Navbar from "./components/Navbar";
+import { Outlet } from "react-router-dom";
+import Container from "react-bootstrap";
 
 const App = () => {
   return (
     <>
-      <Button>Click me</Button>
+      <Navbar />
+      <Container className="my-2">
+        <Outlet />
+      </Container>
     </>
   );
 };

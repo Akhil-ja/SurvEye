@@ -14,6 +14,7 @@ export interface IUser extends Document {
   wallets: number[];
   date_of_birth?: Date;
   days_active: number;
+  status: "active" | "blocked";
 }
 
 const userSchema = new Schema<IUser>({
@@ -45,6 +46,11 @@ const userSchema = new Schema<IUser>({
     },
   },
   days_active: { type: Number, default: 0 },
+  status: {
+    type: String,
+    enum: ["active", "blocked"],
+    default: "active",
+  },
 });
 
 const User = model<IUser>("User", userSchema);

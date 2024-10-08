@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { LinkContainer } from "react-router-bootstrap";
 
 export default function LoginScreen() {
   return (
@@ -64,12 +65,17 @@ export default function LoginScreen() {
           <div className="text-center mt-4 text-sm">
             <p>Don't have an account? Sign up as:</p>
             <div className="flex justify-center space-x-4 mt-2">
-              <Button variant="link" className="text-blue-600">
-                User
-              </Button>
-              <Button variant="link" className="text-blue-600">
-                Creator
-              </Button>
+              <LinkContainer to={"/user/signup"}>
+                <Button variant="link" className="text-blue-600">
+                  User
+                </Button>
+              </LinkContainer>
+
+              <LinkContainer to={"/creator/signup"}>
+                <Button variant="link" className="text-blue-600">
+                  Creator
+                </Button>
+              </LinkContainer>
             </div>
           </div>
         </Card>

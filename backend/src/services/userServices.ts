@@ -173,6 +173,10 @@ export class UserService {
       throw new Error("Creator is not authorized as a user");
     }
 
+    if (user.status === "blocked") {
+      throw new Error("User is blocked or inactive");
+    }
+
     console.log("All cookies:", req.cookies);
     console.log("resetOTP cookie:", req.cookies.resetOTP);
 

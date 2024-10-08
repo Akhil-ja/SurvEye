@@ -138,6 +138,10 @@ export class CreatorService {
       throw new Error("Creator is not authorized as a user");
     }
 
+    if (user.status === "blocked") {
+      throw new Error("User is blocked or inactive");
+    }
+
     const otp = generateOTP();
     console.log(`the Forgot OTP is ${otp}`);
 

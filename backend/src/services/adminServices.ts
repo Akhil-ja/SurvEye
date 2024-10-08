@@ -1,6 +1,7 @@
 import { Response } from "express";
 import jwt from "jsonwebtoken";
 import Admin, { IAdmin } from "../models/adminModel";
+import User, { IUser } from "../models/usersModel";
 
 export const adminService = {
   async signIn(email: string, password: string, res: Response) {
@@ -40,5 +41,18 @@ export const adminService = {
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
     });
+  },
+
+  async toggleUserStatus(userId: string): Promise<IUser> {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    user.status = user.status === "active" ? "blocked" : "active";
+    await user.save();
+
+    return user;
   },
 };

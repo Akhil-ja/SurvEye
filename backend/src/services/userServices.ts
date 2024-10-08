@@ -202,7 +202,7 @@ export class UserService {
 
   async Logout(res: Response, req: Request): Promise<void> {
     console.log("All cookies before logout:", req.cookies);
-    res.clearCookie("user", {
+    await res.clearCookie("user", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",

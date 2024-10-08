@@ -7,7 +7,6 @@ import {
   verifyForgotOTP,
   logout,
 } from "../controllers/creatorController";
-import { protect } from "../middlewares/authMiddleware";
 
 const router = Router();
 

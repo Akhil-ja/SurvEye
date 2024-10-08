@@ -1,5 +1,4 @@
 import { Response } from "express";
-import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import Admin, { IAdmin } from "../models/adminModel";
 
@@ -11,7 +10,7 @@ export const adminService = {
       throw new Error("Admin not found");
     }
 
-    const isPasswordValid = await bcrypt.compare(password, admin.password);
+    const isPasswordValid = password === admin.password;
 
     if (!isPasswordValid) {
       throw new Error("Invalid password");
@@ -36,7 +35,7 @@ export const adminService = {
   },
 
   async logout(res: Response) {
-    res.clearCookie("Admin_jwt", {
+    await res.clearCookie("Admin_jwt", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",

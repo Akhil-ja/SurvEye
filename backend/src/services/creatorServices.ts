@@ -16,27 +16,23 @@ export class CreatorService {
   }): Promise<{ message: string; pendingUserId: string }> {
     const { email, phoneNumber, password, creatorName, industry } = creatorData;
 
-    // Check if the creator already exists in the User collection
     const existingCreator = await User.findOne({ email });
 
     if (existingCreator) {
       throw new Error("Creator already exists with this email.");
     }
 
-    // Check for duplicates in the PendingUser collection
     const existingPendingCreator = await PendingUser.find({ email });
 
     if (existingPendingCreator.length > 0) {
-      // If duplicates are found, delete all of them
       await PendingUser.deleteMany({ email });
       console.log(`Deleted duplicate pending signups for ${email}`);
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const otp = generateOTP();
-    const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // OTP expires in 10 minutes
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
-    // Create and save the new pending creator
     const pendingCreator = new PendingUser({
       email,
       phoneNumber,
@@ -75,7 +71,6 @@ export class CreatorService {
       throw new Error("OTP has expired");
     }
 
-    // Check if phoneNumber is null or empty, and handle accordingly
     const phoneNumber = pendingCreator.phoneNumber || undefined;
 
     const newCreator = new User({
@@ -213,7 +208,7 @@ export class CreatorService {
   }
 
   async Logout(res: Response): Promise<void> {
-    res.clearCookie("user", {
+    await res.clearCookie("user", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",

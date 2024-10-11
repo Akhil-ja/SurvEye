@@ -6,11 +6,15 @@ import {
   Route,
   RouterProvider,
 } from "react-router-dom";
+import { Provider } from "react-redux";
+import { store } from "./store";
 
 import LandingPage from "./screens/landingPage.jsx";
-import LoginScreen from "./screens/signinScreen.jsx";
-import CreatorRegisterScreen from "./screens/creatorSignupScreen.jsx";
-import UserRegisterScreen from "./screens/userSignupScreen.jsx";
+import LoginScreen from "./screens/signin.jsx";
+import CreatorRegisterScreen from "./screens/creatorSignup.jsx";
+import UserRegisterScreen from "./screens/userSignup.jsx";
+import UserHome from "./screens/userHome";
+import CreatorHome from "./screens/creatorHome";
 import App from "./App.jsx";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./index.css";
@@ -22,14 +26,16 @@ const router = createBrowserRouter(
       <Route path="/signin" element={<LoginScreen />} />
       <Route path="/creator/signup" element={<CreatorRegisterScreen />} />
       <Route path="/user/signup" element={<UserRegisterScreen />} />
+      <Route path="/user/home" element={<UserHome />} />
+      <Route path="/creator/home" element={<CreatorHome />} />
     </Route>
   )
 );
 
-export default router;
-
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <Provider store={store}>
+      <RouterProvider router={router} />
+    </Provider>
   </StrictMode>
 );

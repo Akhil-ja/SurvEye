@@ -5,6 +5,7 @@ import routes from "../src/routes/index";
 import userRoutes from "./routes/userRoutes";
 import creatorRoutes from "./routes/creatorRoutes";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 
 dotenv.config();
 
@@ -13,6 +14,14 @@ connectDB();
 const port: string | undefined = process.env.PORT;
 
 const app: Express = express();
+
+app.use(
+  cors({
+    origin: "http://localhost:8000",
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 app.use(cookieParser());
 

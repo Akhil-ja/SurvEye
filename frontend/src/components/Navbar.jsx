@@ -3,8 +3,27 @@ import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
 import { Button } from "@/components/ui/button";
 import { LinkContainer } from "react-router-bootstrap";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "../slices/authSlice"; // Adjust the import based on your project structure
+import { useNavigate } from "react-router-dom";
 
 export default function CustomAppBar() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const authInfo = useSelector((state) => state.auth.authInfo);
+
+  const handleLogout = () => {
+    console.log("Current authInfo:", authInfo);
+
+    if (authInfo && authInfo.role) {
+      console.log("Logging out user with role:", authInfo.role);
+      dispatch(logout(authInfo.role));
+      navigate("/signin");
+    } else {
+      console.warn("No user is logged in or role is undefined.", authInfo);
+    }
+  };
+
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar
@@ -24,15 +43,26 @@ export default function CustomAppBar() {
           </Box>
 
           <Box sx={{ display: "flex", gap: 2 }}>
-            <LinkContainer to={"/signin"}>
+            {authInfo ? (
               <Button
                 variant="outline"
-                className="signin-button"
+                className="logout-button"
                 style={{ color: "black" }}
+                onClick={handleLogout}
               >
-                Login
+                Logout
               </Button>
-            </LinkContainer>
+            ) : (
+              <LinkContainer to={"/signin"}>
+                <Button
+                  variant="outline"
+                  className="signin-button"
+                  style={{ color: "black" }}
+                >
+                  Login
+                </Button>
+              </LinkContainer>
+            )}
           </Box>
         </Toolbar>
       </AppBar>

@@ -44,11 +44,25 @@ export const signIn = createAsyncThunk(
   }
 );
 
+export const resendOTP = createAsyncThunk(
+  "auth/resendOTP",
+  async (pendingUserId, { rejectWithValue }) => {
+    try {
+      const response = await api.post("/resend-otp", { pendingUserId });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to resend OTP" }
+      );
+    }
+  }
+);
+
 export const logout = createAsyncThunk(
   "auth/logout",
-  async (role, { rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      await api.post(`/${role}/logout`);
+      await api.post("/logout");
       localStorage.removeItem("authInfo");
       return null;
     } catch (error) {
@@ -57,7 +71,6 @@ export const logout = createAsyncThunk(
   }
 );
 
-// Helper function to get initial auth state from localStorage
 const getInitialAuthState = () => {
   const authInfo = localStorage.getItem("authInfo");
   return authInfo ? JSON.parse(authInfo) : null;
@@ -71,6 +84,7 @@ const authSlice = createSlice({
     error: null,
     pendingUserId: null,
     message: "",
+    otpResendStatus: "idle",
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -82,8 +96,8 @@ const authSlice = createSlice({
       .addCase(initiateSignUp.fulfilled, (state, action) => {
         state.isLoading = false;
         state.error = null;
-        state.pendingUserId = action.payload.pendingUserId; // Make sure this matches the response
-        state.message = action.payload.message; // Also make sure this matches the response
+        state.pendingUserId = action.payload.pendingUserId;
+        state.message = action.payload.message;
       })
       .addCase(initiateSignUp.rejected, (state, action) => {
         state.isLoading = false;
@@ -130,6 +144,19 @@ const authSlice = createSlice({
       .addCase(logout.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload?.message || "Logout failed";
+      })
+
+      // Handle resendOTP
+      .addCase(resendOTP.pending, (state) => {
+        state.otpResendStatus = "loading";
+      })
+      .addCase(resendOTP.fulfilled, (state, action) => {
+        state.otpResendStatus = "succeeded";
+        state.message = action.payload.message;
+      })
+      .addCase(resendOTP.rejected, (state, action) => {
+        state.otpResendStatus = "failed";
+        state.error = action.payload?.message || "Failed to resend OTP";
       });
   },
 });

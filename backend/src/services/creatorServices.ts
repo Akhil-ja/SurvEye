@@ -56,7 +56,8 @@ export class CreatorService {
 
   async verifyOTPAndCreateCreator(
     pendingUserId: string,
-    otp: string
+    otp: string,
+    res: Response
   ): Promise<IUser> {
     const pendingCreator = await PendingUser.findById(pendingUserId);
     if (!pendingCreator) {
@@ -87,6 +88,15 @@ export class CreatorService {
 
     await newCreator.save();
     await PendingUser.deleteOne({ _id: pendingUserId });
+
+    const token = generateToken(newCreator.id, newCreator.role);
+
+    res.cookie("user", token, {
+      httpOnly: true,
+      secure: false,
+      maxAge: 3 * 24 * 60 * 60 * 1000,
+      sameSite: "strict",
+    });
 
     return newCreator;
   }
@@ -209,14 +219,6 @@ export class CreatorService {
       sameSite: "strict",
     });
     return { user, token };
-  }
-
-  async Logout(res: Response): Promise<void> {
-    await res.clearCookie("user", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-    });
   }
 }
 

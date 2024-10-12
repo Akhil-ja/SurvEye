@@ -38,7 +38,8 @@ export const verifyOTPAndCreateCreator = async (
   try {
     const newCreator = await creatorService.verifyOTPAndCreateCreator(
       pendingUserId,
-      otp
+      otp,
+      res
     );
 
     res.status(201).json({
@@ -142,20 +143,6 @@ export const verifyForgotOTP = async (
     console.error(error);
     res.status(401).json({
       message: "Authentication failed",
-      error:
-        error instanceof Error ? error.message : "An unknown error occurred",
-    });
-  }
-};
-
-export const logout = async (req: Request, res: Response): Promise<void> => {
-  try {
-    await creatorService.Logout(res);
-    res.status(200).json({ message: "Logout successful" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      message: "Logout failed",
       error:
         error instanceof Error ? error.message : "An unknown error occurred",
     });

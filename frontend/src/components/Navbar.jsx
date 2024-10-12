@@ -15,10 +15,13 @@ export default function CustomAppBar() {
   const handleLogout = () => {
     console.log("Current authInfo:", authInfo);
 
-    if (authInfo && authInfo.role) {
+    if (authInfo) {
       console.log("Logging out user with role:", authInfo.role);
-      dispatch(logout(authInfo.role));
-      navigate("/signin");
+      dispatch(logout());
+      localStorage.removeItem("authInfo");
+      setTimeout(() => {
+        navigate("/signin");
+      }, 100);
     } else {
       console.warn("No user is logged in or role is undefined.", authInfo);
     }

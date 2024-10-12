@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../api/axiosConfig";
 
-// Async thunks
 export const initiateSignUp = createAsyncThunk(
   "auth/initiateSignUp",
   async ({ role, userData }, { rejectWithValue }) => {
@@ -9,7 +8,9 @@ export const initiateSignUp = createAsyncThunk(
       const response = await api.post(`/${role}/signup`, userData);
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(
+        error.response?.data || { message: "Registration failed" }
+      );
     }
   }
 );
@@ -68,18 +69,21 @@ const authSlice = createSlice({
     authInfo: getInitialAuthState(),
     isLoading: false,
     error: null,
+    pendingUserId: null,
+    message: "",
   },
   reducers: {},
   extraReducers: (builder) => {
     builder
-      // Handle initiateSignUp
+
       .addCase(initiateSignUp.pending, (state) => {
         state.isLoading = true;
       })
       .addCase(initiateSignUp.fulfilled, (state, action) => {
         state.isLoading = false;
         state.error = null;
-        // You might store pending user information here if required
+        state.pendingUserId = action.payload.pendingUserId; // Make sure this matches the response
+        state.message = action.payload.message; // Also make sure this matches the response
       })
       .addCase(initiateSignUp.rejected, (state, action) => {
         state.isLoading = false;

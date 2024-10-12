@@ -12,6 +12,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "react-toastify";
+import { initiateSignUp } from "../slices/authSlice";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { throttle } from "lodash";
 
 export default function CreatorRegisterScreen() {
   const [name, setName] = useState("");
@@ -20,21 +24,53 @@ export default function CreatorRegisterScreen() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [industry, setIndustry] = useState("");
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
+  // Move the submitHandler function definition above the throttle
   const submitHandler = async (e) => {
     e.preventDefault();
+
     if (password !== confirmPassword) {
       toast.error("Passwords do not match");
       return;
     }
 
+    const userData = {
+      email,
+      phoneNumber,
+      password,
+      name,
+      industry,
+    };
+
     try {
-      //logic
-      toast.success("Registration successful");
+      console.log("before dispatch");
+      const resultAction = await dispatch(
+        initiateSignUp({ role: "creator", userData })
+      );
+      console.log("after dispatch", resultAction);
+
+      if (initiateSignUp.fulfilled.match(resultAction)) {
+        const { pendingUserId, message } = resultAction.payload; // Destructure here
+        toast.success(message);
+
+        localStorage.setItem("pendingUserId", pendingUserId);
+        console.log("Pending User ID for OTP:", pendingUserId);
+
+        navigate(`/verify-otp`);
+      } else {
+        const errorMessage =
+          resultAction.error?.message || "Registration failed";
+        toast.error(errorMessage);
+      }
     } catch (err) {
-      toast.error(err?.data?.message || err.error || "Registration failed");
+      toast.error(err?.message || "Registration failed");
     }
   };
+
+  // Throttle the submitHandler after it has been defined
+  const throttledSubmitHandler = throttle(submitHandler, 2000);
 
   return (
     <FormContainer>
@@ -44,7 +80,7 @@ export default function CreatorRegisterScreen() {
           <CardDescription>Create your account as a Creator</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={submitHandler}>
+          <form onSubmit={throttledSubmitHandler}>
             <div className="grid w-full items-center gap-4">
               <div className="flex flex-col space-y-1.5">
                 <Label htmlFor="email">Email</Label>

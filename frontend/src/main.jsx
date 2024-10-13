@@ -18,7 +18,8 @@ import CreatorHome from "./screens/creatorHome";
 import App from "./App.jsx";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./index.css";
-import OTPVerificationScreen from "./screens/OTPVerificationScreen";
+import OTPVerificationScreen from "./screens/RegisterOTPVerification";
+import ForgotPasswordOTP from "./screens/forgotPasswordOTP";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -30,6 +31,7 @@ const router = createBrowserRouter(
       <Route path="/user/home" element={<UserHome />} />
       <Route path="/creator/home" element={<CreatorHome />} />
       <Route path="/verify-otp" element={<OTPVerificationScreen />} />
+      <Route path="/forgot-password" element={<ForgotPasswordOTP />} />
     </Route>
   )
 );

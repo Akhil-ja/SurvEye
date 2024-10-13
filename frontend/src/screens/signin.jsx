@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { LinkContainer } from "react-router-bootstrap";
 import { signIn } from "../slices/authSlice";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -108,11 +109,20 @@ export default function LoginScreen() {
                   />
                 </div>
 
-                {/* Password Input */}
+                {/* Password Input with Forgot Password Link */}
                 <div className="flex flex-col space-y-1.5">
-                  <Label htmlFor="password" className="font-semibold">
-                    Password
-                  </Label>
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="password" className="font-semibold">
+                      Password
+                    </Label>
+                    {/* Forgot Password Link */}
+                    <Link
+                      to="/forgot-password"
+                      className="text-blue-600 text-sm"
+                    >
+                      Forgot Password?
+                    </Link>
+                  </div>
                   <Input
                     id="password"
                     type="password"
@@ -124,27 +134,27 @@ export default function LoginScreen() {
                 </div>
               </div>
               {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+              <CardFooter className="flex justify-between">
+                <Button
+                  type="submit"
+                  onClick={handleLogin}
+                  disabled={isLoading}
+                  className="bg-orange-500 hover:bg-orange-600 text-white w-full py-2 px-4 rounded"
+                >
+                  {isLoading ? "Signing In..." : "Sign In"}
+                </Button>
+              </CardFooter>
             </form>
           </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button
-              type="submit"
-              onClick={handleLogin}
-              disabled={isLoading}
-              className="bg-orange-500 hover:bg-orange-600 text-white w-full py-2 px-4 rounded"
-            >
-              {isLoading ? "Signing In..." : "Sign In"}
-            </Button>
-          </CardFooter>
           <div className="text-center mt-4 text-sm">
             <p>Don't have an account? Sign up as:</p>
             <div className="flex justify-center space-x-4 mt-2">
-              <LinkContainer to={"/user/signup"}>
+              <LinkContainer to="/user/signup">
                 <Button variant="link" className="text-blue-600">
                   User
                 </Button>
               </LinkContainer>
-              <LinkContainer to={"/creator/signup"}>
+              <LinkContainer to="/creator/signup">
                 <Button variant="link" className="text-blue-600">
                   Creator
                 </Button>

@@ -21,6 +21,7 @@ import "./index.css";
 import OTPVerificationScreen from "./screens/RegisterOTPVerification";
 import ForgotPasswordOTP from "./screens/ForgotPasswordOTP";
 import ForgotPasswordEmail from "./screens/ForgotPasswordEmail";
+import AdminSignIn from "./screens/adminSignin";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -34,6 +35,7 @@ const router = createBrowserRouter(
       <Route path="/verify-otp" element={<OTPVerificationScreen />} />
       <Route path="/forgot-password-email" element={<ForgotPasswordEmail />} />
       <Route path="/forgot-password-otp" element={<ForgotPasswordOTP />} />
+      <Route path="/admin/signin" element={<AdminSignIn />} />
     </Route>
   )
 );

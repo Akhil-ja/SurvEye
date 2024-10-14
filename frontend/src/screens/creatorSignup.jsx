@@ -56,6 +56,7 @@ export default function CreatorRegisterScreen() {
         toast.success(message);
 
         localStorage.setItem("pendingUserId", pendingUserId);
+        localStorage.setItem("userRole", "creator");
         console.log("Pending User ID for OTP:", pendingUserId);
 
         navigate(`/verify-otp`);

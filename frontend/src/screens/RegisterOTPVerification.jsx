@@ -42,6 +42,7 @@ const OTPVerificationScreen = () => {
     e.preventDefault();
 
     const pendingUserId = localStorage.getItem("pendingUserId");
+    const userRole = localStorage.getItem("userRole");
 
     if (!pendingUserId) {
       toast.error("No pending user ID found. Please sign up first.");
@@ -51,7 +52,7 @@ const OTPVerificationScreen = () => {
     try {
       const resultAction = await dispatch(
         verifyOTP({
-          role: "creator",
+          role: userRole,
           pendingUserId,
           otp,
         })
@@ -59,8 +60,9 @@ const OTPVerificationScreen = () => {
 
       if (verifyOTP.fulfilled.match(resultAction)) {
         localStorage.removeItem("pendingUserId");
+        localStorage.removeItem("userRole");
         toast.success(resultAction.payload.message);
-        navigate("/creator/home");
+        navigate(`/${userRole}/home`);
       } else {
         toast.error(resultAction.error.message || "Invalid OTP");
       }

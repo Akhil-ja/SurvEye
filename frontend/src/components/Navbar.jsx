@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { LinkContainer } from "react-router-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../slices/authSlice"; // Adjust the import based on your project structure
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function CustomAppBar() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation(); // Get the current location
   const authInfo = useSelector((state) => state.auth.authInfo);
 
   const handleLogout = () => {
@@ -59,6 +60,27 @@ export default function CustomAppBar() {
               >
                 Logout
               </Button>
+            ) : location.pathname === "/signin" ? ( // Check if the current route is /signin
+              <>
+                <LinkContainer to={"/creator/signup"}>
+                  <Button
+                    variant="outline"
+                    className="join-creator-button"
+                    style={{ color: "black" }}
+                  >
+                    Join as Creator
+                  </Button>
+                </LinkContainer>
+                <LinkContainer to={"/user/signup"}>
+                  <Button
+                    variant="outline"
+                    className="join-user-button"
+                    style={{ color: "red" }}
+                  >
+                    Join as User
+                  </Button>
+                </LinkContainer>
+              </>
             ) : (
               <LinkContainer to={"/signin"}>
                 <Button

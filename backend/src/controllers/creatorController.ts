@@ -19,8 +19,6 @@ export const initiateSignUp = async (
     res.status(200).json(result);
   } catch (error) {
     console.error("Error during sign up initiation:", error);
-
-    // Return generic message to client, logging actual error on the server
     res.status(400).json({
       message: "Creator sign up initiation failed",
       error:

@@ -11,11 +11,9 @@ export class UserService {
     email: string;
     phoneNumber: string;
     password: string;
-    role: "user" | "creator";
-    firstName?: string;
-    lastName?: string;
-    creatorName?: string;
-    industry?: string;
+    role: "user";
+    firstName: string;
+    lastName: string;
     dateOfBirth?: string;
   }): Promise<{ message: string; pendingUserId: string }> {
     const existingUser = await User.findOne({ email: userData.email });
@@ -23,11 +21,17 @@ export class UserService {
       throw new Error("User already exists");
     }
 
+    const existingPendingUser = await PendingUser.find({
+      email: userData.email,
+    });
+    if (existingPendingUser.length > 0) {
+      await PendingUser.deleteMany({ email: userData.email });
+      console.log(`Deleted duplicate pending signups for ${userData.email}`);
+    }
+
     const hashedPassword = await bcrypt.hash(userData.password, 10);
     const otp = generateOTP();
-    console.log(`otp is ${otp}`);
-
-    const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
     const pendingUser = new PendingUser({
       ...userData,
@@ -40,8 +44,8 @@ export class UserService {
     });
 
     await pendingUser.save();
-
     await sendOTP(userData.email, otp);
+    console.log(`The OTP for ${userData.email} is ${otp}`);
 
     return {
       message: "OTP sent for verification",
@@ -49,42 +53,10 @@ export class UserService {
     };
   }
 
-  async signIn(
-    email: string,
-    password: string,
-    res: Response
-  ): Promise<{ user: IUser; token: string }> {
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      throw new Error("Email not registered");
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
-      throw new Error("Incorrect password");
-    }
-
-    if (user.role !== "user") {
-      throw new Error("Access denied. Invalid role");
-    }
-
-    const token = generateToken(user.id, user.role);
-
-    res.cookie("user", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 3 * 24 * 60 * 60 * 1000,
-      sameSite: "strict",
-    });
-
-    return { user, token };
-  }
-
   async verifyOTPAndCreateUser(
     pendingUserId: string,
-    otp: string
+    otp: string,
+    res: Response
   ): Promise<IUser> {
     const pendingUser = await PendingUser.findById(pendingUserId);
     if (!pendingUser) {
@@ -99,15 +71,15 @@ export class UserService {
       throw new Error("OTP has expired");
     }
 
+    const phoneNumber = pendingUser.phoneNumber || undefined;
+
     const newUser = new User({
       email: pendingUser.email,
-      phoneNumber: pendingUser.phoneNumber,
+      phoneNumber: phoneNumber,
       password: pendingUser.password,
-      role: pendingUser.role,
+      role: "user",
       first_name: pendingUser.firstName,
       last_name: pendingUser.lastName,
-      creator_name: pendingUser.creatorName,
-      industry: pendingUser.industry,
       date_of_birth: pendingUser.dateOfBirth,
       created_at: new Date(),
       wallets: [],
@@ -115,10 +87,55 @@ export class UserService {
     });
 
     await newUser.save();
-
     await PendingUser.deleteOne({ _id: pendingUserId });
 
+    const token = generateToken(newUser.id, newUser.role);
+
+    res.cookie("user", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 3 * 24 * 60 * 60 * 1000,
+      sameSite: "strict",
+    });
+
     return newUser;
+  }
+
+  async signIn(
+    email: string,
+    password: string,
+    res: Response,
+    req: Request
+  ): Promise<{ user: IUser; token: string }> {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      throw new Error("Email not registered");
+    }
+
+    if (user.role !== "user") {
+      throw new Error("User is not authorized as a user");
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      throw new Error("Incorrect password");
+    }
+
+    const token = generateToken(user.id, user.role);
+
+    res.cookie("user", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 3 * 24 * 60 * 60 * 1000,
+      sameSite: "strict",
+    });
+
+    console.log("Cookie set. Response headers:", res.getHeaders());
+    console.log("All cookies after signIn:", req.cookies);
+
+    return { user, token };
   }
 
   async sendOTPForForgotPassword(email: string, res: Response): Promise<void> {
@@ -128,7 +145,11 @@ export class UserService {
     }
 
     if (user.role !== "user") {
-      throw new Error("Creator is not authorized as a user");
+      throw new Error("User is not authorized as a user");
+    }
+
+    if (user.status === "blocked") {
+      throw new Error("User is blocked or inactive");
     }
 
     const otp = generateOTP();
@@ -136,7 +157,7 @@ export class UserService {
 
     res.cookie("resetOTP", otp, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Changed this line
+      secure: process.env.NODE_ENV === "production",
       maxAge: 10 * 60 * 1000, // 10 minutes
       sameSite: "strict",
     });
@@ -170,11 +191,7 @@ export class UserService {
     }
 
     if (user.role !== "user") {
-      throw new Error("Creator is not authorized as a user");
-    }
-
-    if (user.status === "blocked") {
-      throw new Error("User is blocked or inactive");
+      throw new Error("User is not authorized as a user");
     }
 
     console.log("All cookies:", req.cookies);
@@ -206,7 +223,7 @@ export class UserService {
 
   async Logout(res: Response, req: Request): Promise<void> {
     console.log("All cookies before logout:", req.cookies);
-    await res.clearCookie("user", {
+    res.clearCookie("user", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",

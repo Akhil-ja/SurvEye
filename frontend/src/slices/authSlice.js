@@ -21,6 +21,7 @@ export const verifyOTP = createAsyncThunk(
     try {
       const response = await api.post(`/${role}/verify-otp`, {
         pendingUserId,
+        role,
         otp,
       });
       localStorage.setItem("authInfo", JSON.stringify(response.data));

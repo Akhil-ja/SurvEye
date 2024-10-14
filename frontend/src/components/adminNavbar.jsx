@@ -16,7 +16,7 @@ const AdminNavbar = () => {
       dispatch(adminLogout());
       localStorage.removeItem("adminInfo");
       localStorage.removeItem("token");
-      navigate("/signin");
+      navigate("/admin/signin");
     }
   };
 

@@ -23,21 +23,32 @@ import ForgotPasswordOTP from "./screens/ForgotPasswordOTP";
 import ForgotPasswordEmail from "./screens/ForgotPasswordEmail";
 import AdminSignIn from "./screens/adminSignin";
 import AdminHome from "./screens/adminHome";
+import ProtectedRoute from "./components/ProtectedRoute";
+import AuthenticatedRoute from "./components/AuthenticatedRoute";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<App />}>
-      <Route index element={<LandingPage />} />
-      <Route path="/signin" element={<LoginScreen />} />
-      <Route path="/creator/signup" element={<CreatorRegisterScreen />} />
-      <Route path="/user/signup" element={<UserRegisterScreen />} />
-      <Route path="/user/home" element={<UserHome />} />
-      <Route path="/creator/home" element={<CreatorHome />} />
-      <Route path="/verify-otp" element={<OTPVerificationScreen />} />
-      <Route path="/forgot-password-email" element={<ForgotPasswordEmail />} />
-      <Route path="/forgot-password-otp" element={<ForgotPasswordOTP />} />
-      <Route path="/admin/signin" element={<AdminSignIn />} />
-      <Route path="/admin/home" element={<AdminHome />} />
+      <Route element={<AuthenticatedRoute />}>
+        <Route index element={<LandingPage />} />
+        <Route path="/signin" element={<LoginScreen />} />
+        <Route path="/creator/signup" element={<CreatorRegisterScreen />} />
+        <Route path="/user/signup" element={<UserRegisterScreen />} />
+        <Route path="/verify-otp" element={<OTPVerificationScreen />} />
+        <Route
+          path="/forgot-password-email"
+          element={<ForgotPasswordEmail />}
+        />
+        <Route path="/forgot-password-otp" element={<ForgotPasswordOTP />} />
+        <Route path="/admin/signin" element={<AdminSignIn />} />
+      </Route>
+
+      {/* Routes that should only be accessible when logged in */}
+      <Route element={<ProtectedRoute />}>
+        <Route path="/user/home" element={<UserHome />} />
+        <Route path="/creator/home" element={<CreatorHome />} />
+        <Route path="/admin/home" element={<AdminHome />} />
+      </Route>
     </Route>
   )
 );

@@ -1,12 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import {
-  initiateSignUp,
-  verifyOTP,
-  signIn,
-  forgotPassword,
-  verifyForgotOTP,
-  logout,
-} from "./userApi";
+import { initiateSignUp, verifyOTP, signIn, logout } from "./userApi";
 
 const initialState = {
   user: null,
@@ -24,7 +17,7 @@ const userSlice = createSlice({
       .addCase(initiateSignUp.pending, (state) => {
         state.isLoading = true;
       })
-      .addCase(initiateSignUp.fulfilled, (state, action) => {
+      .addCase(initiateSignUp.fulfilled, (state) => {
         state.isLoading = false;
         // Handle the response as needed
       })

@@ -1,152 +1,93 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {} from "../slices/authSlice";
-import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
-import FormContainer from "@/components/formContainer";
+import { verifyForgotPasswordOTP } from "../slices/authSlice";
+import { useNavigate, useLocation } from "react-router-dom"; // Add useLocation
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const ForgotPasswordOTPPage = () => {
+const ForgotPasswordOTP = () => {
   const [otp, setOtp] = useState("");
-  const [timer, setTimer] = useState(60);
-  const [canResend, setCanResend] = useState(false);
   const dispatch = useDispatch();
-  const { isLoading, error, otpResendStatus } = useSelector(
-    (state) => state.auth
-  );
   const navigate = useNavigate();
+  const location = useLocation(); // Use useLocation to get email from state
+  const email = location.state?.email; // Retrieve email from location state
 
+  const { isLoading, error, message, forgotPasswordStatus, authInfo } =
+    useSelector((state) => state.auth);
+
+  // If user is authenticated, navigate to their home page
   useEffect(() => {
-    let interval;
-    if (timer > 0 && !canResend) {
-      interval = setInterval(() => {
-        setTimer((prevTimer) => prevTimer - 1);
-      }, 1000);
-    } else if (timer === 0 && !canResend) {
-      setCanResend(true);
+    if (authInfo && authInfo.role) {
+      navigate(`/${authInfo.role}/home`);
     }
-    return () => clearInterval(interval);
-  }, [timer, canResend]);
+  }, [authInfo, navigate]);
 
-  const submitHandler = async (e) => {
+  // Handle OTP verification
+  const handleVerifyOTP = (e) => {
     e.preventDefault();
-
-    const pendingUserId = localStorage.getItem("pendingUserId");
-
-    if (!pendingUserId) {
-      toast.error(
-        "No pending user ID found. Please request password reset first."
-      );
-      return;
-    }
-
-    try {
-      const resultAction = await dispatch(
-        verifyForgotPasswordOTP({
-          pendingUserId,
-          otp,
-        })
-      );
-
-      if (verifyForgotPasswordOTP.fulfilled.match(resultAction)) {
-        localStorage.removeItem("pendingUserId");
-        toast.success(resultAction.payload.message);
-        navigate("/reset-password");
-      } else {
-        toast.error(resultAction.error.message || "Invalid OTP");
-      }
-    } catch (err) {
-      toast.error(err?.message || "OTP verification failed");
-    }
-  };
-
-  const handleResendOTP = async () => {
-    const pendingUserId = localStorage.getItem("pendingUserId");
-
-    if (!pendingUserId) {
-      toast.error(
-        "No pending user ID found. Please request password reset first."
-      );
-      return;
-    }
-
-    try {
-      const resultAction = await dispatch(
-        resendForgotPasswordOTP(pendingUserId)
-      );
-      if (resendForgotPasswordOTP.fulfilled.match(resultAction)) {
-        toast.success(resultAction.payload.message);
-        setTimer(60);
-        setCanResend(false);
-      } else {
-        toast.error(resultAction.error.message || "Failed to resend OTP");
-      }
-    } catch (err) {
-      toast.error(err?.message || "Failed to resend OTP");
+    if (email) {
+      dispatch(verifyForgotPasswordOTP({ email, otp }));
+    } else {
+      // Handle the case where email is missing (e.g., show an error message)
+      console.error("Email is missing.");
     }
   };
 
   return (
-    <FormContainer>
-      <Card className="w-full max-w-md p-6 mx-auto bg-cover bg-center">
+    <div
+      className="flex justify-center items-center h-screen bg-cover bg-center"
+      style={{ backgroundImage: "url('/images/signInbackground.jpg')" }}
+    >
+      <Card className="w-[350px]">
         <CardHeader>
-          <CardTitle>Forgot Password - Verify OTP</CardTitle>
-          <CardDescription>
-            Enter the OTP sent to your email to reset your password
-          </CardDescription>
+          <CardTitle>Verify OTP</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={submitHandler}>
+          <p className="text-sm mb-4">
+            An OTP has been sent to <strong>{email || "your email"}</strong>
+          </p>
+          <form onSubmit={handleVerifyOTP}>
             <div className="grid w-full items-center gap-4">
               <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="otp">OTP</Label>
+                <Label htmlFor="otp" className="font-semibold">
+                  Enter OTP
+                </Label>
                 <Input
                   id="otp"
-                  type="text"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
-                  placeholder="Enter OTP"
+                  placeholder="Enter the OTP"
+                  className="border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
                   required
                 />
               </div>
             </div>
-            <CardFooter className="flex flex-col px-0 pt-6">
+            {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+            {forgotPasswordStatus === "success" && (
+              <p className="text-green-500 text-sm mt-2">{message}</p>
+            )}
+            <CardFooter className="flex justify-between">
               <Button
                 type="submit"
-                className="bg-orange-500 hover:bg-orange-600 text-white w-full py-2 px-3 mb-3"
                 disabled={isLoading}
+                className="bg-orange-500 hover:bg-orange-600 text-white w-full py-2 px-4 rounded mt-4"
               >
-                {isLoading ? "Verifying..." : "Verify OTP"}
-              </Button>
-              <Button
-                type="button"
-                className="bg-gray-300 hover:bg-gray-400 text-gray-800 w-full py-2 px-3"
-                onClick={handleResendOTP}
-                disabled={!canResend || otpResendStatus === "loading"}
-              >
-                {canResend
-                  ? otpResendStatus === "loading"
-                    ? "Resending..."
-                    : "Resend OTP"
-                  : `Resend OTP (${timer}s)`}
+                {isLoading ? "Verifying OTP..." : "Verify OTP"}
               </Button>
             </CardFooter>
           </form>
         </CardContent>
       </Card>
-      {error && <p className="text-red-500 mt-2 text-center">{error}</p>}
-    </FormContainer>
+    </div>
   );
 };
 
-export default ForgotPasswordOTPPage;
+export default ForgotPasswordOTP;

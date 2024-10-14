@@ -71,6 +71,38 @@ export const logout = createAsyncThunk(
   }
 );
 
+export const forgotPasswordSendOTP = createAsyncThunk(
+  "auth/forgotPasswordSendOTP",
+  async (email, { rejectWithValue }) => {
+    try {
+      const response = await api.post("/forgot-password", { email });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to send OTP" }
+      );
+    }
+  }
+);
+
+export const verifyForgotPasswordOTP = createAsyncThunk(
+  "auth/verifyForgotPasswordOTP",
+  async ({ email, otp }, { rejectWithValue }) => {
+    try {
+      const response = await api.post("/verify-forgot-password", {
+        email,
+        otp,
+      });
+      localStorage.setItem("authInfo", JSON.stringify(response.data));
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: "OTP verification failed" }
+      );
+    }
+  }
+);
+
 const getInitialAuthState = () => {
   const authInfo = localStorage.getItem("authInfo");
   return authInfo ? JSON.parse(authInfo) : null;
@@ -85,8 +117,14 @@ const authSlice = createSlice({
     pendingUserId: null,
     message: "",
     otpResendStatus: "idle",
+    forgotPasswordStatus: "idle",
+    forgotPasswordEmail: "",
   },
-  reducers: {},
+  reducers: {
+    setForgotPasswordEmail: (state, action) => {
+      state.forgotPasswordEmail = action.payload;
+    },
+  },
   extraReducers: (builder) => {
     builder
 
@@ -157,8 +195,43 @@ const authSlice = createSlice({
       .addCase(resendOTP.rejected, (state, action) => {
         state.otpResendStatus = "failed";
         state.error = action.payload?.message || "Failed to resend OTP";
+      })
+
+      // Handle forgotPasswordSendOTP
+      .addCase(forgotPasswordSendOTP.pending, (state) => {
+        state.forgotPasswordStatus = "loading";
+        state.error = null;
+      })
+      .addCase(forgotPasswordSendOTP.fulfilled, (state, action) => {
+        state.forgotPasswordStatus = "otpSent";
+        state.message = action.payload.message;
+        state.error = null;
+        state.forgotPasswordEmail = action.meta.arg; // Store the email
+      })
+      .addCase(forgotPasswordSendOTP.rejected, (state, action) => {
+        state.forgotPasswordStatus = "failed";
+        state.error = action.payload?.message || "Failed to send OTP";
+      })
+
+      // Handle verifyForgotPasswordOTP
+      .addCase(verifyForgotPasswordOTP.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(verifyForgotPasswordOTP.fulfilled, (state, action) => {
+        state.authInfo = action.payload.user;
+        state.isLoading = false;
+        state.error = null;
+        state.forgotPasswordStatus = "success";
+        state.message = action.payload.message;
+      })
+      .addCase(verifyForgotPasswordOTP.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload?.message || "OTP verification failed";
+        state.forgotPasswordStatus = "failed";
       });
   },
 });
 
+export const { setForgotPasswordEmail } = authSlice.actions;
 export default authSlice.reducer;

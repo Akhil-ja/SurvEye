@@ -19,7 +19,8 @@ import App from "./App.jsx";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./index.css";
 import OTPVerificationScreen from "./screens/RegisterOTPVerification";
-import ForgotPasswordOTP from "./screens/forgotPasswordOTP";
+import ForgotPasswordOTP from "./screens/ForgotPasswordOTP";
+import ForgotPasswordEmail from "./screens/ForgotPasswordEmail";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -31,7 +32,8 @@ const router = createBrowserRouter(
       <Route path="/user/home" element={<UserHome />} />
       <Route path="/creator/home" element={<CreatorHome />} />
       <Route path="/verify-otp" element={<OTPVerificationScreen />} />
-      <Route path="/forgot-password" element={<ForgotPasswordOTP />} />
+      <Route path="/forgot-password-email" element={<ForgotPasswordEmail />} />
+      <Route path="/forgot-password-otp" element={<ForgotPasswordOTP />} />
     </Route>
   )
 );

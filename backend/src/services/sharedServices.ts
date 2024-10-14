@@ -5,6 +5,7 @@ import User from "../models/usersModel";
 import { Response, Request } from "express";
 import { generateToken } from "../utils/jwtUtils";
 import bcrypt from "bcryptjs";
+import { IUser } from "../models/usersModel";
 export class SharedService {
   async resendOTP(
     pendingUserId: string
@@ -63,9 +64,9 @@ export class SharedService {
     });
 
     await sendOTP(email, otp);
-
+    console.log(`the forgot password OTP is${otp}`);
     return {
-      message: `OTP sent for password reset  ${otp}`,
+      message: `OTP sent for password reset`,
     };
   }
 
@@ -78,13 +79,11 @@ export class SharedService {
       throw new Error("Email not registered");
     }
 
-    // Generate a new OTP
     const otp = generateOTP();
-    const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // OTP expires in 10 minutes
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
-    const hashedOTP = await bcrypt.hash(otp, 10); // Hash the new OTP
+    const hashedOTP = await bcrypt.hash(otp, 10);
 
-    // Overwrite the existing 'resetOTP' cookie with the new hashed OTP
     res.cookie("resetOTP", hashedOTP, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -93,9 +92,10 @@ export class SharedService {
     });
 
     await sendOTP(email, otp);
+    console.log(`the forgot password OTP is${otp}`);
 
     return {
-      message: `A new OTP has been sent for password reset:  ${otp}`,
+      message: `A new OTP has been sent for password reset`,
     };
   }
 
@@ -104,13 +104,13 @@ export class SharedService {
     otp: string,
     req: Request,
     res: Response
-  ): Promise<{ message: string }> {
+  ): Promise<{ user: IUser; token: string }> {
     const user = await User.findOne({ email });
     if (!user) {
       throw new Error("Email not registered");
     }
 
-    const storedHashedOTP = req.cookies.resetOTP; // Retrieve hashed OTP from the cookie
+    const storedHashedOTP = req.cookies.resetOTP;
 
     if (!storedHashedOTP) {
       throw new Error("No OTP found");
@@ -125,15 +125,17 @@ export class SharedService {
     res.clearCookie("resetOTP");
 
     const token = generateToken(user.id, user.role);
+
     res.cookie("user", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: false,
       maxAge: 3 * 24 * 60 * 60 * 1000,
       sameSite: "strict",
     });
 
     return {
-      message: "OTP verified successfully",
+      user,
+      token,
     };
   }
 }

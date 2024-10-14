@@ -14,7 +14,6 @@ import { Label } from "@/components/ui/label";
 import { LinkContainer } from "react-router-bootstrap";
 import { signIn } from "../slices/authSlice";
 import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -115,13 +114,12 @@ export default function LoginScreen() {
                     <Label htmlFor="password" className="font-semibold">
                       Password
                     </Label>
-                    {/* Forgot Password Link */}
-                    <Link
-                      to="/forgot-password"
-                      className="text-blue-600 text-sm"
-                    >
-                      Forgot Password?
-                    </Link>
+
+                    <LinkContainer to="/forgot-password-email">
+                      <Button variant="link" className="text-blue-600">
+                        Forgot Password?
+                      </Button>
+                    </LinkContainer>
                   </div>
                   <Input
                     id="password"
@@ -139,7 +137,7 @@ export default function LoginScreen() {
                   type="submit"
                   onClick={handleLogin}
                   disabled={isLoading}
-                  className="bg-orange-500 hover:bg-orange-600 text-white w-full py-2 px-4 rounded"
+                  className="bg-orange-500 hover:bg-orange-600 text-white w-full py-2 px-4 rounded mt-4"
                 >
                   {isLoading ? "Signing In..." : "Sign In"}
                 </Button>

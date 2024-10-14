@@ -37,13 +37,17 @@ export default function CustomAppBar() {
         }}
       >
         <Toolbar sx={{ justifyContent: "space-between" }}>
-          <Box sx={{ flexGrow: 1, display: "flex", justifyContent: "center" }}>
-            <img
-              src="/images/Logo.png"
-              alt="Customized Logo"
-              style={{ cursor: "pointer", maxWidth: "100%", height: "80px" }}
-            />
-          </Box>
+          <LinkContainer to={"/"}>
+            <Box
+              sx={{ flexGrow: 1, display: "flex", justifyContent: "center" }}
+            >
+              <img
+                src="/images/Logo.png"
+                alt="Customized Logo"
+                style={{ cursor: "pointer", maxWidth: "100%", height: "80px" }}
+              />
+            </Box>
+          </LinkContainer>
 
           <Box sx={{ display: "flex", gap: 2 }}>
             {authInfo ? (

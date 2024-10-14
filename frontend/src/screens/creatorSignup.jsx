@@ -27,7 +27,6 @@ export default function CreatorRegisterScreen() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // Move the submitHandler function definition above the throttle
   const submitHandler = async (e) => {
     e.preventDefault();
 
@@ -52,7 +51,7 @@ export default function CreatorRegisterScreen() {
       console.log("after dispatch", resultAction);
 
       if (initiateSignUp.fulfilled.match(resultAction)) {
-        const { pendingUserId, message } = resultAction.payload; // Destructure here
+        const { pendingUserId, message } = resultAction.payload;
         toast.success(message);
 
         localStorage.setItem("pendingUserId", pendingUserId);
@@ -70,8 +69,7 @@ export default function CreatorRegisterScreen() {
     }
   };
 
-  // Throttle the submitHandler after it has been defined
-  const throttledSubmitHandler = throttle(submitHandler, 2000);
+  const throttledSubmitHandler = throttle(submitHandler, 10000);
 
   return (
     <FormContainer>

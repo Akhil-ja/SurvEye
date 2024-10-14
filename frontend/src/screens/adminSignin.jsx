@@ -3,18 +3,23 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@mui/material";
 import { TextField, Typography, Box, Card, CardContent } from "@mui/material";
+import { adminSignIn } from "../slices/adminSlice";
 
 const AdminSignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { isLoading, error } = useSelector((state) => state.auth);
+  const { isLoading, error } = useSelector((state) => state.admin);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    // await dispatch(adminLogin({ email, password }));
-    // navigate("/admin-dashboard");
+
+    const resultAction = await dispatch(adminSignIn({ email, password }));
+
+    if (adminSignIn.fulfilled.match(resultAction)) {
+      navigate("/admin/home");
+    }
   };
 
   return (

@@ -70,7 +70,7 @@ export default function UserRegisterScreen() {
     }
   };
 
-  const throttledSubmitHandler = throttle(submitHandler, 2000);
+  const throttledSubmitHandler = throttle(submitHandler, 10000);
 
   return (
     <FormContainer>

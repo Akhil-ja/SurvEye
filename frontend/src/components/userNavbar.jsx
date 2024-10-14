@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../slices/authSlice"; // Adjust the import based on your project structure
 import { useNavigate, useLocation } from "react-router-dom";
 
-export default function CustomAppBar() {
+export default function UserNavbar() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation(); // Get the current location
@@ -40,7 +40,12 @@ export default function CustomAppBar() {
         <Toolbar sx={{ justifyContent: "space-between" }}>
           <LinkContainer to={"/"}>
             <Box
-              sx={{ flexGrow: 1, display: "flex", justifyContent: "center" }}
+              sx={{
+                flexGrow: 1,
+                display: "flex",
+                justifyContent: "center",
+                marginLeft: 34,
+              }}
             >
               <img
                 src="/images/Logo.png"
@@ -60,7 +65,7 @@ export default function CustomAppBar() {
               >
                 Logout
               </Button>
-            ) : location.pathname === "/signin" ? ( // Check if the current route is /signin
+            ) : location.pathname === "/signin" ? (
               <>
                 <LinkContainer to={"/creator/signup"}>
                   <Button

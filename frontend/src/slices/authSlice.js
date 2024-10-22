@@ -127,6 +127,9 @@ const authSlice = createSlice({
     setForgotPasswordEmail: (state, action) => {
       state.forgotPasswordEmail = action.payload;
     },
+    clearMessage: (state) => {
+      state.message = "";
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -236,5 +239,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setForgotPasswordEmail } = authSlice.actions;
+export const { setForgotPasswordEmail, clearMessage } = authSlice.actions;
 export default authSlice.reducer;

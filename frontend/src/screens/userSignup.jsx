@@ -12,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "react-toastify";
-import { initiateSignUp } from "../slices/authSlice";
+import { initiateSignUp, clearMessage } from "../slices/authSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { throttle } from "lodash";
@@ -37,8 +37,9 @@ export default function UserRegisterScreen() {
     }
     if (message) {
       toast.success(message);
+      dispatch(clearMessage());
     }
-  }, [error, message]);
+  }, [error, message, dispatch]);
 
   const submitHandler = async (e) => {
     e.preventDefault();

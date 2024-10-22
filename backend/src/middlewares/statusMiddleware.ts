@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { AppError } from "../utils/AppError";
 import User from "../models/usersModel";
+import { AppError } from "../utils/AppError";
 
 interface CustomRequest extends Request {
   user?: any;
@@ -10,19 +10,20 @@ const checkBlockedUser = async (
   req: CustomRequest,
   res: Response,
   next: NextFunction
-) => {
+): Promise<void> => {
   try {
     const user = req.user;
+    console.log("middleware user:", user);
 
     if (user.status === "blocked") {
-      return res.status(403).json({
-        message: "Access denied. Your account has been blocked.",
-      });
+      console.log("User is blocked, sending 403");
+      res.clearCookie("user");
+      return next(new AppError("Your account has been blocked", 403));
     }
     next();
-  } catch (err) {
-    console.error("Error in checkBlockedUser middleware:", err);
-    return res.status(500).json({ message: "Internal server error" });
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    next(new AppError("Unknown error occurred", 500));
   }
 };
 

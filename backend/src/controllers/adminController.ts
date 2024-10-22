@@ -77,6 +77,6 @@ export const getAllUsers = async (
     });
   } catch (error) {
     console.error("Error fetching users:", error);
-    next(new AppError("Failed to fetch users", 500)); // Pass the error to the global error handler
+    next(new AppError("Failed to fetch users", 500));
   }
 };

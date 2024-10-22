@@ -23,7 +23,7 @@ import ForgotPasswordOTP from "./screens/ForgotPasswordOTP";
 import ForgotPasswordEmail from "./screens/ForgotPasswordEmail";
 import AdminSignIn from "./screens/adminSignin";
 import AdminHome from "./screens/adminHome";
-import ProtectedRoute from "./components/ProtectedRoute";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import AuthenticatedRoute from "./components/AuthenticatedRoute";
 import AdminUserList from "./screens/adminUserList";
 

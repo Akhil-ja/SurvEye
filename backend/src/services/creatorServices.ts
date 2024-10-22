@@ -131,6 +131,10 @@ export class CreatorService {
       throw new AppError("User is not authorized as a creator", 401);
     }
 
+    if (user.status === "blocked") {
+      throw new AppError("Creator is blocked", 403);
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
@@ -164,7 +168,7 @@ export class CreatorService {
     }
 
     if (user.status === "blocked") {
-      throw new AppError("User is blocked or inactive", 403);
+      throw new AppError("User is blocked", 403);
     }
 
     const otp = generateOTP();
@@ -197,6 +201,10 @@ export class CreatorService {
 
     if (user.role !== "creator") {
       throw new AppError("User is not authorized as a creator", 401);
+    }
+
+    if (user.status === "blocked") {
+      throw new AppError("Creator is blocked", 403);
     }
 
     console.log("All cookies:", req.cookies);

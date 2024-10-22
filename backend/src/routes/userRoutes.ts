@@ -7,12 +7,15 @@ import {
   verifyForgotOTP,
 } from "../controllers/userController";
 
+import { checkBlockedUser } from "../middlewares/statusMiddleware";
+import { protect } from "../middlewares/authMiddleware";
+
 const router = Router();
 
 // User Routes
-router.post("/signup", initiateSignUp);
+router.post("/signup", initiateSignUp, protect, checkBlockedUser);
 router.post("/verify-otp", verifyOTPAndCreateUser);
-router.post("/signin", signIn);
+router.post("/signin", signIn, protect, checkBlockedUser);
 router.post("/forgot-password", forgotPassword);
 router.post("/forgot-password/verify-otp", verifyForgotOTP);
 

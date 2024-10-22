@@ -15,9 +15,12 @@ const protect = async (
 
   if (token) {
     try {
+      console.log("auth middleware");
+
       const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
 
       req.user = await User.findById(decoded.id).select("-password");
+      console.log(req.user);
 
       next();
     } catch (err) {

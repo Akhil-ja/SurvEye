@@ -5,6 +5,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import AdminSidebar from "./components/adminSidebar";
 import UserSidebar from "./components/userSidebar";
+import CreatorSidebar from "./components/creatorSidebar";
 
 const App = () => {
   const location = useLocation();
@@ -20,10 +21,9 @@ const App = () => {
   const renderSidebar = () => {
     if (location.pathname.startsWith("/admin")) {
       return <AdminSidebar className="bg-gray-800 bg-opacity-80" />;
-    } else if (location.pathname.startsWith("/")) {
-      /// edit for different routes
-      return null;
-    } else {
+    } else if (location.pathname.startsWith("/creator")) {
+      return <CreatorSidebar className="bg-gray-800 bg-opacity-80" />;
+    } else if (location.pathname.startsWith("/user")) {
       return <UserSidebar className="bg-gray-800 bg-opacity-80" />;
     }
   };

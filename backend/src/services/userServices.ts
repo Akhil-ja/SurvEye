@@ -5,7 +5,7 @@ import { generateToken } from "../utils/jwtUtils";
 import PendingUser from "../models/pendingUserModel";
 import { generateOTP, sendOTP } from "../utils/otpUtils";
 import { Request, Response } from "express";
-import { AppError } from "../utils/AppError"; // Import AppError
+import { AppError } from "../utils/AppError";
 
 export class UserService {
   async initiateSignUp(userData: {
@@ -115,13 +115,17 @@ export class UserService {
     }
 
     if (user.role !== "user") {
-      throw new AppError("User is not authorized as a user", 403); 
+      throw new AppError("User is not authorized as a user", 403);
+    }
+
+    if (user.status === "blocked") {
+      throw new AppError("User is blocked", 403);
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      throw new AppError("Incorrect password", 401); 
+      throw new AppError("Incorrect password", 401);
     }
 
     const token = generateToken(user.id, user.role);
@@ -133,20 +137,17 @@ export class UserService {
       sameSite: "strict",
     });
 
-    console.log("Cookie set. Response headers:", res.getHeaders());
-    console.log("All cookies after signIn:", req.cookies);
-
     return { user, token };
   }
 
   async sendOTPForForgotPassword(email: string, res: Response): Promise<void> {
     const user = await User.findOne({ email });
     if (!user) {
-      throw new AppError("Email not registered", 404); 
+      throw new AppError("Email not registered", 404);
     }
 
     if (user.role !== "user") {
-      throw new AppError("User is not authorized as a user", 403); 
+      throw new AppError("User is not authorized as a user", 403);
     }
 
     if (user.status === "blocked") {
@@ -159,22 +160,9 @@ export class UserService {
     res.cookie("resetOTP", otp, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 10 * 60 * 1000, // 10 minutes
+      maxAge: 10 * 60 * 1000,
       sameSite: "strict",
     });
-
-    console.log("Cookie set:", {
-      name: "resetOTP",
-      value: otp,
-      options: {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 10 * 60 * 1000,
-        sameSite: "strict",
-      },
-    });
-
-    console.log("Response headers:", res.getHeaders());
 
     await sendOTP(user.email, otp);
   }
@@ -188,26 +176,27 @@ export class UserService {
     const user = await User.findOne({ email });
 
     if (!user) {
-      throw new AppError("Email not registered", 404); 
+      throw new AppError("Email not registered", 404);
     }
 
     if (user.role !== "user") {
       throw new AppError("User is not authorized as a user", 403);
     }
 
-    console.log("All cookies:", req.cookies);
-    console.log("resetOTP cookie:", req.cookies.resetOTP);
+    if (user.status === "blocked") {
+      throw new AppError("User is blocked", 403);
+    }
 
     const storedOTP = req.cookies.resetOTP;
 
     if (!storedOTP) {
       console.log("OTP not found in cookies");
-      throw new AppError("No OTP found", 400); 
+      throw new AppError("No OTP found", 400);
     }
 
     if (otp !== storedOTP) {
       console.log("OTP mismatch. Provided:", otp, "Stored:", storedOTP);
-      throw new AppError("Invalid OTP", 400); 
+      throw new AppError("Invalid OTP", 400);
     }
 
     res.clearCookie("resetOTP");
@@ -223,14 +212,11 @@ export class UserService {
   }
 
   async Logout(res: Response, req: Request): Promise<void> {
-    console.log("All cookies before logout:", req.cookies);
     res.clearCookie("user", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
     });
-
-    console.log("All cookies after logout:", req.cookies);
   }
 }
 

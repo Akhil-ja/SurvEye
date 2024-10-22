@@ -1,6 +1,22 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../api/axiosConfig";
 
+export const checkBlockStatus = createAsyncThunk(
+  "auth/checkBlockStatus",
+  async (_, { rejectWithValue, dispatch }) => {
+    try {
+      const response = await api.get("/check-status");
+      return response.data;
+    } catch (error) {
+      if (error.response?.status === 403) {
+        localStorage.removeItem("authInfo");
+        dispatch(logout());
+      }
+      return rejectWithValue(error.response?.data);
+    }
+  }
+);
+
 export const initiateSignUp = createAsyncThunk(
   "auth/initiateSignUp",
   async ({ role, userData }, { rejectWithValue }) => {
@@ -133,6 +149,13 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+
+      .addCase(checkBlockStatus.rejected, (state, action) => {
+        if (action.payload?.message === "Your account has been blocked") {
+          state.authInfo = null;
+          state.error = "Your account has been blocked";
+        }
+      })
 
       .addCase(initiateSignUp.pending, (state) => {
         state.isLoading = true;

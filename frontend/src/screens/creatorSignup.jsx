@@ -18,7 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { throttle } from "lodash";
 
 export default function CreatorRegisterScreen() {
-  const [name, setName] = useState("");
+  const [creatorName, setCreatorName] = useState("");
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
@@ -30,7 +30,7 @@ export default function CreatorRegisterScreen() {
   const submitHandler = async (e) => {
     e.preventDefault();
 
-    const trimmedName = name.trim();
+    const trimmedName = creatorName.trim();
     const trimmedEmail = email.trim();
     const trimmedPhoneNumber = phoneNumber.trim();
     const trimmedPassword = password.trim();
@@ -70,7 +70,7 @@ export default function CreatorRegisterScreen() {
       email: trimmedEmail,
       phoneNumber: trimmedPhoneNumber,
       password: trimmedPassword,
-      name: trimmedName,
+      creatorName: trimmedName,
       industry: trimmedIndustry,
     };
 
@@ -154,8 +154,8 @@ export default function CreatorRegisterScreen() {
                 <Label htmlFor="creatorName">Creator Name</Label>
                 <Input
                   id="creatorName"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={creatorName}
+                  onChange={(e) => setCreatorName(e.target.value)}
                   placeholder="Enter Your Creator Name"
                   required
                 />

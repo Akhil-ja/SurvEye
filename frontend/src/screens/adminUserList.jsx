@@ -1,3 +1,6 @@
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { getUsers, toggleUserStatus } from "../slices/adminSlice";
 import {
   Table,
   TableBody,
@@ -14,123 +17,197 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Search } from "lucide-react";
 
-const adminUserList = () => {
-  const surveys = [
-    {
-      name: "Jeanette McCoy",
-      startDate: "September 5, 2023",
-      endDate: "September 9, 2023",
-      amount: "$11.70",
-      status: "ongoing",
-      impressions: "500",
-      remaining: "500",
-    },
-    {
-      name: "Jeanette McCoy",
-      startDate: "August 2, 2023",
-      endDate: "August 2, 2023",
-      amount: "$5.22",
-      status: "ongoing",
-      impressions: "1000",
-      remaining: "1000",
-    },
-    {
-      name: "Cody Fisher",
-      startDate: "September 24, 2017",
-      endDate: "September 24, 2017",
-      amount: "$11.70",
-      status: "expired",
-      impressions: "500",
-      remaining: "500",
-    },
-  ];
+const AdminUserList = () => {
+  const dispatch = useDispatch();
+  const { users, isLoading } = useSelector((state) => state.admin);
+  const [filters, setFilters] = useState({
+    role: "all",
+    status: "all",
+    search: "",
+  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    dispatch(getUsers());
+  }, [dispatch]);
+
+  const handleToggleStatus = (userId) => {
+    dispatch(toggleUserStatus(userId));
+  };
+
+  const filteredUsers = users.filter((user) => {
+    const matchesRole = filters.role === "all" || user.role === filters.role;
+    const matchesStatus =
+      filters.status === "all" || user.status === filters.status;
+    const matchesSearch =
+      user.email.toLowerCase().includes(filters.search.toLowerCase()) ||
+      (user.name &&
+        user.name.toLowerCase().includes(filters.search.toLowerCase()));
+
+    return matchesRole && matchesStatus && matchesSearch;
+  });
+
+  // Pagination
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const paginatedUsers = filteredUsers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const pageNumbers = [];
+  for (let i = 1; i <= totalPages; i++) {
+    pageNumbers.push(i);
+  }
 
   return (
-    <div className="p-6 bg-white">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Survey List</h1>
-        <div className="flex items-center space-x-2">
-          <span>Sort by:</span>
-          <Select>
-            <SelectTrigger className="w-[120px]">
-              <SelectValue placeholder="Cost" />
+    <div className="p-6 bg-white rounded-lg shadow">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">User Management</h1>
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <Search className="absolute left-0.1 top-3 h-4 w-4 text-gray-500" />
+            <Input
+              placeholder="Search users..."
+              className="pl-8 "
+              value={filters.search}
+              onChange={(e) =>
+                setFilters({ ...filters, search: e.target.value })
+              }
+            />
+          </div>
+          <Select
+            value={filters.role}
+            onValueChange={(value) => setFilters({ ...filters, role: value })}
+          >
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Filter by Role" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="cost">Cost</SelectItem>
-              <SelectItem value="date">Date</SelectItem>
+              <SelectItem value="all">All Roles</SelectItem>
+              <SelectItem value="user">User</SelectItem>
+              <SelectItem value="creator">Creator</SelectItem>
+              <SelectItem value="business">Business</SelectItem>
             </SelectContent>
           </Select>
-          <Select>
-            <SelectTrigger className="w-[120px]">
-              <SelectValue placeholder="Posted Time" />
+          <Select
+            value={filters.status}
+            onValueChange={(value) => setFilters({ ...filters, status: value })}
+          >
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Filter by Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="newest">Newest</SelectItem>
-              <SelectItem value="oldest">Oldest</SelectItem>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="blocked">Blocked</SelectItem>
             </SelectContent>
           </Select>
-          <Button>Create Survey</Button>
         </div>
       </div>
 
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[50px]"></TableHead>
-            <TableHead>Survey Name</TableHead>
-            <TableHead>Start Date</TableHead>
-            <TableHead>End Date</TableHead>
-            <TableHead>Amount</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead>Role</TableHead>
+            <TableHead>Join Date</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Impressions</TableHead>
-            <TableHead>Remaining</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {surveys.map((survey, index) => (
-            <TableRow key={index}>
-              <TableCell></TableCell>
-              <TableCell>{survey.name}</TableCell>
-              <TableCell>{survey.startDate}</TableCell>
-              <TableCell>{survey.endDate}</TableCell>
-              <TableCell>{survey.amount}</TableCell>
-              <TableCell>
-                <span
-                  className={`px-2 py-1 rounded-full text-xs ${
-                    survey.status === "ongoing"
-                      ? "bg-green-200 text-green-800"
-                      : survey.status === "expired"
-                      ? "bg-red-200 text-red-800"
-                      : "bg-gray-200 text-gray-800"
-                  }`}
-                >
-                  {survey.status}
-                </span>
+          {isLoading ? (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center py-10">
+                Loading users...
               </TableCell>
-              <TableCell>{survey.impressions}</TableCell>
-              <TableCell>{survey.remaining}</TableCell>
             </TableRow>
-          ))}
+          ) : paginatedUsers.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center py-10">
+                No users found
+              </TableCell>
+            </TableRow>
+          ) : (
+            paginatedUsers.map((user) => (
+              <TableRow key={user._id}>
+                <TableCell>{user.email}</TableCell>
+                <TableCell>
+                  {user.name || user.first_name
+                    ? `${user.first_name} ${user.last_name}`
+                    : user.creator_name || "N/A"}
+                </TableCell>
+                <TableCell className="capitalize">{user.role}</TableCell>
+                <TableCell>
+                  {new Date(user.createdAt).toLocaleDateString()}
+                </TableCell>
+                <TableCell>
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs ${
+                      user.status === "active"
+                        ? "bg-green-200 text-green-800"
+                        : "bg-red-200 text-red-800"
+                    }`}
+                  >
+                    {user.status}
+                  </span>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex items-center justify-end gap-2">
+                    <Switch
+                      checked={user.status === "active"}
+                      onCheckedChange={() => handleToggleStatus(user._id)}
+                    />
+                    <span className="text-sm text-gray-500">
+                      {user.status === "active" ? "Block" : "Unblock"}
+                    </span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
 
-      <div className="flex justify-center items-center mt-4">
-        <div className="flex space-x-1 text-sm">
-          <Button variant="outline" size="sm">
+      <div className="flex justify-between items-center mt-4">
+        <div className="text-sm text-gray-500">
+          Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
+          {Math.min(currentPage * itemsPerPage, filteredUsers.length)} of{" "}
+          {filteredUsers.length} users
+        </div>
+        <div className="flex space-x-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+          >
             Previous
           </Button>
-          {[1, 2, 3].map((page) => (
+          {pageNumbers.map((number) => (
             <Button
-              key={page}
-              variant={page === 1 ? "default" : "outline"}
+              key={number}
+              variant={currentPage === number ? "default" : "outline"}
               size="sm"
+              onClick={() => setCurrentPage(number)}
             >
-              {page}
+              {number}
             </Button>
           ))}
-          <span className="px-2 py-2">...</span>
-          <Button variant="outline" size="sm">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={currentPage === totalPages}
+          >
             Next
           </Button>
         </div>
@@ -139,4 +216,4 @@ const adminUserList = () => {
   );
 };
 
-export default adminUserList;
+export default AdminUserList;

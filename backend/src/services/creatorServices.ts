@@ -5,6 +5,7 @@ import { generateToken } from "../utils/jwtUtils";
 import { generateOTP, sendOTP } from "../utils/otpUtils";
 import PendingUser from "../models/pendingUserModel";
 import { Request, Response } from "express";
+import { AppError } from "../utils/AppError";
 
 export class CreatorService {
   async initiateSignUp(creatorData: {
@@ -16,17 +17,28 @@ export class CreatorService {
   }): Promise<{ message: string; pendingUserId: string }> {
     const { email, phoneNumber, password, creatorName, industry } = creatorData;
 
-    const existingCreator = await User.findOne({ email });
-
-    if (existingCreator) {
-      throw new Error("Creator already exists with this email.");
+    const existingCreatorByEmail = await User.findOne({ email });
+    if (existingCreatorByEmail) {
+      throw new AppError("Creator already exists with this email.", 400);
     }
 
-    const existingPendingCreator = await PendingUser.find({ email });
+    const existingCreatorByPhone = await User.findOne({ phoneNumber });
+    if (existingCreatorByPhone) {
+      throw new AppError("Creator already exists with this phone number.", 400);
+    }
 
-    if (existingPendingCreator.length > 0) {
+    const existingPendingCreatorByEmail = await PendingUser.find({ email });
+    if (existingPendingCreatorByEmail.length > 0) {
       await PendingUser.deleteMany({ email });
       console.log(`Deleted duplicate pending signups for ${email}`);
+    }
+
+    const existingPendingCreatorByPhone = await PendingUser.find({
+      phoneNumber,
+    });
+    if (existingPendingCreatorByPhone.length > 0) {
+      await PendingUser.deleteMany({ phoneNumber });
+      console.log(`Deleted duplicate pending signups for ${phoneNumber}`);
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -54,6 +66,7 @@ export class CreatorService {
     };
   }
 
+  // Verify OTP and Create Creator
   async verifyOTPAndCreateCreator(
     pendingUserId: string,
     otp: string,
@@ -61,15 +74,15 @@ export class CreatorService {
   ): Promise<IUser> {
     const pendingCreator = await PendingUser.findById(pendingUserId);
     if (!pendingCreator) {
-      throw new Error("Invalid or expired signup request");
+      throw new AppError("Invalid or expired signup request", 400);
     }
 
     if (pendingCreator.otp !== otp) {
-      throw new Error("Invalid OTP");
+      throw new AppError("Invalid OTP", 400);
     }
 
     if (pendingCreator.otpExpires < new Date()) {
-      throw new Error("OTP has expired");
+      throw new AppError("OTP has expired", 400);
     }
 
     const phoneNumber = pendingCreator.phoneNumber || undefined;
@@ -101,6 +114,7 @@ export class CreatorService {
     return newCreator;
   }
 
+  // Sign In
   async signIn(
     email: string,
     password: string,
@@ -110,24 +124,24 @@ export class CreatorService {
     const user = await User.findOne({ email });
 
     if (!user) {
-      throw new Error("Email not registered");
+      throw new AppError("User not found", 404);
     }
 
     if (user.role !== "creator") {
-      throw new Error("User is not authorized as a creator");
+      throw new AppError("User is not authorized as a creator", 401);
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      throw new Error("Incorrect password");
+      throw new AppError("Incorrect password", 401);
     }
 
     const token = generateToken(user.id, user.role);
 
     res.cookie("user", token, {
       httpOnly: true,
-      secure: false,
+      secure: process.env.NODE_ENV === "production",
       maxAge: 3 * 24 * 60 * 60 * 1000,
       sameSite: "strict",
     });
@@ -138,46 +152,37 @@ export class CreatorService {
     return { user, token };
   }
 
+  // Send OTP for Forgot Password
   async sendOTPForForgotPassword(email: string, res: Response): Promise<void> {
     const user = await User.findOne({ email });
     if (!user) {
-      throw new Error("Email not registered");
+      throw new AppError("Email not registered", 404);
     }
 
-    if (user.role !== "user") {
-      throw new Error("Creator is not authorized as a user");
+    if (user.role !== "creator") {
+      throw new AppError("User is not authorized as a creator", 401);
     }
 
     if (user.status === "blocked") {
-      throw new Error("User is blocked or inactive");
+      throw new AppError("User is blocked or inactive", 403);
     }
 
     const otp = generateOTP();
-    console.log(`the Forgot OTP is ${otp}`);
+    console.log(`The Forgot OTP for ${email} is ${otp}`);
 
     res.cookie("resetOTP", otp, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Changed this line
-      maxAge: 10 * 60 * 1000, // 10 minutes
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 10 * 60 * 1000,
       sameSite: "strict",
     });
 
-    console.log("Cookie set:", {
-      name: "resetOTP",
-      value: otp,
-      options: {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 10 * 60 * 1000,
-        sameSite: "strict",
-      },
-    });
-
-    console.log("Response headers:", res.getHeaders());
+    console.log("Cookie set for OTP reset:", res.getHeaders());
 
     await sendOTP(user.email, otp);
   }
 
+  // Verify OTP and Sign In
   async verifyOTPAndSignIn(
     email: string,
     otp: string,
@@ -187,11 +192,11 @@ export class CreatorService {
     const user = await User.findOne({ email });
 
     if (!user) {
-      throw new Error("Email not registered");
+      throw new AppError("Email not registered", 404);
     }
 
     if (user.role !== "creator") {
-      throw new Error("User is not authorized as a creator");
+      throw new AppError("User is not authorized as a creator", 401);
     }
 
     console.log("All cookies:", req.cookies);
@@ -200,13 +205,11 @@ export class CreatorService {
     const storedOTP = req.cookies.resetOTP;
 
     if (!storedOTP) {
-      console.log("OTP not found in cookies");
-      throw new Error("No OTP found");
+      throw new AppError("No OTP found", 400);
     }
 
     if (otp !== storedOTP) {
-      console.log("OTP mismatch. Provided:", otp, "Stored:", storedOTP);
-      throw new Error("Invalid OTP");
+      throw new AppError("Invalid OTP", 400);
     }
 
     res.clearCookie("resetOTP");
@@ -218,6 +221,7 @@ export class CreatorService {
       maxAge: 3 * 24 * 60 * 60 * 1000,
       sameSite: "strict",
     });
+
     return { user, token };
   }
 }

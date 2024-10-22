@@ -30,38 +30,64 @@ export default function CreatorRegisterScreen() {
   const submitHandler = async (e) => {
     e.preventDefault();
 
-    if (password !== confirmPassword) {
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+    const trimmedPhoneNumber = phoneNumber.trim();
+    const trimmedPassword = password.trim();
+    const trimmedConfirmPassword = confirmPassword.trim();
+    const trimmedIndustry = industry.trim();
+
+    if (
+      !trimmedName ||
+      !trimmedEmail ||
+      !trimmedPhoneNumber ||
+      !trimmedPassword ||
+      !trimmedConfirmPassword ||
+      !trimmedIndustry
+    ) {
+      toast.error("All fields are required and cannot be empty.");
+      return;
+    }
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(trimmedEmail)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    const phonePattern = /^\d{10}$/;
+    if (!phonePattern.test(trimmedPhoneNumber)) {
+      toast.error("Phone number must be 10 digits");
+      return;
+    }
+
+    if (trimmedPassword !== trimmedConfirmPassword) {
       toast.error("Passwords do not match");
       return;
     }
 
     const userData = {
-      email,
-      phoneNumber,
-      password,
-      name,
-      industry,
+      email: trimmedEmail,
+      phoneNumber: trimmedPhoneNumber,
+      password: trimmedPassword,
+      name: trimmedName,
+      industry: trimmedIndustry,
     };
 
     try {
-      console.log("before dispatch");
       const resultAction = await dispatch(
         initiateSignUp({ role: "creator", userData })
       );
-      console.log("after dispatch", resultAction);
 
       if (initiateSignUp.fulfilled.match(resultAction)) {
         const { pendingUserId, message } = resultAction.payload;
-        toast.success(message);
+        toast.success(message || "Registration successful!");
 
         localStorage.setItem("pendingUserId", pendingUserId);
         localStorage.setItem("userRole", "creator");
-        console.log("Pending User ID for OTP:", pendingUserId);
-
         navigate(`/verify-otp`);
       } else {
-        const errorMessage =
-          resultAction.error?.message || "Registration failed";
+        const errorMessage = resultAction.payload?.message || "Sign-up failed";
         toast.error(errorMessage);
       }
     } catch (err) {
@@ -89,6 +115,7 @@ export default function CreatorRegisterScreen() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter Your Email"
+                  required
                 />
               </div>
               <div className="flex flex-col space-y-1.5">
@@ -98,6 +125,7 @@ export default function CreatorRegisterScreen() {
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
                   placeholder="Enter Your Phone Number"
+                  required
                 />
               </div>
               <div className="flex flex-col space-y-1.5">
@@ -108,6 +136,7 @@ export default function CreatorRegisterScreen() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter Your Password"
+                  required
                 />
               </div>
               <div className="flex flex-col space-y-1.5">
@@ -118,6 +147,7 @@ export default function CreatorRegisterScreen() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm Your Password"
+                  required
                 />
               </div>
               <div className="flex flex-col space-y-1.5">
@@ -127,6 +157,7 @@ export default function CreatorRegisterScreen() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Enter Your Creator Name"
+                  required
                 />
               </div>
               <div className="flex flex-col space-y-1.5">
@@ -136,6 +167,7 @@ export default function CreatorRegisterScreen() {
                   className="p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                   value={industry}
                   onChange={(e) => setIndustry(e.target.value)}
+                  required
                 >
                   <option value="">Select Your Industry</option>
                   <option value="marketing">Marketing</option>

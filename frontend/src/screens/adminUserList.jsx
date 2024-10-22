@@ -14,9 +14,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 
-const CreatorHome = () => {
+const adminUserList = () => {
   const surveys = [
     {
       name: "Jeanette McCoy",
@@ -45,7 +44,6 @@ const CreatorHome = () => {
       impressions: "500",
       remaining: "500",
     },
-    // Add more survey data as needed
   ];
 
   return (
@@ -79,9 +77,7 @@ const CreatorHome = () => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[50px]">
-              <Checkbox />
-            </TableHead>
+            <TableHead className="w-[50px]"></TableHead>
             <TableHead>Survey Name</TableHead>
             <TableHead>Start Date</TableHead>
             <TableHead>End Date</TableHead>
@@ -94,9 +90,7 @@ const CreatorHome = () => {
         <TableBody>
           {surveys.map((survey, index) => (
             <TableRow key={index}>
-              <TableCell>
-                <Checkbox />
-              </TableCell>
+              <TableCell></TableCell>
               <TableCell>{survey.name}</TableCell>
               <TableCell>{survey.startDate}</TableCell>
               <TableCell>{survey.endDate}</TableCell>
@@ -145,4 +139,4 @@ const CreatorHome = () => {
   );
 };
 
-export default CreatorHome;
+export default adminUserList;

@@ -1,5 +1,5 @@
 import FormContainer from "@/components/formContainer";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "react-toastify";
 import { initiateSignUp } from "../slices/authSlice";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { throttle } from "lodash";
 
@@ -29,21 +29,65 @@ export default function UserRegisterScreen() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  const { error, message } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+    if (message) {
+      toast.success(message);
+    }
+  }, [error, message]);
+
   const submitHandler = async (e) => {
     e.preventDefault();
 
-    if (password !== confirmPassword) {
+    const trimmedEmail = email.trim();
+    const trimmedPhoneNumber = phoneNumber.trim();
+    const trimmedPassword = password.trim();
+    const trimmedConfirmPassword = confirmPassword.trim();
+    const trimmedFirstName = firstName.trim();
+    const trimmedLastName = lastName.trim();
+    const trimmedDateOfBirth = dateOfBirth.trim();
+
+    if (
+      !trimmedEmail ||
+      !trimmedPhoneNumber ||
+      !trimmedPassword ||
+      !trimmedConfirmPassword ||
+      !trimmedFirstName ||
+      !trimmedLastName ||
+      !trimmedDateOfBirth
+    ) {
+      toast.error("All fields are required");
+      return;
+    }
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(trimmedEmail)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    const phonePattern = /^\d{10}$/;
+    if (!phonePattern.test(trimmedPhoneNumber)) {
+      toast.error("Phone number must be 10 digits");
+      return;
+    }
+
+    if (trimmedPassword !== trimmedConfirmPassword) {
       toast.error("Passwords do not match");
       return;
     }
 
     const userData = {
-      email,
-      phoneNumber,
-      password,
-      firstName,
-      lastName,
-      dateOfBirth,
+      email: trimmedEmail,
+      phoneNumber: trimmedPhoneNumber,
+      password: trimmedPassword,
+      firstName: trimmedFirstName,
+      lastName: trimmedLastName,
+      dateOfBirth: trimmedDateOfBirth,
     };
 
     try {
@@ -52,13 +96,10 @@ export default function UserRegisterScreen() {
       );
 
       if (initiateSignUp.fulfilled.match(resultAction)) {
-        const { pendingUserId, message } = resultAction.payload;
-        toast.success(message);
-
+        const { pendingUserId } = resultAction.payload;
         localStorage.setItem("pendingUserId", pendingUserId);
         localStorage.setItem("userRole", "user");
         console.log("Pending User ID for OTP:", pendingUserId);
-
         navigate(`/verify-otp`);
       } else {
         const errorMessage =

@@ -6,6 +6,7 @@ import userRoutes from "./routes/userRoutes";
 import creatorRoutes from "./routes/creatorRoutes";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import globalErrorHandler from "./middlewares/errorMiddleware";
 
 dotenv.config();
 
@@ -28,6 +29,8 @@ app.use(cookieParser());
 app.use("/user", userRoutes);
 app.use("/creator", creatorRoutes);
 app.use("/", routes);
+
+app.use(globalErrorHandler);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);

@@ -21,11 +21,10 @@ const OTPVerificationScreen = () => {
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
   const dispatch = useDispatch();
-  const { isLoading, error, otpResendStatus } = useSelector(
-    (state) => state.auth
-  );
+  const { isLoading, otpResendStatus } = useSelector((state) => state.auth);
   const navigate = useNavigate();
 
+  // Countdown timer for OTP resend
   useEffect(() => {
     let interval;
     if (timer > 0 && !canResend) {
@@ -38,6 +37,7 @@ const OTPVerificationScreen = () => {
     return () => clearInterval(interval);
   }, [timer, canResend]);
 
+  // OTP Submission handler
   const submitHandler = async (e) => {
     e.preventDefault();
 
@@ -61,16 +61,22 @@ const OTPVerificationScreen = () => {
       if (verifyOTP.fulfilled.match(resultAction)) {
         localStorage.removeItem("pendingUserId");
         localStorage.removeItem("userRole");
-        toast.success(resultAction.payload.message);
+        toast.success(
+          resultAction.payload.message || "OTP verified successfully!"
+        );
         navigate(`/${userRole}/home`);
       } else {
-        toast.error(resultAction.error.message || "Invalid OTP");
+        // Handle errors
+        const errorMessage = resultAction.payload?.message || "Invalid OTP";
+        toast.error(errorMessage);
       }
     } catch (err) {
+      // Catch any additional errors not handled by Redux
       toast.error(err?.message || "OTP verification failed");
     }
   };
 
+  // Resend OTP handler
   const handleResendOTP = async () => {
     const pendingUserId = localStorage.getItem("pendingUserId");
 
@@ -81,14 +87,22 @@ const OTPVerificationScreen = () => {
 
     try {
       const resultAction = await dispatch(resendOTP(pendingUserId));
+
+      // Handle successful OTP resend
       if (resendOTP.fulfilled.match(resultAction)) {
-        toast.success(resultAction.payload.message);
+        toast.success(
+          resultAction.payload.message || "OTP resent successfully!"
+        );
         setTimer(60);
         setCanResend(false);
       } else {
-        toast.error(resultAction.error.message || "Failed to resend OTP");
+        // Handle errors
+        const errorMessage =
+          resultAction.payload?.message || "Failed to resend OTP";
+        toast.error(errorMessage);
       }
     } catch (err) {
+      // Catch any additional errors not handled by Redux
       toast.error(err?.message || "Failed to resend OTP");
     }
   };
@@ -139,7 +153,6 @@ const OTPVerificationScreen = () => {
           </form>
         </CardContent>
       </Card>
-      {error && <p className="text-red-500 mt-2 text-center">{error}</p>}
     </FormContainer>
   );
 };

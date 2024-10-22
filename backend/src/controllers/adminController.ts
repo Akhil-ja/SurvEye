@@ -1,9 +1,11 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { adminService } from "../services/adminServices";
+import { AppError } from "../utils/AppError";
 
 export const adminSignIn = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   const { email, password } = req.body;
 
@@ -21,40 +23,33 @@ export const adminSignIn = async (
     });
   } catch (error) {
     console.error(error);
-    res.status(401).json({
-      message: "Admin authentication failed",
-      error:
-        error instanceof Error ? error.message : "An unknown error occurred",
-    });
+    next(new AppError("Admin authentication failed", 401));
   }
 };
 
 export const adminLogout = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     await adminService.logout(res);
     res.status(200).json({ message: "Admin logout successful" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      message: "Admin logout failed",
-      error:
-        error instanceof Error ? error.message : "An unknown error occurred",
-    });
+    next(new AppError("Admin logout failed", 500));
   }
 };
 
 export const toggleStatus = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   const userId = req.query.id as string | undefined;
 
   if (!userId) {
-    res.status(400).json({ message: "Invalid user ID" });
-    return;
+    return next(new AppError("Invalid user ID", 400));
   }
 
   try {
@@ -65,10 +60,23 @@ export const toggleStatus = async (
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      message: "Toggle Status failed",
-      error:
-        error instanceof Error ? error.message : "An unknown error occurred",
+    next(new AppError("Toggle status failed", 500));
+  }
+};
+
+export const getAllUsers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const users = await adminService.getAllUsers();
+    res.status(200).json({
+      message: "Users fetched successfully",
+      users,
     });
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    next(new AppError("Failed to fetch users", 500)); // Pass the error to the global error handler
   }
 };

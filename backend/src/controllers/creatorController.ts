@@ -1,9 +1,12 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
+import { AppError } from "../utils/AppError"; // Custom error class
 import { creatorService } from "../services/creatorServices";
 
+// Initiate Sign Up
 export const initiateSignUp = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   const { email, phoneNumber, password, creatorName, industry } = req.body;
 
@@ -18,18 +21,18 @@ export const initiateSignUp = async (
 
     res.status(200).json(result);
   } catch (error) {
-    console.error("Error during sign up initiation:", error);
-    res.status(400).json({
-      message: "Creator sign up initiation failed",
-      error:
-        error instanceof Error ? error.message : "An unknown error occurred",
-    });
+    console.error("Error during sign-up initiation:", error);
+    next(
+      error instanceof AppError ? error : new AppError("Signup failed", 500)
+    );
   }
 };
 
+// Verify OTP and Create Creator
 export const verifyOTPAndCreateCreator = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   const { pendingUserId, otp } = req.body;
 
@@ -41,7 +44,7 @@ export const verifyOTPAndCreateCreator = async (
     );
 
     res.status(201).json({
-      message: "Creator created successfully",
+      message: "Creator sign-up successfully",
       creator: {
         id: newCreator.id,
         email: newCreator.email,
@@ -52,16 +55,21 @@ export const verifyOTPAndCreateCreator = async (
       },
     });
   } catch (error) {
-    console.error(error);
-    res.status(400).json({
-      message: "OTP verification failed",
-      error:
-        error instanceof Error ? error.message : "An unknown error occurred",
-    });
+    console.error("Error during OTP verification:", error);
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError("OTP verification failed", 500)
+    );
   }
 };
 
-export const signIn = async (req: Request, res: Response): Promise<void> => {
+// Sign In
+export const signIn = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   const { email, password } = req.body;
 
   try {
@@ -83,39 +91,44 @@ export const signIn = async (req: Request, res: Response): Promise<void> => {
       token,
     });
   } catch (error) {
-    console.error(error);
-    res.status(401).json({
-      message: "Authentication failed",
-      error:
-        error instanceof Error ? error.message : "An unknown error occurred",
-    });
+    console.error("Error during sign-in:", error);
+    next(
+      new AppError(
+        error instanceof Error ? error.message : "Sign in failed",
+        401
+      )
+    );
   }
 };
 
+// Forgot Password
 export const forgotPassword = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   const { email } = req.body;
 
   try {
     await creatorService.sendOTPForForgotPassword(email, res);
     res.status(200).json({
-      message: "OTP sent for verification",
+      message: "OTP sent for password reset",
     });
   } catch (error) {
-    console.error(error);
-    res.status(400).json({
-      message: "Failed to send OTP",
-      error:
-        error instanceof Error ? error.message : "An unknown error occurred",
-    });
+    console.error("Error during OTP sending:", error);
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError("OTP sending failed", 500)
+    );
   }
 };
 
+// Verify Forgot Password OTP
 export const verifyForgotOTP = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   const { email, otp } = req.body;
 
@@ -138,11 +151,11 @@ export const verifyForgotOTP = async (
       token,
     });
   } catch (error) {
-    console.error(error);
-    res.status(401).json({
-      message: "Authentication failed",
-      error:
-        error instanceof Error ? error.message : "An unknown error occurred",
-    });
+    console.error("Error during OTP verification:", error);
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError("OTP verification failed", 500)
+    );
   }
 };

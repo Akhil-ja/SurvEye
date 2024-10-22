@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   forgotPasswordSendOTP,
@@ -15,22 +15,38 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { toast } from "react-toastify"; // Ensure you import toast
 
 const ForgotPasswordEmail = () => {
   const [email, setEmail] = useState("");
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  // Select auth state from Redux
   const { isLoading, error, message } = useSelector((state) => state.auth);
+
+  // Clear error/message when email input changes
+  useEffect(() => {
+    if (error || message) {
+      dispatch(setForgotPasswordEmail("")); // Clear the state when the email changes
+    }
+  }, [email, dispatch, error, message]);
 
   const handleSendOTP = async (e) => {
     e.preventDefault();
-    dispatch(setForgotPasswordEmail(email)); // Store the email in Redux
+    dispatch(setForgotPasswordEmail(email)); // Store the email in Redux state
+
+    // Dispatch the action to send OTP
     const response = await dispatch(forgotPasswordSendOTP(email));
 
-    // Assuming the response contains a success status, you navigate to the OTP page
+    // Check if the OTP was successfully sent
     if (response.meta.requestStatus === "fulfilled") {
-      navigate("/forgot-password-otp", { state: { email } }); // Pass the email via the navigate function
+      toast.success("OTP sent successfully! Check your email.");
+      navigate("/forgot-password-otp", { state: { email } });
+    } else {
+      // Display backend error message as toast
+      const errorMessage = response.payload?.message || "Failed to send OTP";
+      toast.error(errorMessage); // Show error message from backend
     }
   };
 
@@ -61,10 +77,7 @@ const ForgotPasswordEmail = () => {
                 />
               </div>
             </div>
-            {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-            {message && (
-              <p className="text-green-500 text-sm mt-2">{message}</p>
-            )}
+
             <CardFooter className="flex justify-between">
               <Button
                 type="submit"

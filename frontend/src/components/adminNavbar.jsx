@@ -23,7 +23,16 @@ const AdminNavbar = () => {
   return (
     <AppBar position="static" sx={{ backgroundColor: "#EA580A" }}>
       <Toolbar>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+        <Typography
+          variant="h6"
+          component="div"
+          sx={{
+            flexGrow: 1,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
           Admin Dashboard
         </Typography>
         <Box sx={{ display: "flex", gap: 2 }}>

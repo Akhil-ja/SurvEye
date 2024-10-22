@@ -14,6 +14,8 @@ import { Label } from "@/components/ui/label";
 import { LinkContainer } from "react-router-bootstrap";
 import { signIn } from "../slices/authSlice";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css"; // Import toastify styles
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -36,12 +38,17 @@ export default function LoginScreen() {
 
     // Check if signIn was successful
     if (signIn.fulfilled.match(resultAction)) {
+      toast.success("Successfully signed in!");
+
       // Navigate based on role
       if (role === "user") {
         navigate("/user/home"); // Redirect to user home
       } else {
         navigate("/creator/home"); // Redirect to creator home
       }
+    } else if (signIn.rejected.match(resultAction)) {
+      // Show error message as toast
+      toast.error(resultAction.payload?.message || "Sign-in failed");
     }
   };
 
@@ -131,7 +138,7 @@ export default function LoginScreen() {
                   />
                 </div>
               </div>
-              {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+
               <CardFooter className="flex justify-between">
                 <Button
                   type="submit"

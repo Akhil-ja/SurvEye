@@ -2,19 +2,20 @@ import { Response } from "express";
 import jwt from "jsonwebtoken";
 import Admin, { IAdmin } from "../models/adminModel";
 import User, { IUser } from "../models/usersModel";
+import { AppError } from "../utils/AppError";
 
 export const adminService = {
   async signIn(email: string, password: string, res: Response) {
     const admin = await Admin.findOne({ email });
 
     if (!admin) {
-      throw new Error("Admin not found");
+      throw new AppError("Admin not found", 404);
     }
 
     const isPasswordValid = password === admin.password;
 
     if (!isPasswordValid) {
-      throw new Error("Invalid password");
+      throw new AppError("Invalid password", 401);
     }
 
     const token = jwt.sign(
@@ -47,12 +48,20 @@ export const adminService = {
     const user = await User.findById(userId);
 
     if (!user) {
-      throw new Error("User not found");
+      throw new AppError("User not found", 404);
     }
 
     user.status = user.status === "active" ? "blocked" : "active";
     await user.save();
 
     return user;
+  },
+
+  async getAllUsers(): Promise<IUser[]> {
+    const users = await User.find();
+    if (!users || users.length === 0) {
+      throw new AppError("No users found", 404);
+    }
+    return users;
   },
 };

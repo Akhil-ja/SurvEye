@@ -4,13 +4,13 @@ import Toolbar from "@mui/material/Toolbar";
 import { Button } from "@/components/ui/button";
 import { LinkContainer } from "react-router-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
-import { logout } from "../slices/authSlice"; // Adjust the import based on your project structure
+import { logout } from "../slices/authSlice";
 import { useNavigate, useLocation } from "react-router-dom";
 
 export default function UserNavbar() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const location = useLocation(); // Get the current location
+  const location = useLocation();
   const authInfo = useSelector((state) => state.auth.authInfo);
 
   const handleLogout = () => {
@@ -44,7 +44,7 @@ export default function UserNavbar() {
                 flexGrow: 1,
                 display: "flex",
                 justifyContent: "center",
-                marginLeft: 34,
+                marginLeft: 1,
               }}
             >
               <img

@@ -1,8 +1,6 @@
-// src/slices/adminSlice.js
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../api/axiosConfig";
 
-// Async action to handle admin sign-in
 export const adminSignIn = createAsyncThunk(
   "admin/signIn",
   async ({ email, password }, { rejectWithValue }) => {
@@ -15,14 +13,13 @@ export const adminSignIn = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(
         error.response && error.response.data
-          ? error.response.data
+          ? error.response.data.message
           : error.message
       );
     }
   }
 );
 
-// Async action to handle admin logout
 export const adminLogout = createAsyncThunk(
   "admin/logout",
   async (_, { rejectWithValue }) => {
@@ -32,24 +29,23 @@ export const adminLogout = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(
         error.response && error.response.data
-          ? error.response.data
+          ? error.response.data.message
           : error.message
       );
     }
   }
 );
 
-// Async action to toggle user status
 export const toggleUserStatus = createAsyncThunk(
   "admin/toggleUserStatus",
   async (userId, { rejectWithValue }) => {
     try {
       const response = await api.put(`/admin/users/toggleStatus?id=${userId}`);
-      return response.data.user; // Return the updated user data
+      return response.data.user;
     } catch (error) {
       return rejectWithValue(
         error.response && error.response.data
-          ? error.response.data
+          ? error.response.data.message
           : error.message
       );
     }

@@ -67,7 +67,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom button styles */
 .btn {
   background-color: hsl(24.6, 95%, 53.1%);
   color: hsl(60, 9.1%, 97.8%);
@@ -78,4 +77,17 @@
 
 .btn:hover {
   background-color: hsl(24.6, 95%, 43.1%);
+}
+
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px;
+  background-color: #fff;
+  position: relative;
+  z-index: 10;
 }

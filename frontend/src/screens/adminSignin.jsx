@@ -1,9 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@mui/material";
-import { TextField, Typography, Box, Card, CardContent } from "@mui/material";
+import {
+  Button,
+  TextField,
+  Typography,
+  Box,
+  Card,
+  CardContent,
+} from "@mui/material";
 import { adminSignIn } from "../slices/adminSlice";
+import { toast } from "react-toastify";
 
 const AdminSignIn = () => {
   const [email, setEmail] = useState("");
@@ -14,13 +21,30 @@ const AdminSignIn = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
     const resultAction = await dispatch(adminSignIn({ email, password }));
 
     if (adminSignIn.fulfilled.match(resultAction)) {
       navigate("/admin/home");
+    } else {
+      toast.error(
+        resultAction.error.message || "Login failed. Please try again."
+      );
     }
   };
+
+  const handleEmailChange = (e) => {
+    setEmail(e.target.value);
+  };
+
+  const handlePasswordChange = (e) => {
+    setPassword(e.target.value);
+  };
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
 
   return (
     <div className="flex justify-center items-center h-screen bg-gray-100">
@@ -37,8 +61,11 @@ const AdminSignIn = () => {
                 variant="outlined"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={handleEmailChange}
                 required
+                inputProps={{
+                  pattern: "[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}$",
+                }}
               />
             </Box>
             <Box sx={{ mb: 2 }}>
@@ -48,11 +75,10 @@ const AdminSignIn = () => {
                 variant="outlined"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={handlePasswordChange}
                 required
               />
             </Box>
-            {error && <Typography color="error">{error}</Typography>}
             <Button
               type="submit"
               variant="contained"

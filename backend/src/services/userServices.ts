@@ -5,6 +5,7 @@ import { generateToken } from "../utils/jwtUtils";
 import PendingUser from "../models/pendingUserModel";
 import { generateOTP, sendOTP } from "../utils/otpUtils";
 import { Request, Response } from "express";
+import { AppError } from "../utils/AppError"; // Import AppError
 
 export class UserService {
   async initiateSignUp(userData: {
@@ -18,7 +19,7 @@ export class UserService {
   }): Promise<{ message: string; pendingUserId: string }> {
     const existingUser = await User.findOne({ email: userData.email });
     if (existingUser) {
-      throw new Error("User already exists");
+      throw new AppError("User already exists", 400); // Use AppError for user already exists
     }
 
     const existingPendingUser = await PendingUser.find({
@@ -60,15 +61,15 @@ export class UserService {
   ): Promise<IUser> {
     const pendingUser = await PendingUser.findById(pendingUserId);
     if (!pendingUser) {
-      throw new Error("Invalid or expired signup request");
+      throw new AppError("Invalid or expired signup request", 400); // Use AppError for invalid signup request
     }
 
     if (pendingUser.otp !== otp) {
-      throw new Error("Invalid OTP");
+      throw new AppError("Invalid OTP", 400); // Use AppError for invalid OTP
     }
 
     if (pendingUser.otpExpires < new Date()) {
-      throw new Error("OTP has expired");
+      throw new AppError("OTP has expired", 400); // Use AppError for expired OTP
     }
 
     const phoneNumber = pendingUser.phoneNumber || undefined;
@@ -110,17 +111,17 @@ export class UserService {
     const user = await User.findOne({ email });
 
     if (!user) {
-      throw new Error("Email not registered");
+      throw new AppError("Email not registered", 404); // Use AppError for unregistered email
     }
 
     if (user.role !== "user") {
-      throw new Error("User is not authorized as a user");
+      throw new AppError("User is not authorized as a user", 403); 
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      throw new Error("Incorrect password");
+      throw new AppError("Incorrect password", 401); 
     }
 
     const token = generateToken(user.id, user.role);
@@ -141,15 +142,15 @@ export class UserService {
   async sendOTPForForgotPassword(email: string, res: Response): Promise<void> {
     const user = await User.findOne({ email });
     if (!user) {
-      throw new Error("Email not registered");
+      throw new AppError("Email not registered", 404); 
     }
 
     if (user.role !== "user") {
-      throw new Error("User is not authorized as a user");
+      throw new AppError("User is not authorized as a user", 403); 
     }
 
     if (user.status === "blocked") {
-      throw new Error("User is blocked or inactive");
+      throw new AppError("User is blocked or inactive", 403);
     }
 
     const otp = generateOTP();
@@ -187,11 +188,11 @@ export class UserService {
     const user = await User.findOne({ email });
 
     if (!user) {
-      throw new Error("Email not registered");
+      throw new AppError("Email not registered", 404); 
     }
 
     if (user.role !== "user") {
-      throw new Error("User is not authorized as a user");
+      throw new AppError("User is not authorized as a user", 403);
     }
 
     console.log("All cookies:", req.cookies);
@@ -201,12 +202,12 @@ export class UserService {
 
     if (!storedOTP) {
       console.log("OTP not found in cookies");
-      throw new Error("No OTP found");
+      throw new AppError("No OTP found", 400); 
     }
 
     if (otp !== storedOTP) {
       console.log("OTP mismatch. Provided:", otp, "Stored:", storedOTP);
-      throw new Error("Invalid OTP");
+      throw new AppError("Invalid OTP", 400); 
     }
 
     res.clearCookie("resetOTP");

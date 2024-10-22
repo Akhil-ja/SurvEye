@@ -27,7 +27,9 @@ export const verifyOTP = createAsyncThunk(
       localStorage.setItem("authInfo", JSON.stringify(response.data));
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(
+        error.response?.data || { message: "Registration failed" }
+      );
     }
   }
 );
@@ -40,7 +42,7 @@ export const signIn = createAsyncThunk(
       localStorage.setItem("authInfo", JSON.stringify(response.data));
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(error.response?.data);
     }
   }
 );
@@ -140,7 +142,7 @@ const authSlice = createSlice({
       })
       .addCase(initiateSignUp.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload?.message || "An error occurred";
+        state.error = action.payload?.message || "sign-up error occured";
       })
 
       // Handle verifyOTP
@@ -168,7 +170,7 @@ const authSlice = createSlice({
       })
       .addCase(signIn.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload?.message || "Invalid credentials";
+        state.error = action.payload?.message || "Sign-in failed";
       })
 
       // Handle logout

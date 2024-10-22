@@ -1,10 +1,14 @@
-// controllers/otpController.ts
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { SharedService } from "../services/sharedServices";
+import { AppError } from "../utils/AppError";
 
 const sharedService = new SharedService();
 
-export const resendOTP = async (req: Request, res: Response): Promise<void> => {
+export const resendOTP = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   const { pendingUserId } = req.body;
 
   try {
@@ -12,31 +16,34 @@ export const resendOTP = async (req: Request, res: Response): Promise<void> => {
     res.status(200).json(result);
   } catch (error) {
     console.error("Error during OTP resend:", error);
-    res.status(400).json({
-      message: "Failed to resend OTP",
-      error:
-        error instanceof Error ? error.message : "An unknown error occurred",
-    });
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError("Failed to resend OTP", 400)
+    );
   }
 };
 
-export const logout = async (req: Request, res: Response): Promise<void> => {
+export const logout = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
-    await sharedService.logout(res); // Use the instance method correctly
+    await sharedService.logout(res);
     res.status(200).json({ message: "Logout successful" });
   } catch (error) {
     console.error("Error during logout:", error);
-    res.status(500).json({
-      message: "Logout failed",
-      error:
-        error instanceof Error ? error.message : "An unknown error occurred",
-    });
+    next(
+      error instanceof AppError ? error : new AppError("Logout failed", 500)
+    );
   }
 };
 
 export const forgotPasswordSendOTP = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   const { email } = req.body;
 
@@ -45,17 +52,18 @@ export const forgotPasswordSendOTP = async (
     res.status(200).json(result);
   } catch (error) {
     console.error("Error during forgot password OTP send:", error);
-    res.status(400).json({
-      message: "Failed to send OTP",
-      error:
-        error instanceof Error ? error.message : "An unknown error occurred",
-    });
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError("Failed to send OTP", 400)
+    );
   }
 };
 
 export const resendForgotPasswordSendOTP = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   const { email } = req.body;
 
@@ -64,17 +72,18 @@ export const resendForgotPasswordSendOTP = async (
     res.status(200).json(result);
   } catch (error) {
     console.error("Error during forgot password OTP send:", error);
-    res.status(400).json({
-      message: "Failed to send OTP",
-      error:
-        error instanceof Error ? error.message : "An unknown error occurred",
-    });
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError("Failed to resend OTP", 400)
+    );
   }
 };
 
 export const verifyForgotPasswordOTP = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   const { email, otp } = req.body;
 
@@ -88,10 +97,10 @@ export const verifyForgotPasswordOTP = async (
     res.status(200).json(result);
   } catch (error) {
     console.error("Error during OTP verification:", error);
-    res.status(400).json({
-      message: "OTP verification failed",
-      error:
-        error instanceof Error ? error.message : "An unknown error occurred",
-    });
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError("OTP verification failed", 400)
+    );
   }
 };

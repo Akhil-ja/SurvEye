@@ -25,6 +25,7 @@ import AdminSignIn from "./screens/adminSignin";
 import AdminHome from "./screens/adminHome";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AuthenticatedRoute from "./components/AuthenticatedRoute";
+import AdminUserList from "./screens/adminUserList";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -35,6 +36,10 @@ const router = createBrowserRouter(
         <Route path="/creator/signup" element={<CreatorRegisterScreen />} />
         <Route path="/user/signup" element={<UserRegisterScreen />} />
         <Route path="/verify-otp" element={<OTPVerificationScreen />} />
+        {/**admin routes change it */}
+        <Route path="/admin/home" element={<AdminHome />} />
+        <Route path="/admin/users" element={<AdminUserList />} />
+
         <Route
           path="/forgot-password-email"
           element={<ForgotPasswordEmail />}
@@ -47,7 +52,6 @@ const router = createBrowserRouter(
       <Route element={<ProtectedRoute />}>
         <Route path="/user/home" element={<UserHome />} />
         <Route path="/creator/home" element={<CreatorHome />} />
-        <Route path="/admin/home" element={<AdminHome />} />
       </Route>
     </Route>
   )

@@ -1,9 +1,11 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { userService } from "../services/userServices";
+import { AppError } from "../utils/AppError"; // Import AppError
 
 export const initiateSignUp = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   const { email, phoneNumber, password, firstName, lastName, dateOfBirth } =
     req.body;
@@ -21,18 +23,19 @@ export const initiateSignUp = async (
 
     res.status(200).json(result);
   } catch (error) {
-    console.error("Error during sign up initiation:", error);
-    res.status(400).json({
-      message: "User sign up initiation failed",
-      error:
-        error instanceof Error ? error.message : "An unknown error occurred",
-    });
+    console.error("Error during OTP resend:", error);
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError("Failed to resend OTP", 400)
+    );
   }
 };
 
 export const verifyOTPAndCreateUser = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   const { pendingUserId, otp } = req.body;
 
@@ -42,7 +45,6 @@ export const verifyOTPAndCreateUser = async (
       otp,
       res
     );
-
     res.status(201).json({
       message: "User created successfully",
       user: {
@@ -55,21 +57,24 @@ export const verifyOTPAndCreateUser = async (
       },
     });
   } catch (error) {
-    console.error(error);
-    res.status(400).json({
-      message: "OTP verification failed",
-      error:
-        error instanceof Error ? error.message : "An unknown error occurred",
-    });
+    console.error("Error during OTP resend:", error);
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError("Failed to send OTP", 400)
+    );
   }
 };
 
-export const signIn = async (req: Request, res: Response): Promise<void> => {
+export const signIn = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   const { email, password } = req.body;
 
   try {
     const { user, token } = await userService.signIn(email, password, res, req);
-
     res.status(200).json({
       message: "Sign in successful",
       user: {
@@ -82,18 +87,17 @@ export const signIn = async (req: Request, res: Response): Promise<void> => {
       token,
     });
   } catch (error) {
-    console.error(error);
-    res.status(401).json({
-      message: "Authentication failed",
-      error:
-        error instanceof Error ? error.message : "An unknown error occurred",
-    });
+    console.error("Error during Sign-in:", error);
+    next(
+      error instanceof AppError ? error : new AppError("Failed to signin", 400)
+    );
   }
 };
 
 export const forgotPassword = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   const { email } = req.body;
 
@@ -103,18 +107,19 @@ export const forgotPassword = async (
       message: "OTP sent for verification",
     });
   } catch (error) {
-    console.error(error);
-    res.status(400).json({
-      message: "Failed to send OTP",
-      error:
-        error instanceof Error ? error.message : "An unknown error occurred",
-    });
+    console.error("Error during OTP resend:", error);
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError("Failed to resend OTP", 400)
+    );
   }
 };
 
 export const verifyForgotOTP = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   const { email, otp } = req.body;
 
@@ -125,7 +130,6 @@ export const verifyForgotOTP = async (
       res,
       req
     );
-
     res.status(200).json({
       message: "Sign in successful",
       user: {
@@ -138,25 +142,25 @@ export const verifyForgotOTP = async (
       token,
     });
   } catch (error) {
-    console.error(error);
-    res.status(401).json({
-      message: "Authentication failed",
-      error:
-        error instanceof Error ? error.message : "An unknown error occurred",
-    });
+    console.error("Error during OTP verification:", error);
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError("Failed to verify OTP", 400)
+    );
   }
 };
 
-export const logout = async (req: Request, res: Response): Promise<void> => {
+export const logout = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     await userService.Logout(res, req);
     res.status(200).json({ message: "Logout successful" });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      message: "Logout failed",
-      error:
-        error instanceof Error ? error.message : "An unknown error occurred",
-    });
+    console.error("Error during logout:", error);
+    next(new AppError("Logout failed", 500));
   }
 };

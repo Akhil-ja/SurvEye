@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { verifyForgotPasswordOTP } from "../slices/authSlice";
-import { useNavigate, useLocation } from "react-router-dom"; // Add useLocation
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,18 +12,18 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { toast } from "react-toastify";
 
 const ForgotPasswordOTP = () => {
   const [otp, setOtp] = useState("");
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const location = useLocation(); // Use useLocation to get email from state
-  const email = location.state?.email; // Retrieve email from location state
+  const location = useLocation();
+  const email = location.state?.email;
 
   const { isLoading, error, message, forgotPasswordStatus, authInfo } =
     useSelector((state) => state.auth);
 
-  // If user is authenticated, navigate to their home page
   useEffect(() => {
     if (authInfo && authInfo.role) {
       navigate(`/${authInfo.role}/home`);
@@ -31,12 +31,23 @@ const ForgotPasswordOTP = () => {
   }, [authInfo, navigate]);
 
   // Handle OTP verification
-  const handleVerifyOTP = (e) => {
+  const handleVerifyOTP = async (e) => {
     e.preventDefault();
     if (email) {
-      dispatch(verifyForgotPasswordOTP({ email, otp }));
+      const resultAction = await dispatch(
+        verifyForgotPasswordOTP({ email, otp })
+      );
+
+      if (verifyForgotPasswordOTP.fulfilled.match(resultAction)) {
+        toast.success("OTP verified successfully!");
+        navigate(`/${authInfo.role}/home`);
+      } else {
+        const errorMessage =
+          resultAction.payload?.message || "OTP verification failed";
+        toast.error(errorMessage);
+      }
     } else {
-      // Handle the case where email is missing (e.g., show an error message)
+      toast.error("Email is missing.");
       console.error("Email is missing.");
     }
   };

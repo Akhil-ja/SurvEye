@@ -26,6 +26,8 @@ import AdminHome from "./screens/adminHome";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import AuthenticatedRoute from "./components/AuthenticatedRoute";
 import AdminUserList from "./screens/adminUserList";
+import UserProfile from "./screens/userProfile";
+import CreatorProfile from "./screens/creatorProfile";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -52,6 +54,8 @@ const router = createBrowserRouter(
       <Route element={<ProtectedRoute />}>
         <Route path="/user/home" element={<UserHome />} />
         <Route path="/creator/home" element={<CreatorHome />} />
+        <Route path="/creator/profile" element={<CreatorProfile />} />
+        <Route path="/user/profile" element={<UserProfile />} />
       </Route>
     </Route>
   )

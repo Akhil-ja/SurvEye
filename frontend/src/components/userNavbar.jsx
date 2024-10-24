@@ -86,7 +86,7 @@ export default function UserNavbar() {
                 <DropdownMenuContent className="w-56" align="end">
                   <DropdownMenuItem
                     className="cursor-pointer"
-                    onClick={() => navigate("/profile")}
+                    onClick={() => navigate(`/${authInfo.user.role}/profile`)}
                   >
                     <User className="mr-2 h-4 w-4" />
                     <span>Profile</span>
@@ -96,7 +96,7 @@ export default function UserNavbar() {
                     onClick={handleLogout}
                   >
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
+                    <span onClick={handleLogout}>Log out</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

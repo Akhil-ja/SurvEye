@@ -1,51 +1,114 @@
-import { createSlice } from "@reduxjs/toolkit";
-import {
-  initiateSignUp,
-  verifyOTP,
-  signIn,
-  forgotPassword,
-  verifyForgotOTP,
-  logout,
-} from "./creatorApi";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import api from "../api/axiosConfig";
 
-const initialState = {
-  creator: null,
-  token: null,
-  isLoading: false,
-  error: null,
-};
+// Async thunk for fetching creator profile
+export const fetchCreatorProfile = createAsyncThunk(
+  "creator/fetchProfile",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get("/creator/profile");
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to fetch profile" }
+      );
+    }
+  }
+);
+
+export const updateCreatorProfile = createAsyncThunk(
+  "creator/updateProfile",
+  async (profileData, { rejectWithValue }) => {
+    try {
+      const response = await api.put("/creator/profile", profileData);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to update profile" }
+      );
+    }
+  }
+);
+
+export const changePassword = createAsyncThunk(
+  "creator/changePassword",
+  async ({ oldPassword, newPassword }, { rejectWithValue }) => {
+    try {
+      const response = await api.put("/creator/change-password", {
+        oldPassword,
+        newPassword,
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to change password" }
+      );
+    }
+  }
+);
 
 const creatorSlice = createSlice({
   name: "creator",
-  initialState,
-  reducers: {},
+  initialState: {
+    profile: null,
+    isLoading: false,
+    error: null,
+    message: "",
+    passwordChangeStatus: "idle",
+  },
+  reducers: {
+    clearMessage: (state) => {
+      state.message = "";
+      state.error = null;
+    },
+    resetPasswordChangeStatus: (state) => {
+      state.passwordChangeStatus = "idle";
+    },
+  },
   extraReducers: (builder) => {
     builder
-      .addCase(initiateSignUp.pending, (state) => {
+      .addCase(fetchCreatorProfile.pending, (state) => {
         state.isLoading = true;
       })
-      .addCase(initiateSignUp.fulfilled, (state, action) => {
+      .addCase(fetchCreatorProfile.fulfilled, (state, action) => {
         state.isLoading = false;
-        // Handle the response as needed
+        state.profile = action.payload.user;
+        state.error = null;
       })
-      .addCase(initiateSignUp.rejected, (state, action) => {
+      .addCase(fetchCreatorProfile.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || "An error occurred";
+        state.error = action.payload?.message || "Failed to fetch profile";
       })
-      .addCase(verifyOTP.fulfilled, (state, action) => {
-        state.creator = action.payload.creator;
-        state.token = action.payload.token;
+
+      // Handle updateCreatorProfile
+      .addCase(updateCreatorProfile.pending, (state) => {
+        state.isLoading = true;
       })
-      .addCase(signIn.fulfilled, (state, action) => {
-        state.creator = action.payload.user;
-        state.token = action.payload.token;
+      .addCase(updateCreatorProfile.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.profile = action.payload.user;
+        state.message = action.payload.message;
+        state.error = null;
       })
-      .addCase(logout.fulfilled, (state) => {
-        state.creator = null;
-        state.token = null;
+      .addCase(updateCreatorProfile.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload?.message || "Failed to update profile";
+      })
+
+      .addCase(changePassword.pending, (state) => {
+        state.passwordChangeStatus = "loading";
+      })
+      .addCase(changePassword.fulfilled, (state, action) => {
+        state.passwordChangeStatus = "succeeded";
+        state.message = action.payload.message;
+        state.error = null;
+      })
+      .addCase(changePassword.rejected, (state, action) => {
+        state.passwordChangeStatus = "failed";
+        state.error = action.payload?.message || "Failed to change password";
       });
-    // Add cases for forgotPassword and verifyForgotOTP as needed
   },
 });
 
+export const { clearMessage, resetPasswordChangeStatus } = creatorSlice.actions;
 export default creatorSlice.reducer;

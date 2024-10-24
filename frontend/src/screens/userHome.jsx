@@ -1,11 +1,21 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useSelector } from "react-redux";
 
 const UserHome = () => {
+  const authInfo = useSelector((state) => state.auth.authInfo);
+
+  if (!authInfo || !authInfo.user) {
+    return (
+      <div className="p-6 bg-white">
+        <Card className="h-40">
+          <CardContent className="p-4">
+            <h2 className="text-xl">Loading user information...</h2>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   const HoverCard = ({ className, children }) => (
     <Card
       className={`${className} transition-all duration-300 hover:shadow-lg hover:scale-105 cursor-pointer`}
@@ -17,11 +27,12 @@ const UserHome = () => {
   return (
     <div className="p-6 bg-white">
       <div className="grid grid-cols-4 gap-4">
-        {/* Left column */}
         <div className="col-span-1 space-y-4">
           <HoverCard className="h-40">
             <CardContent className="p-4">
-              <h1 className="text-3xl font-bold">Hello Anna</h1>
+              <h1 className="text-3xl font-bold">
+                Hello {authInfo.user.first_name || "User"}
+              </h1>
               <h2 className="text-xl text-pink-500">Welcome Back!</h2>
             </CardContent>
           </HoverCard>
@@ -45,7 +56,6 @@ const UserHome = () => {
           </HoverCard>
         </div>
 
-        {/* Middle columns */}
         <div className="col-span-2 space-y-4">
           <HoverCard className="h-52">
             <CardHeader>
@@ -71,7 +81,6 @@ const UserHome = () => {
           </HoverCard>
         </div>
 
-        {/* Right column */}
         <div className="col-span-1 space-y-4">
           <HoverCard className="h-52">
             <CardHeader>
@@ -93,7 +102,6 @@ const UserHome = () => {
           </HoverCard>
         </div>
 
-        {/* Wallet card spanning across columns */}
         <div className="col-span-4">
           <HoverCard className="h-40 mt-0">
             <CardHeader>

@@ -190,7 +190,10 @@ const authSlice = createSlice({
         state.isLoading = true;
       })
       .addCase(signIn.fulfilled, (state, action) => {
-        state.authInfo = action.payload.user;
+        state.authInfo = {
+          user: action.payload.user || action.payload, // Handle both formats
+          token: action.payload.token,
+        };
         state.isLoading = false;
         state.error = null;
       })

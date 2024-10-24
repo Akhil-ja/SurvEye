@@ -232,6 +232,125 @@ export class CreatorService {
 
     return { user, token };
   }
+
+  async getProfile(userId: string): Promise<any> {
+    const creator = await User.findById(userId).select("-password"); // Exclude sensitive fields
+
+    if (!creator) {
+      throw new AppError("Creator not found", 404);
+    }
+
+    if (creator.role !== "creator") {
+      throw new AppError("User is not authorized as a creator", 401);
+    }
+
+    if (creator.status === "blocked") {
+      throw new AppError("Creator is blocked", 403);
+    }
+
+    return {
+      id: creator.id,
+      number: creator.phoneNumber,
+      email: creator.email,
+      role: creator.role,
+      creator_name: creator.creator_name,
+      industry: creator.industry,
+    };
+  }
+
+  async editProfile(
+    userId: string,
+    updates: {
+      creator_name?: string;
+      industry?: string;
+    }
+  ): Promise<IUser> {
+    const creator = await User.findById(userId);
+
+    if (!creator) {
+      throw new AppError("Creator not found", 404);
+    }
+
+    if (creator.role !== "creator") {
+      throw new AppError("User is not authorized as a creator", 401);
+    }
+
+    if (creator.status === "blocked") {
+      throw new AppError("Creator is blocked", 403);
+    }
+
+    if (updates.creator_name && updates.creator_name.trim().length === 0) {
+      throw new AppError("Creator name cannot be empty", 400);
+    }
+
+    if (updates.industry && updates.industry.trim().length === 0) {
+      throw new AppError("Industry cannot be empty", 400);
+    }
+
+    if (updates.creator_name) {
+      creator.creator_name = updates.creator_name.trim();
+    }
+
+    if (updates.industry) {
+      creator.industry = updates.industry.trim();
+    }
+
+    await creator.save();
+
+    return creator;
+  }
+
+  async changePassword(
+    userId: string,
+    updates: {
+      oldPassword?: string;
+      newPassword?: string;
+    }
+  ): Promise<IUser> {
+    const creator = await User.findById(userId);
+
+    if (!creator) {
+      throw new AppError("Creator not found", 404);
+    }
+
+    if (creator.role !== "creator") {
+      throw new AppError("User is not authorized as a creator", 401);
+    }
+
+    if (creator.status === "blocked") {
+      throw new AppError("Creator is blocked", 403);
+    }
+
+    if (updates.oldPassword && updates.newPassword) {
+      const isMatch = await bcrypt.compare(
+        updates.oldPassword,
+        creator.password
+      );
+
+      if (!isMatch) {
+        throw new AppError("Old password is incorrect", 400);
+      }
+
+      const isSamePassword = await bcrypt.compare(
+        updates.newPassword,
+        creator.password
+      );
+
+      if (isSamePassword) {
+        throw new AppError(
+          "New password cannot be the same as the old password",
+          400
+        );
+      }
+
+      const salt = await bcrypt.genSalt(10);
+      creator.password = await bcrypt.hash(updates.newPassword, salt);
+    }
+
+    await creator.save();
+
+    return creator;
+  }
 }
 
 export const creatorService = new CreatorService();

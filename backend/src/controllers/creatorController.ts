@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { AppError } from "../utils/AppError"; // Custom error class
+import { AppError } from "../utils/AppError";
 import { creatorService } from "../services/creatorServices";
 
 // Initiate Sign Up
@@ -156,6 +156,126 @@ export const verifyForgotOTP = async (
       error instanceof AppError
         ? error
         : new AppError("OTP verification failed", 500)
+    );
+  }
+};
+
+export const fetchCreatorProfile = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      throw new AppError("Authentication required", 401);
+    }
+
+    const creatorProfile = await creatorService.getProfile(userId);
+
+    res.status(200).json({
+      message: "Profile fetched successfully",
+      user: creatorProfile,
+    });
+  } catch (error) {
+    console.error("Error fetching profile:", error);
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError("Profile fetch failed", 500)
+    );
+  }
+};
+
+export const editCreatorProfile = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    console.log("in edid profile");
+
+    const userId = req.user?.id;
+    console.log("userid:", userId);
+
+    if (!userId) {
+      throw new AppError("Authentication required", 401);
+    }
+
+    const { creator_name, industry } = req.body;
+
+    if (!creator_name && !industry) {
+      throw new AppError("No updates provided", 400);
+    }
+
+    const updatedCreator = await creatorService.editProfile(userId, {
+      creator_name,
+      industry,
+    });
+
+    res.status(200).json({
+      message: "Profile updated successfully",
+      user: {
+        id: updatedCreator.id,
+        email: updatedCreator.email,
+        role: updatedCreator.role,
+        creator_name: updatedCreator.creator_name,
+        industry: updatedCreator.industry,
+      },
+    });
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError("Profile update failed", 500)
+    );
+  }
+};
+
+export const changePasswordController = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    console.log("In change password");
+
+    const userId = req.user?.id;
+    console.log("User ID:", userId);
+
+    if (!userId) {
+      throw new AppError("Authentication required", 401);
+    }
+
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      throw new AppError("Both old and new passwords are required", 400);
+    }
+
+    const updatedCreator = await creatorService.changePassword(userId, {
+      oldPassword,
+      newPassword,
+    });
+
+    res.status(200).json({
+      message: "Password updated successfully",
+      user: {
+        id: updatedCreator.id,
+        email: updatedCreator.email,
+        role: updatedCreator.role,
+        creator_name: updatedCreator.creator_name,
+        industry: updatedCreator.industry,
+      },
+    });
+  } catch (error) {
+    console.error("Error changing password:", error);
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError("Password update failed", 500)
     );
   }
 };

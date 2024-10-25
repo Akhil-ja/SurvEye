@@ -19,7 +19,7 @@ import {
   fetchCreatorProfile,
   resetPasswordChangeStatus,
   clearMessage,
-} from "../slices/creatorSlice";
+} from "../../slices/creatorSlice";
 import { toast } from "react-toastify";
 
 const CreatorProfile = () => {

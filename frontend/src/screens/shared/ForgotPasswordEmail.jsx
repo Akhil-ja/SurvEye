@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   forgotPasswordSendOTP,
   setForgotPasswordEmail,
-} from "../slices/authSlice";
+} from "../../slices/authSlice";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {

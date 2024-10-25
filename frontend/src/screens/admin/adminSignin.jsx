@@ -9,7 +9,7 @@ import {
   Card,
   CardContent,
 } from "@mui/material";
-import { adminSignIn } from "../slices/adminSlice";
+import { adminSignIn } from "../../slices/adminSlice";
 import { toast } from "react-toastify";
 
 const AdminSignIn = () => {

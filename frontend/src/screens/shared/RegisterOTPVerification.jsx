@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { verifyOTP, resendOTP } from "../slices/authSlice";
+import { verifyOTP, resendOTP } from "../../slices/authSlice";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import FormContainer from "@/components/formContainer";

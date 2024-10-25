@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { verifyForgotPasswordOTP } from "../slices/authSlice";
+import { verifyForgotPasswordOTP } from "../../slices/authSlice";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {

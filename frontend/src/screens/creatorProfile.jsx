@@ -33,14 +33,22 @@ const CreatorProfile = () => {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [isIndustryDialogOpen, setIndustryDialogOpen] = useState(false);
+  const [newIndustry, setNewIndustry] = useState("");
 
   useEffect(() => {
     dispatch(fetchCreatorProfile());
-  }, [dispatch]);
+  }, []);
 
   useEffect(() => {
     if (profile) {
       setNewName(profile.creator_name || "");
+    }
+  }, [profile]);
+
+  useEffect(() => {
+    if (profile) {
+      setNewIndustry(profile.industry || "");
     }
   }, [profile]);
 
@@ -51,6 +59,7 @@ const CreatorProfile = () => {
     }
     if (message) {
       toast.success(message);
+      setNameDialogOpen(false);
       dispatch(clearMessage());
     }
   }, [error, message]);
@@ -62,6 +71,12 @@ const CreatorProfile = () => {
     }
   };
 
+  const handleSaveIndustry = async () => {
+    if (newIndustry) {
+      await dispatch(updateCreatorProfile({ industry: newIndustry }));
+      setIndustryDialogOpen(false);
+    }
+  };
   const handleSavePassword = async () => {
     if (newPassword !== confirmNewPassword) {
       alert("New password and confirm password do not match");
@@ -113,7 +128,12 @@ const CreatorProfile = () => {
           <Separator />
           <ProfileRow label="Email" value={profile?.email || "Not set"} />
           <Separator />
-          <ProfileRow label="Industry" value={profile?.industry || "Not set"} />
+          <ProfileRow
+            label="Industry"
+            value={profile?.industry || "Not set"}
+            showArrow
+            onClick={() => setIndustryDialogOpen(true)}
+          />
         </CardContent>
       </Card>
 
@@ -147,6 +167,40 @@ const CreatorProfile = () => {
             disabled={isLoading}
           >
             {isLoading ? "Saving..." : "Save"}
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isIndustryDialogOpen} onOpenChange={setIndustryDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Industry</DialogTitle>
+            <DialogDescription>
+              Select the industry you belong to.
+            </DialogDescription>
+          </DialogHeader>
+          <select
+            value={newIndustry}
+            onChange={(e) => setNewIndustry(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded mt-4"
+          >
+            <option value="">Select Your Industry</option>
+            <option value="marketing">Marketing</option>
+            <option value="personal">Personal</option>
+            <option value="technology">Technology</option>
+            <option value="education">Education</option>
+            <option value="healthcare">Healthcare</option>
+            <option value="finance">Finance</option>
+            <option value="consulting">Consulting</option>
+            <option value="real-estate">Real Estate</option>
+            <option value="other">Other</option>
+          </select>
+          <Button
+            className="mt-4 w-full"
+            onClick={handleSaveIndustry}
+            disabled={isLoading}
+          >
+            {isLoading ? "Saving..." : "Save Industry"}
           </Button>
         </DialogContent>
       </Dialog>

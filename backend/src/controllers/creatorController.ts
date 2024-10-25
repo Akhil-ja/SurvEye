@@ -219,6 +219,7 @@ export const editCreatorProfile = async (
       user: {
         id: updatedCreator.id,
         email: updatedCreator.email,
+        number: updatedCreator.phoneNumber,
         role: updatedCreator.role,
         creator_name: updatedCreator.creator_name,
         industry: updatedCreator.industry,
@@ -266,6 +267,7 @@ export const changePasswordController = async (
         id: updatedCreator.id,
         email: updatedCreator.email,
         role: updatedCreator.role,
+        number: updatedCreator.phoneNumber,
         creator_name: updatedCreator.creator_name,
         industry: updatedCreator.industry,
       },

@@ -6,18 +6,19 @@ import {
   forgotPassword,
   verifyForgotOTP,
 } from "../controllers/userController";
-
 import { checkBlockedUser } from "../middlewares/statusMiddleware";
 import { protect } from "../middlewares/authMiddleware";
 
 const router = Router();
 
-// User Routes
-router.post("/signup", initiateSignUp, protect, checkBlockedUser);
+// Public routes
+router.post("/signup", initiateSignUp);
 router.post("/verify-otp", verifyOTPAndCreateUser);
-router.post("/signin", signIn, protect, checkBlockedUser);
+router.post("/signin", signIn);
 router.post("/forgot-password", forgotPassword);
 router.post("/forgot-password/verify-otp", verifyForgotOTP);
-router.put("/profile", verifyForgotOTP);
+
+// Protected routes
+// router.put("/profile", protect, checkBlockedUser, updateProfile);
 
 export default router;

@@ -30,6 +30,20 @@ export const updateCreatorProfile = createAsyncThunk(
   }
 );
 
+export const createSurvey = createAsyncThunk(
+  "creator/createSurvey",
+  async (surveyData, { rejectWithValue }) => {
+    try {
+      const response = await api.post("creator/survey", surveyData);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to create survey" }
+      );
+    }
+  }
+);
+
 export const changePassword = createAsyncThunk(
   "creator/changePassword",
   async ({ oldPassword, newPassword }, { rejectWithValue }) => {
@@ -55,6 +69,7 @@ const creatorSlice = createSlice({
     error: null,
     message: "",
     passwordChangeStatus: "idle",
+    surveyCreationStatus: "idle",
   },
   reducers: {
     clearMessage: (state) => {
@@ -106,9 +121,25 @@ const creatorSlice = createSlice({
       .addCase(changePassword.rejected, (state, action) => {
         state.passwordChangeStatus = "failed";
         state.error = action.payload?.message || "Failed to change password";
+      })
+      .addCase(createSurvey.pending, (state) => {
+        state.surveyCreationStatus = "loading";
+      })
+      .addCase(createSurvey.fulfilled, (state, action) => {
+        state.surveyCreationStatus = "succeeded";
+        state.message = action.payload.message;
+        state.error = null;
+      })
+      .addCase(createSurvey.rejected, (state, action) => {
+        state.surveyCreationStatus = "failed";
+        state.error = action.payload?.message || "Failed to create survey";
       });
   },
 });
 
-export const { clearMessage, resetPasswordChangeStatus } = creatorSlice.actions;
+export const {
+  clearMessage,
+  resetPasswordChangeStatus,
+  resetSurveyCreationStatus,
+} = creatorSlice.actions;
 export default creatorSlice.reducer;

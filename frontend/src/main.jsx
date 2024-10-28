@@ -9,25 +9,28 @@ import {
 import { Provider } from "react-redux";
 import { store } from "./store";
 
-import LandingPage from "./screens/landingPage.jsx";
-import LoginScreen from "./screens/signin.jsx";
-import CreatorRegisterScreen from "./screens/creatorSignup.jsx";
-import UserRegisterScreen from "./screens/userSignup.jsx";
-import UserHome from "./screens/userHome";
-import CreatorHome from "./screens/creatorHome";
+import LandingPage from "./screens/shared/landingPage.jsx";
+import LoginScreen from "./screens/shared/signin.jsx";
+import CreatorRegisterScreen from "./screens/creator/creatorSignup.jsx";
+import UserRegisterScreen from "./screens/user/userSignup.jsx";
+import UserHome from "./screens/user/userHome";
+import CreatorHome from "./screens/creator/creatorHome";
 import App from "./App.jsx";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./index.css";
-import OTPVerificationScreen from "./screens/RegisterOTPVerification";
-import ForgotPasswordOTP from "./screens/ForgotPasswordOTP";
-import ForgotPasswordEmail from "./screens/ForgotPasswordEmail";
-import AdminSignIn from "./screens/adminSignin";
-import AdminHome from "./screens/adminHome";
+import OTPVerificationScreen from "./screens/shared/RegisterOTPVerification";
+import ForgotPasswordOTP from "./screens/shared/ForgotPasswordOTP";
+import ForgotPasswordEmail from "./screens/shared/ForgotPasswordEmail";
+import AdminSignIn from "./screens/admin/adminSignin";
+import AdminHome from "./screens/admin/adminHome";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import AuthenticatedRoute from "./components/AuthenticatedRoute";
-import AdminUserList from "./screens/adminUserList";
-import UserProfile from "./screens/userProfile";
-import CreatorProfile from "./screens/creatorProfile";
+import AdminUserList from "./screens/admin/adminUserList";
+import UserProfile from "./screens/user/userProfile";
+import CreatorProfile from "./screens/creator/creatorProfile";
+import CreatorSurveyList from "./screens/creator/creatorSurveyList";
+import CreateSurvey from "./screens/creator/createSurvey";
+import MakeSurvey from "./screens/creator/makeSurvey";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -50,12 +53,17 @@ const router = createBrowserRouter(
         <Route path="/admin/signin" element={<AdminSignIn />} />
       </Route>
 
-      {/* Routes that should only be accessible when logged in */}
       <Route element={<ProtectedRoute />}>
+        {/**user */}
+        <Route path="/user/profile" element={<UserProfile />} />
         <Route path="/user/home" element={<UserHome />} />
+
+        {/**creator */}
         <Route path="/creator/home" element={<CreatorHome />} />
         <Route path="/creator/profile" element={<CreatorProfile />} />
-        <Route path="/user/profile" element={<UserProfile />} />
+        <Route path="/creator/surveylist" element={<CreatorSurveyList />} />
+        <Route path="/creator/survey" element={<CreateSurvey />} />
+        <Route path="/creator/surveycreate" element={<MakeSurvey />} />
       </Route>
     </Route>
   )

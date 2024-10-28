@@ -281,3 +281,52 @@ export const changePasswordController = async (
     );
   }
 };
+
+export const createSurvey = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const creatorId = req.user?.id;
+    console.log("User ID:", creatorId);
+
+    if (!creatorId) {
+      throw new AppError("Authentication required", 401);
+    }
+
+    const {
+      surveyName,
+      description,
+      category,
+      creatorName,
+      sampleSize,
+      targetAgeRange,
+      duration,
+      questions,
+    } = req.body;
+
+    const survey = await creatorService.createSurvey(creatorId, {
+      surveyName,
+      description,
+      category,
+      creatorName,
+      sampleSize,
+      targetAgeRange,
+      duration,
+      questions,
+    });
+
+    res.status(200).json({
+      message: "Survey created successfully",
+      survey,
+    });
+  } catch (error) {
+    console.error("Error creating survey:", error);
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError("Survey creation failed", 500)
+    );
+  }
+};

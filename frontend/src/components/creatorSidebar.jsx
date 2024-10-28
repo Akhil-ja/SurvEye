@@ -1,4 +1,5 @@
-import { FaBars, FaHome, FaUserAlt, FaSignOutAlt } from "react-icons/fa";
+import { FaBars, FaHome } from "react-icons/fa";
+import { RiSurveyFill } from "react-icons/ri";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 
@@ -28,36 +29,39 @@ const CreatorSidebar = () => {
           <ul className="space-y-4 mt-10">
             <li>
               <Link
-                to="/dashboard"
+                onClick={toggleSidebar}
+                to="creator/home"
                 className="flex items-center space-x-2 py-2 px-4 hover:bg-gray-700 rounded"
               >
                 <FaHome className="text-xl text-white" />
-                <span className="text-white">Dashboard</span>
+                <span className="text-white">Home</span>
+              </Link>
+            </li>
+
+            <li>
+              <Link
+                onClick={toggleSidebar}
+                to="creator/surveylist"
+                className="flex items-center space-x-2 py-2 px-4 hover:bg-gray-700 rounded"
+              >
+                <RiSurveyFill className="text-xl text-white" />
+                <span className="text-white">Survey List</span>
               </Link>
             </li>
             <li>
               <Link
-                to="/profile"
+                onClick={toggleSidebar}
+                to="creator/survey"
                 className="flex items-center space-x-2 py-2 px-4 hover:bg-gray-700 rounded"
               >
-                <FaUserAlt className="text-xl text-white" />
-                <span className="text-white">Profile</span>
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/logout"
-                className="flex items-center space-x-2 py-2 px-4 hover:bg-gray-700 rounded"
-              >
-                <FaSignOutAlt className="text-xl text-white" />
-                <span className="text-white">Logout</span>
+                <RiSurveyFill className="text-xl text-white" />
+                <span className="text-white">Survey</span>
               </Link>
             </li>
           </ul>
         </nav>
       </div>
 
-      {/* Overlay for closing sidebar */}
       {isOpen && (
         <div
           className="fixed inset-0 z-30 bg-black bg-opacity-50"

@@ -10,25 +10,38 @@ const protect = async (
   req: CustomRequest,
   res: Response,
   next: NextFunction
-) => {
-  const token = req.cookies?.user;
+): Promise<void> => {
+  try {
+    console.log("in protect");
 
-  if (token) {
-    try {
-      console.log("auth middleware:");
+    const token = req.cookies?.user;
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
-
-      req.user = await User.findById(decoded.id).select("-password");
-
-      console.log(req.user);
-
-      next();
-    } catch (err) {
-      res.status(401).json({ message: "Invalid token" });
+    if (!token) {
+      res.status(401).json({ message: "Not authorized, no token" });
+      return;
     }
-  } else {
-    res.status(401).json({ message: "Not Authorized, no token" });
+
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT_SECRET is not defined");
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET) as JwtPayload;
+    const user = await User.findById(decoded.id).select("-password");
+
+    if (!user) {
+      res.status(401).json({ message: "User not found" });
+      return;
+    }
+    console.log(user);
+
+    req.user = user;
+    next();
+  } catch (err) {
+    if (err instanceof jwt.JsonWebTokenError) {
+      res.status(401).json({ message: "Invalid token....." });
+    } else {
+      res.status(500).json({ message: "Server error" });
+    }
   }
 };
 

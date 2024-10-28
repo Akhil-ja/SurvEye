@@ -20,44 +20,99 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
+import { useDispatch } from "react-redux";
+import { createSurvey } from "../../slices/creatorSlice";
+import { useNavigate } from "react-router-dom";
 
 const CreateSurvey = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const [formData, setFormData] = React.useState({
+    surveyName: "",
+    description: "",
+    category: "",
+    creatorName: "",
+    sampleSize: "",
+  });
+
   const [startDate, setStartDate] = React.useState(null);
   const [endDate, setEndDate] = React.useState(null);
   const [isAllAges, setIsAllAges] = React.useState(false);
+  const [minAge, setMinAge] = React.useState("");
+  const [maxAge, setMaxAge] = React.useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Handle form submission
-    console.log("Form submitted");
+
+    const surveyData = {
+      ...formData,
+      duration: {
+        startDate,
+        endDate,
+      },
+      targetAgeRange: {
+        isAllAges,
+        minAge: isAllAges ? null : minAge,
+        maxAge: isAllAges ? null : maxAge,
+      },
+    };
+
+    dispatch(createSurvey(surveyData))
+      .unwrap()
+      .then(() => {
+        console.log("Survey created successfully");
+        navigate("/creator/surveycreate");
+      })
+      .catch((error) => {
+        console.error("Failed to create survey:", error);
+      });
   };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <Card className="max-w-2xl mx-auto">
+      <Card className="max-w-xl mx-auto">
         <CardHeader>
           <CardTitle className="text-3xl font-bold">Create Survey</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-4">
+              {/* Survey Name */}
               <div>
                 <Label htmlFor="surveyName">Survey Name</Label>
-                <Input id="surveyName" placeholder="Enter survey name" />
+                <Input
+                  id="surveyName"
+                  placeholder="Enter survey name"
+                  value={formData.surveyName}
+                  onChange={(e) =>
+                    setFormData({ ...formData, surveyName: e.target.value })
+                  }
+                />
               </div>
 
+              {/* Description */}
               <div>
                 <Label htmlFor="description">Description</Label>
                 <Textarea
                   id="description"
                   placeholder="Enter survey description"
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
                   className="h-24"
                 />
               </div>
 
+              {/* Category */}
               <div>
                 <Label htmlFor="category">Category</Label>
-                <Select>
+                <Select
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, category: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
@@ -71,25 +126,39 @@ const CreateSurvey = () => {
                 </Select>
               </div>
 
+              {/* Creator's Name */}
               <div>
                 <Label htmlFor="creatorName">Creator's Name</Label>
-                <Input id="creatorName" placeholder="Enter creator's name" />
+                <Input
+                  id="creatorName"
+                  placeholder="Enter creator's name"
+                  value={formData.creatorName}
+                  onChange={(e) =>
+                    setFormData({ ...formData, creatorName: e.target.value })
+                  }
+                />
               </div>
 
+              {/* Sample Size */}
               <div>
                 <Label htmlFor="sampleSize">Sample Size</Label>
                 <Input
                   id="sampleSize"
                   type="number"
                   placeholder="Enter sample size"
+                  value={formData.sampleSize}
+                  onChange={(e) =>
+                    setFormData({ ...formData, sampleSize: e.target.value })
+                  }
                 />
               </div>
 
+              {/* Age Range */}
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="allAges"
                   checked={isAllAges}
-                  onCheckedChange={setIsAllAges}
+                  onCheckedChange={(checked) => setIsAllAges(checked)}
                 />
                 <Label htmlFor="allAges">All Ages</Label>
               </div>
@@ -97,22 +166,34 @@ const CreateSurvey = () => {
               {!isAllAges && (
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Age Range</Label>
+                    <Label>Min Age</Label>
                     <Input
                       type="number"
                       placeholder="Min age"
+                      value={minAge}
+                      onChange={(e) => setMinAge(e.target.value)}
                       className="mt-1"
+                      id="minAge"
                     />
                   </div>
-                  <div className="flex items-end">
-                    <Input type="number" placeholder="Max age" />
+                  <div>
+                    <Label>Max Age</Label>
+                    <Input
+                      id="maxAge"
+                      type="number"
+                      placeholder="Max age"
+                      value={maxAge}
+                      onChange={(e) => setMaxAge(e.target.value)}
+                    />
                   </div>
                 </div>
               )}
 
+              {/* Duration */}
               <div>
                 <Label>Duration</Label>
                 <div className="grid grid-cols-2 gap-4 mt-1">
+                  {/* Start Date */}
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -135,6 +216,7 @@ const CreateSurvey = () => {
                     </PopoverContent>
                   </Popover>
 
+                  {/* End Date */}
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button

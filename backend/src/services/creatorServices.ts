@@ -6,6 +6,8 @@ import { generateOTP, sendOTP } from "../utils/otpUtils";
 import PendingUser from "../models/pendingUserModel";
 import { Request, Response } from "express";
 import { AppError } from "../utils/AppError";
+import { ISurvey } from "../models/surveyModel";
+import { Survey } from "../models/surveyModel";
 
 export class CreatorService {
   async initiateSignUp(creatorData: {
@@ -350,6 +352,65 @@ export class CreatorService {
     await creator.save();
 
     return creator;
+  }
+
+  async createSurvey(
+    creatorId: string,
+    surveyData: {
+      surveyName: string;
+      description: string;
+      category: "market" | "product" | "customer";
+      creatorName: string;
+      sampleSize: number;
+      targetAgeRange: {
+        isAllAges: boolean;
+        minAge?: number;
+        maxAge?: number;
+      };
+      duration: {
+        startDate: Date;
+        endDate: Date;
+      };
+      questions: Array<{
+        questionText: string;
+        questionType: "multiple_choice" | "single_choice" | "text" | "rating";
+        options?: Array<{ text: string; value: number }>;
+        required: boolean;
+        pageNumber: number;
+      }>;
+    }
+  ): Promise<ISurvey> {
+    const creator = await User.findById(creatorId);
+
+    if (!creator) {
+      throw new AppError("Creator not found", 404);
+    }
+
+    if (creator.role !== "creator") {
+      throw new AppError("User is not authorized as a creator", 401);
+    }
+
+    if (creator.status === "blocked") {
+      throw new AppError("Creator is blocked", 403);
+    }
+
+    const survey = new Survey({
+      creator: creatorId,
+      surveyName: surveyData.surveyName,
+      description: surveyData.description,
+      category: surveyData.category,
+      creatorName: surveyData.creatorName,
+      sampleSize: surveyData.sampleSize,
+      targetAgeRange: surveyData.targetAgeRange,
+      duration: surveyData.duration,
+      questions: surveyData.questions,
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
+
+    await survey.save();
+
+    return survey;
   }
 }
 

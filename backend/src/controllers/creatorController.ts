@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { AppError } from "../utils/AppError";
 import { creatorService } from "../services/creatorServices";
+import { IIncomingSurveyData } from "../types/surveyTypes";
 
 // Initiate Sign Up
 export const initiateSignUp = async (
@@ -358,6 +359,42 @@ export const getSurvey = async (
       error instanceof AppError
         ? error
         : new AppError("Failed to fetch survey", 500)
+    );
+  }
+};
+
+export const makeSurvey = async (
+  req: Request<{}, any, IIncomingSurveyData>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const surveyData = req.body;
+
+    if (!surveyData || !surveyData.pages) {
+      throw new AppError("Survey data missing", 400);
+    }
+
+    // Validate the incoming data structure
+    if (!Array.isArray(surveyData.pages)) {
+      throw new AppError("Invalid survey data format", 400);
+    }
+
+    const survey = await creatorService.makeSurvey(surveyData);
+
+    res.status(200).json({
+      success: true,
+      data: survey,
+    });
+  } catch (error) {
+    console.error(
+      "Error creating/updating survey:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError("Failed to create/update survey", 500)
     );
   }
 };

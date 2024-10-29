@@ -9,6 +9,25 @@ import { AppError } from "../utils/AppError";
 import { ISurvey } from "../models/surveyModel";
 import { Survey } from "../models/surveyModel";
 
+interface IIncomingOption {
+  text: string;
+}
+
+interface IIncomingQuestion {
+  type: "mcq" | "checkbox" | "text" | "rating";
+  question: string;
+  options: string[];
+}
+
+interface IIncomingPage {
+  questions: IIncomingQuestion[];
+}
+
+interface IIncomingSurveyData {
+  surveyId: string;
+  pages: IIncomingPage[];
+}
+
 export class CreatorService {
   async initiateSignUp(creatorData: {
     email: string;
@@ -420,6 +439,72 @@ export class CreatorService {
       throw new AppError("Survey not found", 404);
     }
 
+    return survey;
+  }
+
+  private mapQuestionType(
+    type: string
+  ): "multiple_choice" | "single_choice" | "text" | "rating" {
+    switch (type) {
+      case "mcq":
+        return "single_choice";
+      case "checkbox":
+        return "multiple_choice";
+      case "text":
+        return "text";
+      case "rating":
+        return "rating";
+      default:
+        throw new Error(`Invalid question type: ${type}`);
+    }
+  }
+
+  private transformQuestions(pages: IIncomingPage[]): any[] {
+    let transformedQuestions: any[] = [];
+    let pageNumber = 1;
+
+    pages.forEach((page) => {
+      const pageQuestions = page.questions.map((q) => ({
+        questionText: q.question,
+        questionType: this.mapQuestionType(q.type),
+        options: q.options.map((opt, index) => ({
+          text: opt,
+          value: index + 1,
+        })),
+        required: true,
+        pageNumber: pageNumber,
+      }));
+
+      transformedQuestions = [...transformedQuestions, ...pageQuestions];
+      pageNumber++;
+    });
+
+    return transformedQuestions;
+  }
+
+  async makeSurvey(surveyData: IIncomingSurveyData): Promise<ISurvey> {
+    const { surveyId, pages } = surveyData;
+
+    // If surveyId exists, update existing survey
+    if (surveyId) {
+      const existingSurvey = await Survey.findById(surveyId);
+      if (!existingSurvey) {
+        throw new Error("Survey not found");
+      }
+
+      existingSurvey.questions = this.transformQuestions(pages);
+      existingSurvey.updated_at = new Date();
+      await existingSurvey.save();
+      return existingSurvey;
+    }
+
+    const survey = new Survey({
+      questions: this.transformQuestions(pages),
+      status: "active",
+      isPublished: true,
+    });
+
+    await survey.save();
     return survey;
   }
 }

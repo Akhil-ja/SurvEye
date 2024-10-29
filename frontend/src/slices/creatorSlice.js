@@ -75,6 +75,18 @@ export const getSurvey = createAsyncThunk(
   }
 );
 
+export const submitSurvey = createAsyncThunk(
+  "creator/submitSurvey",
+  async (surveyData) => {
+    console.log("Submitting Survey Data in slice:", surveyData);
+    console.log("Survey ID:", surveyData.surveyId);
+
+    const response = await api.post(`creator/createsurvey`, surveyData);
+
+    return response.data;
+  }
+);
+
 const creatorSlice = createSlice({
   name: "creator",
   initialState: {
@@ -109,7 +121,6 @@ const creatorSlice = createSlice({
         state.error = action.payload?.message || "Failed to fetch profile";
       })
 
-      // Handle updateCreatorProfile
       .addCase(updateCreatorProfile.pending, (state) => {
         state.isLoading = true;
       })
@@ -159,6 +170,18 @@ const creatorSlice = createSlice({
       .addCase(getSurvey.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      .addCase(submitSurvey.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(submitSurvey.fulfilled, (state, action) => {
+        state.loading = false;
+        // Optionally handle successful submission (e.g., store response)
+      })
+      .addCase(submitSurvey.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
       });
   },
 });

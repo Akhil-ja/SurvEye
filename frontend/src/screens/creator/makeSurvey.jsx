@@ -10,12 +10,34 @@ import {
 } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { getSurvey, submitSurvey } from "@/slices/creatorSlice";
+import { useNavigate } from "react-router-dom";
 
 const SurveyBuilder = () => {
   const [pages, setPages] = useState([{ questions: [] }]);
   const [currentPage, setCurrentPage] = useState(0);
   const [showQuestionTypes, setShowQuestionTypes] = useState(false);
   const [showReview, setShowReview] = useState(false);
+
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const surveyId = searchParams.get("surveyId");
+  console.log(surveyId);
+
+  const dispatch = useDispatch();
+
+  const { data, loading, error } = useSelector((state) => state.creator);
+
+  useEffect(() => {
+    if (surveyId) {
+      dispatch(getSurvey({ surveyId }))
+        .unwrap()
+        .then((result) => console.log("Survey data:", result))
+        .catch((error) => console.error("Error fetching survey:", error));
+    }
+  }, [dispatch, surveyId]);
 
   useEffect(() => {
     const savedPages = localStorage.getItem("surveyProgress");
@@ -31,6 +53,11 @@ const SurveyBuilder = () => {
   useEffect(() => {
     localStorage.setItem("surveyProgress", JSON.stringify(pages));
   }, [pages, currentPage]);
+
+  const surveyData = {
+    surveyId: surveyId,
+    pages: pages,
+  };
 
   const questionTypes = [
     { id: "mcq", label: "Multiple Choice", icon: "⭕" },
@@ -86,9 +113,29 @@ const SurveyBuilder = () => {
   };
 
   const handleSubmit = () => {
+    const isValid = pages.every(
+      (page) =>
+        page.questions.length > 0 &&
+        page.questions.every((question) => question.question.trim() !== "")
+    );
+
+    if (!isValid) {
+      alert("Please fill in all questions before submitting!");
+      return;
+    }
+
     alert("Survey submitted! Check console for data.");
-    console.log("Submitted survey data:", pages);
     localStorage.removeItem("surveyProgress");
+    dispatch(submitSurvey(surveyData))
+      .unwrap()
+      .then((result) => {
+        console.log("Survey submitted successfully:", result);
+        localStorage.removeItem("surveyProgress");
+        navigate(`/creator/surveyinfo?surveyId=${surveyId}`);
+      })
+      .catch((error) => {
+        console.error("Error submitting survey:", error);
+      });
   };
 
   return (
@@ -96,6 +143,7 @@ const SurveyBuilder = () => {
       <div className="max-w-2xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Create Survey</h1>
+          <h2 className="text-2xl font-bold"></h2>
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-500">
               Page {currentPage + 1} of {pages.length}
@@ -109,6 +157,13 @@ const SurveyBuilder = () => {
             </Button>
           </div>
         </div>
+
+        {data?.data && (
+          <div className="mb-4 p-4 bg-white rounded-lg shadow-sm">
+            <h2 className="text-xl font-bold">{data.data.surveyName}</h2>
+            <p className="text-sm text-gray-600">{data.data.category}</p>
+          </div>
+        )}
 
         {showReview ? (
           <div className="p-6 bg-white rounded-lg shadow-sm">
@@ -346,8 +401,8 @@ const SurveyBuilder = () => {
                 }
                 disabled={currentPage === pages.length - 1}
               >
+                <ChevronRight className="h-4 w-4 mr-2" />
                 Next
-                <ChevronRight className="h-4 w-4 ml-2" />
               </Button>
             </div>
           </div>

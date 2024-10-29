@@ -31,6 +31,7 @@ import CreatorProfile from "./screens/creator/creatorProfile";
 import CreatorSurveyList from "./screens/creator/creatorSurveyList";
 import CreateSurvey from "./screens/creator/createSurvey";
 import MakeSurvey from "./screens/creator/makeSurvey";
+import SurveyInfo from "./screens/creator/surveyInfo";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -64,6 +65,7 @@ const router = createBrowserRouter(
         <Route path="/creator/surveylist" element={<CreatorSurveyList />} />
         <Route path="/creator/survey" element={<CreateSurvey />} />
         <Route path="/creator/surveycreate" element={<MakeSurvey />} />
+        <Route path="/creator/surveyinfo" element={<SurveyInfo />} />
       </Route>
     </Route>
   )

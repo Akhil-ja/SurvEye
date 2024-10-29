@@ -284,3 +284,41 @@ export const changePasswordController = async (
     );
   }
 };
+
+export const getActiveSurveys = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 6;
+    const sortBy = (req.query.sortBy as string) || "createdAt";
+    const order = (req.query.order as "asc" | "desc") || "desc";
+
+    const result = await userService.getActiveSurveys(
+      page,
+      limit,
+      sortBy,
+      order
+    );
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        surveys: result.surveys,
+        pagination: {
+          currentPage: result.currentPage,
+          totalPages: result.totalPages,
+          totalSurveys: result.totalSurveys,
+        },
+      },
+    });
+  } catch (error) {
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError("Failed to fetch surveys", 500)
+    );
+  }
+};

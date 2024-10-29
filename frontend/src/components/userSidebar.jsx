@@ -1,6 +1,7 @@
-import { FaBars, FaHome, FaUserAlt, FaSignOutAlt } from "react-icons/fa";
+import { FaBars, FaHome, FaUserAlt } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import { RiSurveyFill } from "react-icons/ri";
 
 const UserSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -9,11 +10,16 @@ const UserSidebar = () => {
     setIsOpen(!isOpen);
   };
 
+  // Function to handle link clicks
+  const handleLinkClick = () => {
+    setIsOpen(false); // Close the sidebar
+  };
+
   return (
     <>
       <button
         onClick={toggleSidebar}
-        className="fixed top-4 left-4 z-50 p-2  text-white rounded-md"
+        className="fixed top-4 left-4 z-50 p-2 text-white rounded-md"
         aria-label="Toggle sidebar"
       >
         <FaBars className="text-2xl" />
@@ -28,7 +34,8 @@ const UserSidebar = () => {
           <ul className="space-y-4 mt-10">
             <li>
               <Link
-                to="/dashboard"
+                to="/user/home"
+                onClick={handleLinkClick} // Close sidebar on click
                 className="flex items-center space-x-2 py-2 px-4 hover:bg-gray-700 rounded"
               >
                 <FaHome className="text-xl text-white" />
@@ -37,7 +44,8 @@ const UserSidebar = () => {
             </li>
             <li>
               <Link
-                to="/profile"
+                to="/user/profile"
+                onClick={handleLinkClick} // Close sidebar on click
                 className="flex items-center space-x-2 py-2 px-4 hover:bg-gray-700 rounded"
               >
                 <FaUserAlt className="text-xl text-white" />
@@ -46,11 +54,12 @@ const UserSidebar = () => {
             </li>
             <li>
               <Link
-                to="/logout"
+                to="/user/survey"
+                onClick={handleLinkClick} // Close sidebar on click
                 className="flex items-center space-x-2 py-2 px-4 hover:bg-gray-700 rounded"
               >
-                <FaSignOutAlt className="text-xl text-white" />
-                <span className="text-white">Logout</span>
+                <RiSurveyFill className="text-xl text-white" />
+                <span className="text-white">Survey</span>
               </Link>
             </li>
           </ul>

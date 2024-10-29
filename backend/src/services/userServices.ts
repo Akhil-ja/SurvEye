@@ -6,6 +6,8 @@ import PendingUser from "../models/pendingUserModel";
 import { generateOTP, sendOTP } from "../utils/otpUtils";
 import { Request, Response } from "express";
 import { AppError } from "../utils/AppError";
+import { ISurvey } from "../models/surveyModel";
+import { Survey } from "../models/surveyModel";
 
 export class UserService {
   async initiateSignUp(userData: {
@@ -332,6 +334,40 @@ export class UserService {
     await user.save();
 
     return user;
+  }
+
+  async getActiveSurveys(
+    page: number = 1,
+    limit: number = 6,
+    sortBy: string = "createdAt",
+    order: "asc" | "desc" = "desc"
+  ): Promise<{
+    surveys: ISurvey[];
+    currentPage: number;
+    totalPages: number;
+    totalSurveys: number;
+  }> {
+    const skip = (page - 1) * limit;
+    const sortOrder = order === "asc" ? 1 : -1;
+
+    const [surveys, totalSurveys] = await Promise.all([
+      Survey.find({ status: "active" })
+        .sort({ [sortBy]: sortOrder })
+        .skip(skip)
+        .limit(limit),
+      Survey.countDocuments({ status: "active" }),
+    ]);
+
+    if (surveys.length === 0) {
+      throw new AppError("No active surveys found", 404);
+    }
+
+    return {
+      surveys,
+      currentPage: page,
+      totalPages: Math.ceil(totalSurveys / limit),
+      totalSurveys,
+    };
   }
 }
 

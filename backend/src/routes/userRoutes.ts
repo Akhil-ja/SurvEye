@@ -8,6 +8,7 @@ import {
   changePasswordController,
   editUserProfile,
   fetchUserProfile,
+  getActiveSurveys,
 } from "../controllers/userController";
 import { checkBlockedUser } from "../middlewares/statusMiddleware";
 import { protect } from "../middlewares/authMiddleware";
@@ -32,5 +33,7 @@ router
   .route("/profile")
   .get(protect, checkBlockedUser, fetchUserProfile)
   .put(protect, checkBlockedUser, editUserProfile);
+
+router.get("/surveys", protect, checkBlockedUser, getActiveSurveys);
 
 export default router;

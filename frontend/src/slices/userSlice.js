@@ -20,11 +20,9 @@ export const updateUserProfile = createAsyncThunk(
   "User/updateProfile",
   async (profileData, { rejectWithValue }) => {
     try {
-      console.log("profile data in slice:", profileData);
-
       const payload = {
-        firstName: profileData.first_name, // Map first_name to firstName
-        lastName: profileData.last_name, // Map last_name to lastName
+        firstName: profileData.first_name,
+        lastName: profileData.last_name,
         email: profileData.email,
         number: profileData.number,
         role: profileData.role,
@@ -57,15 +55,90 @@ export const changePassword = createAsyncThunk(
   }
 );
 
+export const getSurvey = createAsyncThunk(
+  "user/getSurvey",
+  async (
+    { page = 1, sort = "date", order = "desc" } = {},
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await api.get(`user/surveys`, {
+        params: {
+          page,
+          sort,
+          order,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to fetch surveys" }
+      );
+    }
+  }
+);
+
+export const fetchSurveyDetails = createAsyncThunk(
+  "user/fetchSurveyDetails",
+  async (surveyId, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/user/surveyinfo/${surveyId}`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to fetch survey details" }
+      );
+    }
+  }
+);
+
+export const submitSurveyResponses = createAsyncThunk(
+  "user/submitSurveyResponses",
+  async ({ surveyId, responses }, { rejectWithValue }) => {
+    try {
+      const response = await api.post(`/user/survey/${surveyId}/submit`, {
+        responses,
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to submit survey responses" }
+      );
+    }
+  }
+);
+
+const initialState = {
+  profile: null,
+  isLoading: false,
+  error: null,
+  message: "",
+  passwordChangeStatus: "idle",
+  surveys: {
+    loading: false,
+    error: null,
+    data: {
+      surveys: [],
+      pagination: {
+        currentPage: 1,
+        totalPages: 1,
+        totalSurveys: 0,
+      },
+    },
+    sortBy: "date",
+    sortOrder: "desc",
+  },
+  currentSurvey: {
+    loading: false,
+    error: null,
+    data: null,
+    submissionStatus: "idle",
+  },
+};
+
 const userSlice = createSlice({
   name: "user",
-  initialState: {
-    profile: null,
-    isLoading: false,
-    error: null,
-    message: "",
-    passwordChangeStatus: "idle",
-  },
+  initialState,
   reducers: {
     clearMessage: (state) => {
       state.message = "";
@@ -74,9 +147,23 @@ const userSlice = createSlice({
     resetPasswordChangeStatus: (state) => {
       state.passwordChangeStatus = "idle";
     },
+    setSortBy: (state, action) => {
+      state.surveys.sortBy = action.payload;
+    },
+    setSortOrder: (state, action) => {
+      state.surveys.sortOrder = action.payload;
+    },
+    clearSurveyErrors: (state) => {
+      state.surveys.error = null;
+      state.currentSurvey.error = null;
+    },
+    resetSubmissionStatus: (state) => {
+      state.submissionStatus = null;
+    },
   },
   extraReducers: (builder) => {
     builder
+      // Profile reducers
       .addCase(fetchUserProfile.pending, (state) => {
         state.isLoading = true;
       })
@@ -90,6 +177,7 @@ const userSlice = createSlice({
         state.error = action.payload?.message || "Failed to fetch profile";
       })
 
+      // Update profile reducers
       .addCase(updateUserProfile.pending, (state) => {
         state.isLoading = true;
       })
@@ -104,6 +192,7 @@ const userSlice = createSlice({
         state.error = action.payload?.message || "Failed to update profile";
       })
 
+      // Password change reducers
       .addCase(changePassword.pending, (state) => {
         state.passwordChangeStatus = "loading";
       })
@@ -115,9 +204,80 @@ const userSlice = createSlice({
       .addCase(changePassword.rejected, (state, action) => {
         state.passwordChangeStatus = "failed";
         state.error = action.payload?.message || "Failed to change password";
+      })
+
+      // Survey reducers
+      .addCase(getSurvey.pending, (state) => {
+        state.surveys.loading = true;
+        state.surveys.error = null;
+      })
+      .addCase(getSurvey.fulfilled, (state, action) => {
+        state.surveys.loading = false;
+        state.surveys.data = action.payload.data;
+      })
+      .addCase(getSurvey.rejected, (state, action) => {
+        state.surveys.loading = false;
+        state.surveys.error =
+          action.payload?.message || "Failed to fetch surveys";
+      })
+      .addCase(fetchSurveyDetails.pending, (state) => {
+        state.currentSurvey.loading = true;
+        state.currentSurvey.error = null;
+      })
+      .addCase(fetchSurveyDetails.fulfilled, (state, action) => {
+        state.currentSurvey.loading = false;
+        state.currentSurvey.data = action.payload;
+        state.currentSurvey.error = null;
+      })
+      .addCase(fetchSurveyDetails.rejected, (state, action) => {
+        state.currentSurvey.loading = false;
+        state.currentSurvey.error =
+          action.payload?.message || "Failed to fetch survey details";
+      })
+      .addCase(submitSurveyResponses.pending, (state) => {
+        state.currentSurvey.submissionStatus = "submitting";
+        state.currentSurvey.error = null;
+      })
+      .addCase(submitSurveyResponses.fulfilled, (state, action) => {
+        state.currentSurvey.submissionStatus = "succeeded";
+        state.message =
+          action.payload.message || "Survey submitted successfully";
+        state.currentSurvey.error = null;
+      })
+      .addCase(submitSurveyResponses.rejected, (state, action) => {
+        state.currentSurvey.submissionStatus = "failed";
+        state.currentSurvey.error =
+          action.payload?.message || "Failed to submit survey";
       });
   },
 });
 
-export const { clearMessage, resetPasswordChangeStatus } = userSlice.actions;
+// Export actions
+export const {
+  clearMessage,
+  resetPasswordChangeStatus,
+  setSortBy,
+  setSortOrder,
+  clearSurveyErrors,
+  resetSubmissionStatus,
+} = userSlice.actions;
+
+// Export selectors
+export const selectSurveys = (state) => state.user.surveys.data.surveys;
+export const selectSurveyPagination = (state) =>
+  state.user.surveys.data.pagination;
+export const selectSurveyLoading = (state) => state.user.surveys.loading;
+export const selectSurveyError = (state) => state.user.surveys.error;
+export const selectSortBy = (state) => state.user.surveys.sortBy;
+export const selectSortOrder = (state) => state.user.surveys.sortOrder;
+
+// Add these new selectors for the current survey
+export const selectCurrentSurvey = (state) => state.user.currentSurvey.data;
+export const selectCurrentSurveyLoading = (state) =>
+  state.user.currentSurvey.loading;
+export const selectCurrentSurveyError = (state) =>
+  state.user.currentSurvey.error;
+export const selectSubmissionStatus = (state) =>
+  state.user.currentSurvey.submissionStatus;
+
 export default userSlice.reducer;

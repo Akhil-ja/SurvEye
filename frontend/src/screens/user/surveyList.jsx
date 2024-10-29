@@ -1,4 +1,7 @@
-import { useState } from "react";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -15,82 +18,61 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-
-const surveys = [
-  {
-    title: "Top 5 SaaS Businesses – August 2021",
-    description: "Description",
-  },
-  {
-    title: "InsightQuest Consumer Feedback August 2021",
-    description: "The InsightQuest Consumer Feedback survey i...",
-  },
-  {
-    title: "Top 5 SaaS Businesses – August 2021",
-    description: "Description",
-  },
-  {
-    title: "Top 5 SaaS Businesses – August 2021",
-    description: "Description",
-  },
-  {
-    title: "Top 5 SaaS Businesses – August 2021",
-    description: "Description",
-  },
-  {
-    title: "InsightQuest Consumer Feedback August 2021",
-    description: "The InsightQuest Consumer Feedback survey i...",
-  },
-  {
-    title: "Top 5 SaaS Businesses – August 2021",
-    description: "Description",
-  },
-  {
-    title: "Top 5 SaaS Businesses – August 2021",
-    description: "Description",
-  },
-  {
-    title: "Top 5 SaaS Businesses – August 2021",
-    description: "Description",
-  },
-];
-
-const ITEMS_PER_PAGE = 6;
+import {
+  getSurvey,
+  selectSurveys,
+  selectSurveyPagination,
+  selectSurveyLoading,
+  selectSurveyError,
+  setSortBy,
+  setSortOrder,
+  selectSortBy,
+  selectSortOrder,
+} from "../../slices/userSlice";
 
 const ActiveSurveys = () => {
-  const [currentPage, setCurrentPage] = useState(1);
+  const dispatch = useDispatch();
+  const navigate = useNavigate(); // Initialize navigate
+  const surveys = useSelector(selectSurveys);
+  const pagination = useSelector(selectSurveyPagination);
+  const loading = useSelector(selectSurveyLoading);
+  const error = useSelector(selectSurveyError);
+  const sortBy = useSelector(selectSortBy);
+  const sortOrder = useSelector(selectSortOrder);
 
-  const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
-  const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
-  const currentSurveys = surveys.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(surveys.length / ITEMS_PER_PAGE);
+  useEffect(() => {
+    dispatch(
+      getSurvey({
+        page: pagination.currentPage,
+        sort: sortBy,
+        order: sortOrder,
+      })
+    );
+  }, [dispatch, pagination.currentPage, sortBy, sortOrder]);
 
   const handlePageChange = (page) => {
-    setCurrentPage(page);
+    dispatch(getSurvey({ page, sort: sortBy, order: sortOrder }));
   };
 
-  // Generate page numbers for pagination
-  const getPageNumbers = () => {
-    const pages = [];
-    for (let i = 1; i <= totalPages; i++) {
-      pages.push(i);
-    }
-    return pages;
+  const handleSortChange = (value) => {
+    dispatch(setSortBy(value));
   };
 
-  // Handle previous page click
-  const handlePrevious = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
+  const handleOrderChange = (value) => {
+    dispatch(setSortOrder(value));
   };
 
-  // Handle next page click
-  const handleNext = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
+  const formatDate = (dateString) => {
+    return format(new Date(dateString), "MMM dd, yyyy");
   };
+
+  if (loading) {
+    return <div className="text-center p-8">Loading surveys...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center text-red-500 p-8">{error}</div>;
+  }
 
   return (
     <div className="min-h-screen bg-white p-8">
@@ -99,70 +81,96 @@ const ActiveSurveys = () => {
           <h1 className="text-2xl font-bold">Active Surveys</h1>
           <div className="flex gap-4">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500">Sort by :</span>
-              <Select defaultValue="cost">
+              <span className="text-sm text-gray-500">Sort by:</span>
+              <Select value={sortBy} onValueChange={handleSortChange}>
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="cost">Cost</SelectItem>
                   <SelectItem value="date">Date</SelectItem>
                   <SelectItem value="name">Name</SelectItem>
+                  <SelectItem value="responses">Responses</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <Select defaultValue="recent">
+            <Select value={sortOrder} onValueChange={handleOrderChange}>
               <SelectTrigger className="w-32">
-                <SelectValue placeholder="Posted Time" />
+                <SelectValue placeholder="Order" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="recent">Posted Time</SelectItem>
-                <SelectItem value="oldest">Oldest First</SelectItem>
+                <SelectItem value="desc">Newest First</SelectItem>
+                <SelectItem value="asc">Oldest First</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {currentSurveys.map((survey, index) => (
-            <Card key={index} className="bg-pink-50">
+          {surveys?.map((survey) => (
+            <Card key={survey._id} className="bg-pink-50">
               <CardHeader>
                 <CardTitle className="text-base font-medium">
-                  {survey.title}
+                  {survey.surveyName}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-gray-600 mb-4">
-                  {survey.description}
-                </p>
-                <div className="flex justify-end">
-                  <button className="px-4 py-1 bg-red-200 text-red-600 rounded-full text-sm hover:bg-red-400 transition-colors">
-                    Attend
-                  </button>
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600">{survey.description}</p>
+                  <div className="text-xs text-gray-500 space-y-1">
+                    <p>Created by: {survey.creatorName}</p>
+                    <p>Category: {survey.category}</p>
+                    <p>Sample Size: {survey.sampleSize}</p>
+                    <p>
+                      Age Range:{" "}
+                      {survey.targetAgeRange.isAllAges
+                        ? "All Ages"
+                        : `${survey.targetAgeRange.minAge} - ${survey.targetAgeRange.maxAge}`}
+                    </p>
+                    <p>
+                      Duration: {formatDate(survey.duration.startDate)} -{" "}
+                      {formatDate(survey.duration.endDate)}
+                    </p>
+                    <p>Total Responses: {survey.totalResponses}</p>
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      className="px-4 py-1 bg-red-200 text-red-600 rounded-full text-sm hover:bg-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={!survey.isPublished}
+                      onClick={() =>
+                        survey.isPublished &&
+                        navigate(`/user/attendsurvey?surveyId=${survey._id}`)
+                      }
+                    >
+                      {survey.isPublished ? "Attend" : "Coming Soon"}
+                    </button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        {totalPages > 1 && (
+        {pagination.totalPages > 1 && (
           <div className="flex justify-center mt-8">
             <Pagination>
               <PaginationContent>
                 <PaginationItem>
                   <PaginationPrevious
-                    onClick={handlePrevious}
+                    onClick={() => handlePageChange(pagination.currentPage - 1)}
                     className={`cursor-pointer ${
-                      currentPage === 1 ? "opacity-50" : ""
+                      pagination.currentPage === 1 ? "opacity-50" : ""
                     }`}
                   />
                 </PaginationItem>
 
-                {getPageNumbers().map((pageNum) => (
+                {Array.from(
+                  { length: pagination.totalPages },
+                  (_, i) => i + 1
+                ).map((pageNum) => (
                   <PaginationItem key={pageNum}>
                     <PaginationLink
                       className={`cursor-pointer ${
-                        pageNum === currentPage ? "bg-red-100" : ""
+                        pageNum === pagination.currentPage ? "bg-red-100" : ""
                       }`}
                       onClick={() => handlePageChange(pageNum)}
                     >
@@ -173,9 +181,11 @@ const ActiveSurveys = () => {
 
                 <PaginationItem>
                   <PaginationNext
-                    onClick={handleNext}
+                    onClick={() => handlePageChange(pagination.currentPage + 1)}
                     className={`cursor-pointer ${
-                      currentPage === totalPages ? "opacity-50" : ""
+                      pagination.currentPage === pagination.totalPages
+                        ? "opacity-50"
+                        : ""
                     }`}
                   />
                 </PaginationItem>

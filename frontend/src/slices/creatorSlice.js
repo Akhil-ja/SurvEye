@@ -175,9 +175,8 @@ const creatorSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(submitSurvey.fulfilled, (state, action) => {
+      .addCase(submitSurvey.fulfilled, (state) => {
         state.loading = false;
-        // Optionally handle successful submission (e.g., store response)
       })
       .addCase(submitSurvey.rejected, (state, action) => {
         state.loading = false;

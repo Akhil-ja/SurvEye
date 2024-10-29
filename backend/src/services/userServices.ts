@@ -218,6 +218,121 @@ export class UserService {
       sameSite: "strict",
     });
   }
+  async getProfile(userId: string): Promise<any> {
+    const user = await User.findById(userId).select("-password"); // Exclude sensitive fields
+
+    if (!user) {
+      throw new AppError("User not found", 404);
+    }
+
+    if (user.role !== "user") {
+      throw new AppError("User is not authorized as a user", 401);
+    }
+
+    if (user.status === "blocked") {
+      throw new AppError("User is blocked", 403);
+    }
+
+    return {
+      id: user.id,
+      number: user.phoneNumber,
+      email: user.email,
+      role: user.role,
+      first_name: user.first_name,
+      last_name: user.last_name,
+    };
+  }
+
+  async editProfile(
+    userId: string,
+    updates: {
+      firstName?: string;
+      lastName?: string;
+    }
+  ): Promise<IUser> {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      throw new AppError("User not found", 404);
+    }
+
+    if (user.role !== "user") {
+      throw new AppError("User is not authorized as a user", 401);
+    }
+
+    if (user.status === "blocked") {
+      throw new AppError("User is blocked", 403);
+    }
+
+    if (updates.firstName && updates.firstName.trim().length === 0) {
+      throw new AppError("First name cannot be empty", 400);
+    }
+
+    if (updates.lastName && updates.lastName.trim().length === 0) {
+      throw new AppError("Last name cannot be empty", 400);
+    }
+
+    if (updates.firstName) {
+      user.first_name = updates.firstName.trim();
+    }
+
+    if (updates.lastName) {
+      user.last_name = updates.lastName.trim();
+    }
+
+    await user.save();
+
+    return user;
+  }
+
+  async changePassword(
+    userId: string,
+    updates: {
+      oldPassword?: string;
+      newPassword?: string;
+    }
+  ): Promise<IUser> {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      throw new AppError("User not found", 404);
+    }
+
+    if (user.role !== "user") {
+      throw new AppError("User is not authorized as a user", 401);
+    }
+
+    if (user.status === "blocked") {
+      throw new AppError("User is blocked", 403);
+    }
+
+    if (updates.oldPassword && updates.newPassword) {
+      const isMatch = await bcrypt.compare(updates.oldPassword, user.password);
+
+      if (!isMatch) {
+        throw new AppError("Old password is incorrect", 400);
+      }
+
+      const isSamePassword = await bcrypt.compare(
+        updates.newPassword,
+        user.password
+      );
+
+      if (isSamePassword) {
+        throw new AppError(
+          "New password cannot be the same as the old password",
+          400
+        );
+      }
+
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(updates.newPassword, salt);
+    }
+
+    await user.save();
+
+    return user;
+  }
 }
 
 export const userService = new UserService();

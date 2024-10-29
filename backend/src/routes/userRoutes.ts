@@ -5,6 +5,9 @@ import {
   signIn,
   forgotPassword,
   verifyForgotOTP,
+  changePasswordController,
+  editUserProfile,
+  fetchUserProfile,
 } from "../controllers/userController";
 import { checkBlockedUser } from "../middlewares/statusMiddleware";
 import { protect } from "../middlewares/authMiddleware";
@@ -19,6 +22,15 @@ router.post("/forgot-password", forgotPassword);
 router.post("/forgot-password/verify-otp", verifyForgotOTP);
 
 // Protected routes
-// router.put("/profile", protect, checkBlockedUser, updateProfile);
+router.put(
+  "/change-password",
+  protect,
+  checkBlockedUser,
+  changePasswordController
+);
+router
+  .route("/profile")
+  .get(protect, checkBlockedUser, fetchUserProfile)
+  .put(protect, checkBlockedUser, editUserProfile);
 
 export default router;

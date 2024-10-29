@@ -9,47 +9,123 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useState } from "react";
+import { toast } from "react-toastify";
+import { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchUserProfile,
+  updateUserProfile,
+  changePassword,
+  clearMessage,
+} from "../../slices/userSlice";
 
 const ProfileView = () => {
+  const dispatch = useDispatch();
+
+  // Add debugging log to check Redux state
+  const userState = useSelector((state) => {
+    console.log("Redux State:", state);
+    return (
+      state?.user || {
+        profile: null,
+        isLoading: false,
+        error: null,
+        message: "",
+        passwordChangeStatus: "idle",
+      }
+    );
+  });
+
+  // Safely destructure with default values
+  const {
+    profile = null,
+    isLoading = false,
+    error = null,
+    message = "",
+    passwordChangeStatus = "idle",
+  } = userState;
+
   const [isNameDialogOpen, setNameDialogOpen] = useState(false);
   const [isPasswordDialogOpen, setPasswordDialogOpen] = useState(false);
-  const [profileData, setProfileData] = useState({
-    name: "Name",
-    contactNumber: "1234567890",
-    email: "xyz@gmail.com",
-  });
-  const [newName, setNewName] = useState(profileData.name);
-
+  const [newName, setNewName] = useState("");
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
 
-  const handleSaveName = () => {
-    if (newName.trim()) {
-      setProfileData({ ...profileData, name: newName.trim() });
+  // Calculate fullName only if profile exists
+  const fullName = profile
+    ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim()
+    : "";
+
+  useEffect(() => {
+    try {
+      dispatch(fetchUserProfile());
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (profile?.first_name && profile?.last_name) {
+      setNewName(`${profile.first_name} ${profile.last_name}`);
+    }
+  }, [profile]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+      dispatch(clearMessage());
+    }
+    if (message) {
+      toast.success(message);
       setNameDialogOpen(false);
-    } else {
-      alert("Name cannot be empty");
+      dispatch(clearMessage());
+    }
+  }, [error, message]);
+
+  const handleSaveName = async () => {
+    if (!newName.trim()) {
+      toast.error("Name cannot be empty");
+      return;
+    }
+
+    const [firstName, ...lastNameParts] = newName.trim().split(" ");
+    const lastName = lastNameParts.join(" ");
+
+    try {
+      await dispatch(
+        updateUserProfile({
+          ...profile,
+          first_name: firstName,
+          last_name: lastName || "",
+        })
+      ).unwrap();
+      setNameDialogOpen(false);
+    } catch (err) {
+      console.error("Error updating name:", err);
     }
   };
 
-  const handleSavePassword = () => {
+  const handleSavePassword = async () => {
     if (!oldPassword || !newPassword || !confirmNewPassword) {
-      alert("Please fill all the password fields");
+      toast.error("Please fill all the password fields");
       return;
     }
 
     if (newPassword !== confirmNewPassword) {
-      alert("New password and confirm password do not match");
+      toast.error("New password and confirm password do not match");
       return;
     }
 
-    console.log("Password updated:", newPassword);
-    setPasswordDialogOpen(false);
-    setOldPassword("");
-    setNewPassword("");
-    setConfirmNewPassword("");
+    try {
+      await dispatch(changePassword({ oldPassword, newPassword })).unwrap();
+      setPasswordDialogOpen(false);
+      setOldPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+    } catch (err) {
+      console.error("Error changing password:", err);
+    }
   };
 
   const ProfileRow = ({ label, value, showArrow = false, onClick }) => (
@@ -67,24 +143,50 @@ const ProfileView = () => {
     </div>
   );
 
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="flex justify-center p-4">Loading profile data...</div>
+    );
+  }
+
+  // Show error state if Redux store is not properly connected
+  if (!userState) {
+    return (
+      <div className="flex justify-center p-4 text-red-600">
+        Error: Unable to connect to user state. Please check Redux store
+        configuration.
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-5xl mx-auto p-4 space-y-4">
+      {message && (
+        <div className="bg-green-100 text-green-700 p-4 rounded mb-4">
+          {message}
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-100 text-red-700 p-4 rounded mb-4">{error}</div>
+      )}
+
       <Card className="border border-purple-200">
         <CardContent className="p-0">
           <ProfileRow
-            label="User Name"
-            value={profileData.name}
+            label="Name"
+            value={fullName || "Loading..."}
             showArrow
             onClick={() => setNameDialogOpen(true)}
           />
-
           <Separator />
           <ProfileRow
             label="Contact Number"
-            value={profileData.contactNumber}
+            value={profile?.number || "Loading..."}
           />
           <Separator />
-          <ProfileRow label="Email" value={profileData.email} />
+          <ProfileRow label="Email" value={profile?.email || "Loading..."} />
           <Separator />
         </CardContent>
       </Card>
@@ -99,12 +201,20 @@ const ProfileView = () => {
       </Button>
 
       {/* Name Edit Dialog */}
-      <Dialog open={isNameDialogOpen} onOpenChange={setNameDialogOpen}>
+      <Dialog
+        open={isNameDialogOpen}
+        onOpenChange={(open) => {
+          setNameDialogOpen(open);
+          if (!open) {
+            dispatch(clearMessage());
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Name</DialogTitle>
             <DialogDescription>
-              Enter the new name you want to use.
+              Enter your full name (first name and last name).
             </DialogDescription>
           </DialogHeader>
           <input
@@ -112,16 +222,31 @@ const ProfileView = () => {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             className="w-full p-2 border border-gray-300 rounded mt-4"
-            placeholder="Enter new name"
+            placeholder="Enter full name"
           />
-          <Button className="mt-2 w-20 mx-auto" onClick={handleSaveName}>
-            Save
+          <Button
+            className="mt-2 w-20 mx-auto"
+            onClick={handleSaveName}
+            disabled={isLoading}
+          >
+            {isLoading ? "Saving..." : "Save"}
           </Button>
         </DialogContent>
       </Dialog>
 
       {/* Password Change Dialog */}
-      <Dialog open={isPasswordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+      <Dialog
+        open={isPasswordDialogOpen}
+        onOpenChange={(open) => {
+          setPasswordDialogOpen(open);
+          if (!open) {
+            dispatch(clearMessage());
+            setOldPassword("");
+            setNewPassword("");
+            setConfirmNewPassword("");
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Change Password</DialogTitle>
@@ -155,8 +280,12 @@ const ProfileView = () => {
             className="w-full p-2 border border-gray-300 rounded mt-4"
           />
 
-          <Button className="mt-4 w-full" onClick={handleSavePassword}>
-            Save Password
+          <Button
+            className="mt-4 w-full"
+            onClick={handleSavePassword}
+            disabled={passwordChangeStatus === "loading"}
+          >
+            {passwordChangeStatus === "loading" ? "Saving..." : "Save Password"}
           </Button>
         </DialogContent>
       </Dialog>

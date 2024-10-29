@@ -164,3 +164,123 @@ export const logout = async (
     next(new AppError("Logout failed", 500));
   }
 };
+
+export const fetchUserProfile = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    console.log("in fetch profile");
+
+    const userId = req.user?.id;
+
+    if (!userId) {
+      throw new AppError("Authentication required", 401);
+    }
+
+    const userProfile = await userService.getProfile(userId);
+
+    res.status(200).json({
+      message: "Profile fetched successfully",
+      user: userProfile,
+    });
+  } catch (error) {
+    console.error("Error fetching profile:", error);
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError("Profile fetch failed", 500)
+    );
+  }
+};
+
+export const editUserProfile = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    console.log("in edit profile");
+
+    const userId = req.user?.id;
+
+    if (!userId) {
+      throw new AppError("Authentication required", 401);
+    }
+
+    const { firstName, lastName } = req.body;
+
+    if (!firstName && !lastName) {
+      throw new AppError("No updates provided", 400);
+    }
+
+    const updatedUser = await userService.editProfile(userId, {
+      firstName,
+      lastName,
+    });
+
+    res.status(200).json({
+      message: "Profile updated successfully",
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        number: updatedUser.phoneNumber,
+        role: updatedUser.role,
+        first_name: updatedUser.first_name,
+        last_name: updatedUser.last_name,
+      },
+    });
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError("Profile update failed", 500)
+    );
+  }
+};
+
+export const changePasswordController = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      throw new AppError("Authentication required", 401);
+    }
+
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      throw new AppError("Both old and new passwords are required", 400);
+    }
+
+    const updatedUser = await userService.changePassword(userId, {
+      oldPassword,
+      newPassword,
+    });
+
+    res.status(200).json({
+      message: "Password updated successfully",
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        number: updatedUser.phoneNumber,
+        first_name: updatedUser.first_name,
+        last_name: updatedUser.last_name,
+      },
+    });
+  } catch (error) {
+    console.error("Error changing password:", error);
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError("Password update failed", 500)
+    );
+  }
+};

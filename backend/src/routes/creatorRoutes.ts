@@ -9,6 +9,7 @@ import {
   editCreatorProfile,
   changePasswordController,
   createSurvey,
+  getSurvey,
 } from "../controllers/creatorController";
 import { checkBlockedUser } from "../middlewares/statusMiddleware";
 import { protect } from "../middlewares/authMiddleware";
@@ -35,5 +36,6 @@ router
   .put(protect, checkBlockedUser, editCreatorProfile);
 
 router.post("/survey", protect, checkBlockedUser, createSurvey);
+router.get("/survey", protect, checkBlockedUser, getSurvey);
 
 export default router;

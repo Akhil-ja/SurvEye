@@ -412,6 +412,16 @@ export class CreatorService {
 
     return survey;
   }
+
+  async getSurvey(surveyId: string): Promise<ISurvey> {
+    const survey = await Survey.findById(surveyId);
+
+    if (!survey) {
+      throw new AppError("Survey not found", 404);
+    }
+
+    return survey;
+  }
 }
 
 export const creatorService = new CreatorService();

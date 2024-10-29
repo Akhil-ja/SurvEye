@@ -330,3 +330,34 @@ export const createSurvey = async (
     );
   }
 };
+
+export const getSurvey = async (
+  req: Request<{}, any, any, { surveyId?: string | string[] }>,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const surveyId = req.query.surveyId;
+
+    if (!surveyId || typeof surveyId !== "string") {
+      throw new AppError("Survey ID required", 400);
+    }
+
+    const survey = await creatorService.getSurvey(surveyId);
+
+    res.status(200).json({
+      success: true,
+      data: survey,
+    });
+  } catch (error) {
+    console.error(
+      "Error fetching survey:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError("Failed to fetch survey", 500)
+    );
+  }
+};

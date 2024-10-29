@@ -42,7 +42,7 @@ const CreateSurvey = () => {
   const [minAge, setMinAge] = React.useState("");
   const [maxAge, setMaxAge] = React.useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const surveyData = {
@@ -58,17 +58,14 @@ const CreateSurvey = () => {
       },
     };
 
-    dispatch(createSurvey(surveyData))
-      .unwrap()
-      .then(() => {
-        console.log("Survey created successfully");
-        navigate("/creator/surveycreate");
-      })
-      .catch((error) => {
-        console.error("Failed to create survey:", error);
-      });
+    try {
+      const result = await dispatch(createSurvey(surveyData)).unwrap();
+      console.log("Survey created successfully with ID:", result.survey._id);
+      navigate(`/creator/surveycreate?surveyId=${result.survey._id}`);
+    } catch (error) {
+      console.error("Failed to create survey:", error);
+    }
   };
-
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <Card className="max-w-xl mx-auto">

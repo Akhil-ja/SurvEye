@@ -30,6 +30,23 @@ export const updateCreatorProfile = createAsyncThunk(
   }
 );
 
+export const changePassword = createAsyncThunk(
+  "creator/changePassword",
+  async ({ oldPassword, newPassword }, { rejectWithValue }) => {
+    try {
+      const response = await api.put("/creator/change-password", {
+        oldPassword,
+        newPassword,
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to change password" }
+      );
+    }
+  }
+);
+
 export const createSurvey = createAsyncThunk(
   "creator/createSurvey",
   async (surveyData, { rejectWithValue }) => {
@@ -44,18 +61,15 @@ export const createSurvey = createAsyncThunk(
   }
 );
 
-export const changePassword = createAsyncThunk(
-  "creator/changePassword",
-  async ({ oldPassword, newPassword }, { rejectWithValue }) => {
+export const getSurvey = createAsyncThunk(
+  "creator/getSurvey",
+  async ({ surveyId }, { rejectWithValue }) => {
     try {
-      const response = await api.put("/creator/change-password", {
-        oldPassword,
-        newPassword,
-      });
+      const response = await api.get(`creator/survey?surveyId=${surveyId}`);
       return response.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data || { message: "Failed to change password" }
+        error.response?.data || { message: "Failed to fetch survey" }
       );
     }
   }
@@ -133,6 +147,18 @@ const creatorSlice = createSlice({
       .addCase(createSurvey.rejected, (state, action) => {
         state.surveyCreationStatus = "failed";
         state.error = action.payload?.message || "Failed to create survey";
+      })
+      .addCase(getSurvey.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getSurvey.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = action.payload;
+      })
+      .addCase(getSurvey.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });

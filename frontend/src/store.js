@@ -6,7 +6,6 @@ import creatorReducer from "./slices/creatorSlice";
 
 export const store = configureStore({
   reducer: {
-    // creator: creatorReducer,
     // user: userReducer,
     auth: authReducer,
     admin: adminReducer,

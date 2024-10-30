@@ -7,6 +7,7 @@ interface IOption extends Document {
 }
 
 interface IQuestion {
+  _id: Types.ObjectId;
   questionText: string;
   questionType: "multiple_choice" | "single_choice" | "text" | "rating";
   options: IOption[];

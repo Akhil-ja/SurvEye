@@ -15,38 +15,53 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { getAllSurveys } from "@/slices/creatorSlice";
 
 const CreatorHome = () => {
-  const surveys = [
-    {
-      name: "Jeanette McCoy",
-      startDate: "September 5, 2023",
-      endDate: "September 9, 2023",
-      amount: "$11.70",
-      status: "ongoing",
-      impressions: "500",
-      remaining: "500",
-    },
-    {
-      name: "Jeanette McCoy",
-      startDate: "August 2, 2023",
-      endDate: "August 2, 2023",
-      amount: "$5.22",
-      status: "ongoing",
-      impressions: "1000",
-      remaining: "1000",
-    },
-    {
-      name: "Cody Fisher",
-      startDate: "September 24, 2017",
-      endDate: "September 24, 2017",
-      amount: "$11.70",
-      status: "expired",
-      impressions: "500",
-      remaining: "500",
-    },
-    // Add more survey data as needed
-  ];
+  const dispatch = useDispatch();
+  const { surveys, isLoading, error } = useSelector((state) => state.creator);
+  const [formattedSurveys, setFormattedSurveys] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [surveysPerPage] = useState(10);
+
+  useEffect(() => {
+    dispatch(getAllSurveys());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (surveys && surveys.data && surveys.data.length > 0) {
+      const newFormattedSurveys = surveys.data.map((survey) => ({
+        id: survey._id,
+        name: survey.surveyName,
+        creatorName: survey.creatorName,
+        startDate: new Date(survey.duration.startDate).toLocaleDateString(),
+        endDate: new Date(survey.duration.endDate).toLocaleDateString(),
+        status: survey.isPublished ? "active" : "draft",
+        amount: survey.amount,
+        impressions: survey.impressions,
+        remaining: survey.remaining,
+      }));
+      setFormattedSurveys(newFormattedSurveys);
+    }
+  }, [surveys]);
+
+  if (isLoading) return <div>Loading surveys...</div>;
+  if (error) return <div>Error fetching surveys: {error.message}</div>;
+
+  const indexOfLastSurvey = currentPage * surveysPerPage;
+  const indexOfFirstSurvey = indexOfLastSurvey - surveysPerPage;
+  const currentSurveys = formattedSurveys.slice(
+    indexOfFirstSurvey,
+    indexOfLastSurvey
+  );
+  const totalPages = Math.ceil(formattedSurveys.length / surveysPerPage);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
 
   return (
     <div className="p-6 bg-white">
@@ -72,7 +87,9 @@ const CreatorHome = () => {
               <SelectItem value="oldest">Oldest</SelectItem>
             </SelectContent>
           </Select>
-          <Button>Create Survey</Button>
+          <Link to={"/creator/survey"}>
+            <Button>Create Survey</Button>
+          </Link>
         </div>
       </div>
 
@@ -83,6 +100,7 @@ const CreatorHome = () => {
               <Checkbox />
             </TableHead>
             <TableHead>Survey Name</TableHead>
+            <TableHead>Creator Name</TableHead>
             <TableHead>Start Date</TableHead>
             <TableHead>End Date</TableHead>
             <TableHead>Amount</TableHead>
@@ -92,51 +110,98 @@ const CreatorHome = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {surveys.map((survey, index) => (
-            <TableRow key={index}>
-              <TableCell>
-                <Checkbox />
+          {currentSurveys.length > 0 ? (
+            currentSurveys.map((survey) => (
+              <TableRow key={survey.id}>
+                <TableCell>
+                  <Checkbox />
+                </TableCell>
+                <TableCell>
+                  <Link to={`/creator/surveyinfo?surveyId=${survey.id}`}>
+                    {survey.name}
+                  </Link>
+                </TableCell>
+                <TableCell>
+                  <Link to={`/creator/surveyinfo?surveyId=${survey.id}`}>
+                    {survey.creatorName}
+                  </Link>
+                </TableCell>
+                <TableCell>
+                  <Link to={`/creator/surveyinfo?surveyId=${survey.id}`}>
+                    {survey.startDate}
+                  </Link>
+                </TableCell>
+                <TableCell>
+                  <Link to={`/creator/surveyinfo?surveyId=${survey.id}`}>
+                    {survey.endDate}
+                  </Link>
+                </TableCell>
+                <TableCell>
+                  <Link to={`/creator/surveyinfo?surveyId=${survey.id}`}>
+                    {survey.amount}
+                  </Link>
+                </TableCell>
+                <TableCell>
+                  <Link to={`/creator/surveyinfo?surveyId=${survey.id}`}>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs ${
+                        survey.status === "active"
+                          ? "bg-green-200 text-green-800"
+                          : "bg-gray-200 text-gray-800"
+                      }`}
+                    >
+                      {survey.status}
+                    </span>
+                  </Link>
+                </TableCell>
+                <TableCell>
+                  <Link to={`/creator/surveyinfo?surveyId=${survey.id}`}>
+                    {survey.impressions}
+                  </Link>
+                </TableCell>
+                <TableCell>
+                  <Link to={`/creator/surveyinfo?surveyId=${survey.id}`}>
+                    {survey.remaining}
+                  </Link>
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={8} className="text-center">
+                No surveys found
               </TableCell>
-              <TableCell>{survey.name}</TableCell>
-              <TableCell>{survey.startDate}</TableCell>
-              <TableCell>{survey.endDate}</TableCell>
-              <TableCell>{survey.amount}</TableCell>
-              <TableCell>
-                <span
-                  className={`px-2 py-1 rounded-full text-xs ${
-                    survey.status === "ongoing"
-                      ? "bg-green-200 text-green-800"
-                      : survey.status === "expired"
-                      ? "bg-red-200 text-red-800"
-                      : "bg-gray-200 text-gray-800"
-                  }`}
-                >
-                  {survey.status}
-                </span>
-              </TableCell>
-              <TableCell>{survey.impressions}</TableCell>
-              <TableCell>{survey.remaining}</TableCell>
             </TableRow>
-          ))}
+          )}
         </TableBody>
       </Table>
 
       <div className="flex justify-center items-center mt-4">
         <div className="flex space-x-1 text-sm">
-          <Button variant="outline" size="sm">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={currentPage === 1}
+            onClick={() => handlePageChange(currentPage - 1)}
+          >
             Previous
           </Button>
-          {[1, 2, 3].map((page) => (
+          {[...Array(totalPages)].map((_, index) => (
             <Button
-              key={page}
-              variant={page === 1 ? "default" : "outline"}
+              key={index + 1}
+              variant={index + 1 === currentPage ? "default" : "outline"}
               size="sm"
+              onClick={() => handlePageChange(index + 1)}
             >
-              {page}
+              {index + 1}
             </Button>
           ))}
-          <span className="px-2 py-2">...</span>
-          <Button variant="outline" size="sm">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={currentPage === totalPages}
+            onClick={() => handlePageChange(currentPage + 1)}
+          >
             Next
           </Button>
         </div>

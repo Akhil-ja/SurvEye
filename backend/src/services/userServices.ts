@@ -8,6 +8,9 @@ import { Request, Response } from "express";
 import { AppError } from "../utils/AppError";
 import { ISurvey } from "../models/surveyModel";
 import { Survey } from "../models/surveyModel";
+import { SurveyResponse } from "../models/surveyresponse";
+import { Types } from "mongoose";
+import { ResponseData, IQuestion } from "../types/responseSurveyTypes";
 
 export class UserService {
   async initiateSignUp(userData: {
@@ -350,12 +353,22 @@ export class UserService {
     const skip = (page - 1) * limit;
     const sortOrder = order === "asc" ? 1 : -1;
 
+    const currentDate = new Date();
+
     const [surveys, totalSurveys] = await Promise.all([
-      Survey.find({ status: "active" })
+      Survey.find({
+        status: "active",
+        "duration.startDate": { $lte: currentDate },
+        "duration.endDate": { $gte: currentDate },
+      })
         .sort({ [sortBy]: sortOrder })
         .skip(skip)
         .limit(limit),
-      Survey.countDocuments({ status: "active" }),
+      Survey.countDocuments({
+        status: "active",
+        "duration.startDate": { $lte: currentDate },
+        "duration.endDate": { $gte: currentDate },
+      }),
     ]);
 
     if (surveys.length === 0) {
@@ -381,6 +394,173 @@ export class UserService {
     return {
       survey,
     };
+  }
+
+  async submitResponse(
+    surveyId: string,
+    userId: string,
+    responses: ResponseData[]
+  ) {
+    // Validate survey exists and is active
+    const survey = (await Survey.findById(surveyId)) as ISurvey | null;
+    if (!survey) {
+      throw new AppError("Survey not found", 404);
+    }
+
+    if (survey.status !== "active") {
+      throw new AppError("Survey is not active", 400);
+    }
+
+    const currentDate = new Date();
+    if (
+      currentDate < survey.duration.startDate ||
+      currentDate > survey.duration.endDate
+    ) {
+      throw new AppError("Survey is not within its active duration", 400);
+    }
+
+    // Check if user has already submitted a response
+    const existingResponse = await SurveyResponse.findOne({
+      survey: new Types.ObjectId(surveyId),
+      user: new Types.ObjectId(userId),
+    });
+
+    if (existingResponse) {
+      throw new AppError(
+        "You have already submitted a response to this survey",
+        400
+      );
+    }
+
+    // Validate all required questions are answered
+    const requiredQuestionIds = survey.questions
+      .filter((q) => q.required)
+      .map((q) => q._id.toString());
+
+    const answeredQuestionIds = responses.map((r) => r.questionId);
+    const missingRequiredQuestions = requiredQuestionIds.filter(
+      (qId) => !answeredQuestionIds.includes(qId)
+    );
+
+    if (missingRequiredQuestions.length > 0) {
+      throw new AppError("All required questions must be answered", 400);
+    }
+
+    const formattedAnswers = await Promise.all(
+      responses.map(async (response) => {
+        const question = survey.questions.find(
+          (q) => q._id.toString() === response.questionId
+        );
+
+        if (!question) {
+          throw new AppError(
+            `Invalid question ID: ${response.questionId}`,
+            400
+          );
+        }
+
+        let formattedAnswer: {
+          questionText: string;
+          selectedOptions?: Types.ObjectId[];
+          textAnswer?: string;
+          ratingValue?: number;
+        } = {
+          questionText: question.questionText,
+        };
+
+        switch (question.questionType) {
+          case "single_choice":
+          case "rating":
+            if (Array.isArray(response.answer)) {
+              throw new AppError(
+                `Question ${response.questionId} requires a single answer`,
+                400
+              );
+            }
+            if (question.questionType === "single_choice") {
+              const validOption = question.options.find(
+                (opt) => opt.value.toString() === response.answer
+              );
+              if (!validOption) {
+                throw new AppError(
+                  `Invalid option for question ${response.questionId}`,
+                  400
+                );
+              }
+              formattedAnswer.selectedOptions = [
+                validOption._id as Types.ObjectId,
+              ];
+            } else {
+              const rating = parseInt(response.answer);
+              if (isNaN(rating) || rating < 1 || rating > 5) {
+                throw new AppError(
+                  `Invalid rating value for question ${response.questionId}`,
+                  400
+                );
+              }
+              formattedAnswer.ratingValue = rating;
+            }
+            break;
+
+          case "multiple_choice":
+            if (!Array.isArray(response.answer)) {
+              throw new AppError(
+                `Question ${response.questionId} requires multiple answers`,
+                400
+              );
+            }
+            const validOptions = response.answer.map((ans) => {
+              const option = question.options.find(
+                (opt) => opt.value.toString() === ans
+              );
+              if (!option) {
+                throw new AppError(
+                  `Invalid option "${ans}" for question ${response.questionId}`,
+                  400
+                );
+              }
+              return option._id;
+            });
+            formattedAnswer.selectedOptions = validOptions as Types.ObjectId[];
+
+            break;
+
+          case "text":
+            if (Array.isArray(response.answer)) {
+              throw new AppError(
+                `Question ${response.questionId} requires a text answer`,
+                400
+              );
+            }
+            formattedAnswer.textAnswer = response.answer;
+            break;
+
+          default:
+            throw new AppError(
+              `Unsupported question type for question ${response.questionId}`,
+              400
+            );
+        }
+
+        return formattedAnswer;
+      })
+    );
+
+    // Create survey response
+    const surveyResponse = new SurveyResponse({
+      survey: surveyId,
+      user: userId,
+      answers: formattedAnswers,
+      completedAt: new Date(),
+    });
+
+    await surveyResponse.save();
+
+    await Survey.findByIdAndUpdate(surveyId, {
+      $inc: { totalResponses: 1 },
+    });
+
+    return surveyResponse;
   }
 }
 

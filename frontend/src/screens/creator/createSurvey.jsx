@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "react-toastify";
 import {
   Select,
   SelectContent,
@@ -44,6 +45,55 @@ const CreateSurvey = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!formData.surveyName || !formData.creatorName) {
+      toast.error("Survey Name and Creator's Name are required.");
+      return;
+    }
+
+    if (!isAllAges) {
+      if (!minAge || !maxAge) {
+        toast.error("Please enter both minimum and maximum age.");
+        return false;
+      }
+      if (minAge <= 0 || maxAge <= 0) {
+        toast.error("Age cannot be zero or negative.");
+        return false;
+      }
+      if (parseInt(minAge) > parseInt(maxAge)) {
+        toast.error("Minimum age cannot be greater than maximum age.");
+        return false;
+      }
+    }
+
+    if (startDate && endDate) {
+      if (startDate > endDate) {
+        toast.error("Start date cannot be later than the end date.");
+        return;
+      }
+      if (format(startDate, "yyyy-MM-dd") === format(endDate, "yyyy-MM-dd")) {
+        toast.error("Start date and end date cannot be the same.");
+        return;
+      }
+    } else {
+      toast.error("Both start date and end date must be selected.");
+      return;
+    }
+
+    if (!formData.category) {
+      toast.error("Please select a category.");
+      return false;
+    }
+
+    if (!formData.sampleSize) {
+      toast.error("Sample size must be filled.");
+      return false;
+    }
+
+    if (parseInt(formData.sampleSize) <= 0) {
+      toast.error("Sample size must be greater than zero.");
+      return false;
+    }
 
     const surveyData = {
       ...formData,

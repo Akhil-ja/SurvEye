@@ -75,6 +75,20 @@ export const getSurvey = createAsyncThunk(
   }
 );
 
+export const getAllSurveys = createAsyncThunk(
+  "creator/getAllSurveys",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get("/creator/surveys");
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to fetch surveys" }
+      );
+    }
+  }
+);
+
 export const submitSurvey = createAsyncThunk(
   "creator/submitSurvey",
   async (surveyData) => {
@@ -96,6 +110,7 @@ const creatorSlice = createSlice({
     message: "",
     passwordChangeStatus: "idle",
     surveyCreationStatus: "idle",
+    surveys: [],
   },
   reducers: {
     clearMessage: (state) => {
@@ -181,6 +196,19 @@ const creatorSlice = createSlice({
       .addCase(submitSurvey.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message;
+      })
+      .addCase(getAllSurveys.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getAllSurveys.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.surveys = action.payload;
+        state.error = null;
+      })
+      .addCase(getAllSurveys.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload?.message || "Failed to fetch surveys";
       });
   },
 });

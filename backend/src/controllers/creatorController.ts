@@ -363,6 +363,35 @@ export const getSurvey = async (
   }
 };
 
+export const getAllSurveys = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const creatorId = req.user.id;
+
+    console.log("in fetatch survey", creatorId);
+
+    const { surveys } = await creatorService.getAllSurveys(creatorId);
+
+    res.status(200).json({
+      success: true,
+      data: surveys,
+    });
+  } catch (error) {
+    console.error(
+      "Error fetching surveys:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError("Failed to fetch surveys", 500)
+    );
+  }
+};
+
 export const makeSurvey = async (
   req: Request<{}, any, IIncomingSurveyData>,
   res: Response,

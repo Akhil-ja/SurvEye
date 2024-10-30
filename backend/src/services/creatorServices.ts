@@ -442,6 +442,16 @@ export class CreatorService {
     return survey;
   }
 
+  async getAllSurveys(creatorId: string): Promise<{ surveys: ISurvey[] }> {
+    const surveys = await Survey.find({ creator: creatorId });
+
+    if (surveys.length === 0) {
+      throw new AppError("No active surveys found for this creator", 404);
+    }
+
+    return { surveys };
+  }
+
   private mapQuestionType(
     type: string
   ): "multiple_choice" | "single_choice" | "text" | "rating" {

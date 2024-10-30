@@ -355,3 +355,41 @@ export const getSurveyinfo = async (
     );
   }
 };
+
+export const submitSurveyResponse = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    const { surveyId, responses } = req.body;
+
+    if (!userId) {
+      throw new AppError("Authentication required", 401);
+    }
+
+    if (!surveyId || !responses || !Array.isArray(responses)) {
+      throw new AppError("Invalid submission data", 400);
+    }
+
+    const result = await userService.submitResponse(
+      surveyId,
+      userId,
+      responses
+    );
+
+    res.status(201).json({
+      status: "success",
+      message: "Survey response submitted successfully",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Error submitting survey response:", error);
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError("Failed to submit survey response", 500)
+    );
+  }
+};

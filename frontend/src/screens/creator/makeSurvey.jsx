@@ -1,6 +1,7 @@
 import { Plus, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "react-toastify";
 import {
   Dialog,
   DialogContent,
@@ -66,21 +67,58 @@ const SurveyBuilder = () => {
     { id: "rating", label: "Rating Scale", icon: "⭐" },
   ];
 
+  const validateFields = (question) => {
+    if (!question.text) {
+      toast.error("Question text cannot be empty");
+      return false;
+    }
+    if (question.options.length === 0) {
+      toast.error("Options cannot be empty");
+      return false;
+    }
+    if (question.options.some((option) => option.text.trim() === "")) {
+      toast.error("Option fields cannot be empty");
+      return false;
+    }
+    if (question.options.length > 5) {
+      toast.error("A maximum of 5 options is allowed for each question");
+      return false;
+    }
+    return true;
+  };
+
   const addQuestion = (type) => {
     const newQuestion = {
       type,
       question: "",
-      options: type === "mcq" || type === "checkbox" ? ["Option 1"] : [],
+      options: type === "mcq" || type === "checkbox" ? ["", ""] : [], // Use empty strings for placeholders
     };
 
     const updatedPages = [...pages];
-    updatedPages[currentPage].questions = [newQuestion]; // Only allow one question
-    setPages(updatedPages);
-    setShowQuestionTypes(false);
+
+    // Check if the current page already has a question
+    if (
+      updatedPages[currentPage].questions.length === 0 ||
+      updatedPages[currentPage].questions[0].question !== ""
+    ) {
+      updatedPages[currentPage].questions = [newQuestion]; // Only allow one question
+      setPages(updatedPages);
+      setShowQuestionTypes(false);
+    } else {
+      toast.error(
+        "Please fill in the existing question before adding a new one!"
+      );
+    }
   };
 
   const updateQuestion = (questionIndex, field, value) => {
     const updatedPages = [...pages];
+
+    if (field === "question" && value.trim() === "") {
+      toast.error("Question cannot be empty!");
+      return;
+    }
+
     updatedPages[currentPage].questions[questionIndex][field] = value;
     setPages(updatedPages);
   };
@@ -88,8 +126,21 @@ const SurveyBuilder = () => {
   const addOption = (questionIndex) => {
     const updatedPages = [...pages];
     const options = updatedPages[currentPage].questions[questionIndex].options;
-    options.push(`Option ${options.length + 1}`);
-    setPages(updatedPages);
+
+    const emptyOptionIndex = options.findIndex(
+      (option) => option.trim() === ""
+    );
+    if (emptyOptionIndex !== -1) {
+      toast.error(`Option ${emptyOptionIndex + 1} cannot be empty!`);
+      return;
+    }
+
+    if (options.length < 5) {
+      options.push(`Option ${options.length + 1}`);
+      setPages(updatedPages);
+    } else {
+      toast.error("Maximum of 5 options allowed!");
+    }
   };
 
   const removeOption = (questionIndex, optionIndex) => {
@@ -120,11 +171,11 @@ const SurveyBuilder = () => {
     );
 
     if (!isValid) {
-      alert("Please fill in all questions before submitting!");
+      toast.error("Please fill in all questions before submitting!");
       return;
     }
 
-    alert("Survey submitted! Check console for data.");
+    toast.success("Survey submitted");
     localStorage.removeItem("surveyProgress");
     dispatch(submitSurvey(surveyData))
       .unwrap()

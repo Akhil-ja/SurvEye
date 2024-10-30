@@ -1,10 +1,16 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
+  Users,
+  Clock,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   fetchSurveyDetails,
   submitSurveyResponses,
@@ -15,24 +21,58 @@ import {
   resetSubmissionStatus,
 } from "../../slices/userSlice";
 
+const LOCAL_STORAGE_KEY_PREFIX = "survey_progress_";
+
 const AttendSurvey = () => {
-  const [currentPage, setCurrentPage] = useState(0);
-  const [answers, setAnswers] = useState({});
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
   const surveyId = searchParams.get("surveyId");
+  const storageKey = `${LOCAL_STORAGE_KEY_PREFIX}${surveyId}`;
+
+  // Initialize state from local storage if available
+  const [currentPage, setCurrentPage] = useState(() => {
+    const saved = localStorage.getItem(`${storageKey}_page`);
+    return saved ? parseInt(saved) : 1;
+  });
+
+  const [answers, setAnswers] = useState(() => {
+    const saved = localStorage.getItem(`${storageKey}_answers`);
+    return saved ? JSON.parse(saved) : {};
+  });
+
+  const [lastUpdated, setLastUpdated] = useState(() => {
+    const saved = localStorage.getItem(`${storageKey}_lastUpdated`);
+    return saved ? new Date(saved) : new Date();
+  });
+
   const survey = useSelector(selectCurrentSurvey);
   const isLoading = useSelector(selectCurrentSurveyLoading);
   const error = useSelector(selectCurrentSurveyError);
   const submissionStatus = useSelector(selectSubmissionStatus);
 
+  // Save to local storage whenever answers or page changes
+  useEffect(() => {
+    localStorage.setItem(`${storageKey}_answers`, JSON.stringify(answers));
+    localStorage.setItem(`${storageKey}_page`, currentPage.toString());
+    localStorage.setItem(`${storageKey}_lastUpdated`, new Date().toISOString());
+  }, [answers, currentPage, storageKey]);
+
+  // Check survey expiration
+  useEffect(() => {
+    if (survey?.data?.survey) {
+      const endDate = new Date(survey.data.survey.duration.endDate);
+      if (endDate < new Date()) {
+        clearLocalStorage();
+        navigate("/surveys/expired");
+      }
+    }
+  }, [survey, navigate]);
+
   useEffect(() => {
     if (surveyId) {
       dispatch(fetchSurveyDetails(surveyId));
     }
-
     return () => {
       dispatch(resetSubmissionStatus());
     };
@@ -40,10 +80,17 @@ const AttendSurvey = () => {
 
   useEffect(() => {
     if (submissionStatus === "succeeded") {
+      clearLocalStorage();
       alert("Survey submitted successfully!");
       navigate("/user/surveys");
     }
   }, [submissionStatus, navigate]);
+
+  const clearLocalStorage = () => {
+    localStorage.removeItem(`${storageKey}_answers`);
+    localStorage.removeItem(`${storageKey}_page`);
+    localStorage.removeItem(`${storageKey}_lastUpdated`);
+  };
 
   const handleAnswer = (questionId, answer) => {
     setAnswers((prev) => ({
@@ -52,53 +99,101 @@ const AttendSurvey = () => {
     }));
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
+    const formattedResponses = Object.entries(answers).map(
+      ([questionId, answer]) => ({
+        questionId,
+        answer: Array.isArray(answer)
+          ? answer.map((a) => a.toString())
+          : answer.toString(),
+      })
+    );
+
     dispatch(
       submitSurveyResponses({
         surveyId,
-        responses: answers,
+        responses: formattedResponses,
       })
     );
   };
 
+  // Add a resume banner if there's saved progress
+  const ResumeBanner = () => {
+    if (Object.keys(answers).length > 0) {
+      return (
+        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-sm text-blue-700">
+                You have an ongoing survey session
+              </p>
+              <p className="text-xs text-blue-600">
+                Last updated: {new Date(lastUpdated).toLocaleString()}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={clearLocalStorage}
+              className="text-blue-700 hover:text-blue-800"
+            >
+              Clear Progress
+            </Button>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   const renderQuestion = (question) => {
-    switch (question.type) {
-      case "mcq":
+    switch (question.questionType) {
+      case "single_choice":
         return (
           <div className="space-y-2">
-            {question.options.map((option, index) => (
-              <div key={index} className="flex items-center space-x-2">
+            {question.options.map((option) => (
+              <div key={option._id} className="flex items-center space-x-2">
                 <input
                   type="radio"
-                  name={`question-${question.id}`}
-                  checked={answers[question.id] === option}
-                  onChange={() => handleAnswer(question.id, option)}
+                  name={`question-${question._id}`}
+                  checked={answers[question._id] === option.value}
+                  onChange={() => handleAnswer(question._id, option.value)}
                   className="w-4 h-4 text-red-600"
                 />
-                <span className="text-sm">{option}</span>
+                <span className="text-sm">{option.text}</span>
               </div>
             ))}
           </div>
         );
 
-      case "checkbox":
+      case "multiple_choice":
         return (
           <div className="space-y-2">
-            {question.options.map((option, index) => (
-              <div key={index} className="flex items-center space-x-2">
+            {question.options.map((option) => (
+              <div key={option._id} className="flex items-center space-x-2">
                 <input
                   type="checkbox"
-                  checked={answers[question.id]?.includes(option)}
+                  checked={answers[question._id]?.includes(option.value)}
                   onChange={(e) => {
-                    const currentAnswers = answers[question.id] || [];
+                    const currentAnswers = answers[question._id] || [];
                     const newAnswers = e.target.checked
-                      ? [...currentAnswers, option]
-                      : currentAnswers.filter((a) => a !== option);
-                    handleAnswer(question.id, newAnswers);
+                      ? [...currentAnswers, option.value]
+                      : currentAnswers.filter((a) => a !== option.value);
+                    handleAnswer(question._id, newAnswers);
                   }}
                   className="w-4 h-4 text-red-600"
                 />
-                <span className="text-sm">{option}</span>
+                <span className="text-sm">{option.text}</span>
               </div>
             ))}
           </div>
@@ -107,8 +202,8 @@ const AttendSurvey = () => {
       case "text":
         return (
           <Input
-            value={answers[question.id] || ""}
-            onChange={(e) => handleAnswer(question.id, e.target.value)}
+            value={answers[question._id] || ""}
+            onChange={(e) => handleAnswer(question._id, e.target.value)}
             placeholder="Enter your answer"
             className="mt-2"
           />
@@ -120,10 +215,14 @@ const AttendSurvey = () => {
             {[1, 2, 3, 4, 5].map((num) => (
               <Button
                 key={num}
-                variant={answers[question.id] === num ? "default" : "outline"}
+                variant={answers[question._id] === num ? "default" : "outline"}
                 size="sm"
-                onClick={() => handleAnswer(question.id, num)}
-                className={answers[question.id] === num ? "bg-red-600" : ""}
+                onClick={() => handleAnswer(question._id, num)}
+                className={`${
+                  answers[question._id] === num
+                    ? "bg-red-600 hover:bg-red-700"
+                    : "hover:bg-gray-100"
+                } min-w-[40px]`}
               >
                 {num}
               </Button>
@@ -152,28 +251,80 @@ const AttendSurvey = () => {
     );
   }
 
-  if (!survey) {
+  if (!survey?.data?.survey) {
     return null;
   }
 
+  const surveyData = survey.data.survey;
+  const currentQuestions = surveyData.questions.filter(
+    (q) => q.pageNumber === currentPage
+  );
+  const totalPages = Math.max(...surveyData.questions.map((q) => q.pageNumber));
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">{survey.surveyName}</h1>
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-500">
-              Page {currentPage + 1} of {survey.pages.length}
-            </span>
-          </div>
-        </div>
+      <div className="max-w-3xl mx-auto">
+        <ResumeBanner />
 
-        <div className="bg-white rounded-lg shadow-sm min-h-[600px] relative">
-          <div className="p-6">
-            {survey.pages[currentPage]?.questions.map((question, index) => (
-              <Card key={index} className="mb-4">
+        {/* Survey Header */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold">
+              {surveyData.surveyName}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-center space-x-2">
+                <Calendar className="h-5 w-5 text-gray-500" />
+                <div>
+                  <p className="text-sm font-medium">Duration</p>
+                  <p className="text-sm text-gray-500">
+                    {formatDate(surveyData.duration.startDate)} -{" "}
+                    {formatDate(surveyData.duration.endDate)}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Users className="h-5 w-5 text-gray-500" />
+                <div>
+                  <p className="text-sm font-medium">Target Age Range</p>
+                  <p className="text-sm text-gray-500">
+                    {surveyData.targetAgeRange.isAllAges
+                      ? "All Ages"
+                      : `${surveyData.targetAgeRange.minAge} - ${surveyData.targetAgeRange.maxAge} years`}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Clock className="h-5 w-5 text-gray-500" />
+                <div>
+                  <p className="text-sm font-medium">Sample Size</p>
+                  <p className="text-sm text-gray-500">
+                    {surveyData.totalResponses} of {surveyData.sampleSize}{" "}
+                    responses
+                  </p>
+                </div>
+              </div>
+            </div>
+            <p className="mt-4 text-sm text-gray-600">
+              {surveyData.description}
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Questions Section */}
+        <div className="bg-white rounded-lg shadow-sm min-h-[400px] relative">
+          <div className="p-6 pb-24">
+            {currentQuestions.map((question, index) => (
+              <Card key={question._id} className="mb-4">
                 <CardContent className="p-4">
-                  <h3 className="font-medium mb-4">{question.question}</h3>
+                  <div className="flex items-start justify-between mb-4">
+                    <h3 className="font-medium">{question.questionText}</h3>
+                    {question.required && (
+                      <span className="text-xs text-red-500">*Required</span>
+                    )}
+                  </div>
                   {renderQuestion(question)}
                 </CardContent>
               </Card>
@@ -183,14 +334,18 @@ const AttendSurvey = () => {
           <div className="absolute bottom-6 left-6 right-6 flex justify-between">
             <Button
               variant="outline"
-              onClick={() => setCurrentPage((prev) => Math.max(0, prev - 1))}
-              disabled={currentPage === 0}
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
             >
               <ChevronLeft className="h-4 w-4 mr-2" />
               Previous
             </Button>
 
-            {currentPage === survey.pages.length - 1 ? (
+            <div className="text-sm text-gray-500">
+              Page {currentPage} of {totalPages}
+            </div>
+
+            {currentPage === totalPages ? (
               <Button
                 onClick={handleSubmit}
                 disabled={submissionStatus === "submitting"}
@@ -204,9 +359,7 @@ const AttendSurvey = () => {
               <Button
                 variant="outline"
                 onClick={() =>
-                  setCurrentPage((prev) =>
-                    Math.min(survey.pages.length - 1, prev + 1)
-                  )
+                  setCurrentPage((prev) => Math.min(totalPages, prev + 1))
                 }
               >
                 Next

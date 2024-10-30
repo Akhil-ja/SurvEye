@@ -322,3 +322,36 @@ export const getActiveSurveys = async (
     );
   }
 };
+
+export const getSurveyinfo = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    console.log("in get survey info");
+
+    const surveyId = req.query.surveyId;
+    if (typeof surveyId !== "string") {
+      throw new AppError("Invalid survey ID format", 400);
+    }
+    const result = await userService.getSurveyinfo(surveyId);
+
+    if (!result.survey) {
+      throw new AppError("Survey not found", 404);
+    }
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        survey: result.survey,
+      },
+    });
+  } catch (error) {
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError("Failed to fetch survey", 500)
+    );
+  }
+};

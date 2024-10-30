@@ -369,6 +369,19 @@ export class UserService {
       totalSurveys,
     };
   }
+
+  async getSurveyinfo(surveyId: string): Promise<{
+    survey: ISurvey | null;
+  }> {
+    const survey = await Survey.findOne({
+      _id: surveyId,
+      status: "active",
+    });
+
+    return {
+      survey,
+    };
+  }
 }
 
 export const userService = new UserService();

@@ -82,7 +82,7 @@ export const fetchSurveyDetails = createAsyncThunk(
   "user/fetchSurveyDetails",
   async (surveyId, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/user/surveyinfo/${surveyId}`);
+      const response = await api.get(`/user/surveyinfo?surveyId=${surveyId}`);
       return response.data;
     } catch (error) {
       return rejectWithValue(

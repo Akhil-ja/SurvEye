@@ -1,3 +1,4 @@
+/* eslint-disable react/react-in-jsx-scope */
 import { FaBars, FaHome, FaUserAlt } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { useState } from "react";
@@ -10,9 +11,8 @@ const UserSidebar = () => {
     setIsOpen(!isOpen);
   };
 
-  // Function to handle link clicks
   const handleLinkClick = () => {
-    setIsOpen(false); // Close the sidebar
+    setIsOpen(false);
   };
 
   return (

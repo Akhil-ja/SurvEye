@@ -1,3 +1,4 @@
+/* eslint-disable react/react-in-jsx-scope */
 import { FaBars, FaHome } from "react-icons/fa";
 import { RiSurveyFill } from "react-icons/ri";
 import { Link } from "react-router-dom";

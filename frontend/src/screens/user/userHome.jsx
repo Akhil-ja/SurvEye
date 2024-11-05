@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSelector } from "react-redux";
+import React from "react";
 
 const UserHome = () => {
   const authInfo = useSelector((state) => state.auth.authInfo);

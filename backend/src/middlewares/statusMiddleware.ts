@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from "express";
-import User from "../models/usersModel";
 import { AppError } from "../utils/AppError";
 
 interface CustomRequest extends Request {

@@ -175,7 +175,7 @@ const CreateSurvey = () => {
 
               {/* Creator's Name */}
               <div>
-                <Label htmlFor="creatorName">Creator's Name</Label>
+                <Label htmlFor="creatorName">Creator&apos;s Name</Label>
                 <Input
                   id="creatorName"
                   placeholder="Enter creator's name"

@@ -1,3 +1,4 @@
+/* eslint-disable react/react-in-jsx-scope */
 import { Outlet, useLocation } from "react-router-dom";
 import AdminNavbar from "./components/adminNavbar";
 import UserNavbar from "./components/userNavbar";

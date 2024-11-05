@@ -1,4 +1,5 @@
 import { LinkContainer } from "react-router-bootstrap";
+import React from "react";
 
 const LandingPage = () => {
   return (

@@ -1,3 +1,4 @@
+/* eslint-disable react/react-in-jsx-scope */
 import { Plus, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

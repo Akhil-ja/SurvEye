@@ -1,4 +1,5 @@
 import { StrictMode } from "react";
+import React from "react";
 import { createRoot } from "react-dom/client";
 import {
   createBrowserRouter,
@@ -25,6 +26,7 @@ import AdminSignIn from "./screens/admin/adminSignin";
 import AdminHome from "./screens/admin/adminHome";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import AuthenticatedRoute from "./components/AuthenticatedRoute";
+import AdminRoute from "./components/AdminRoute";
 import AdminUserList from "./screens/admin/adminUserList";
 import UserProfile from "./screens/user/userProfile";
 import CreatorProfile from "./screens/creator/creatorProfile";
@@ -44,32 +46,36 @@ const router = createBrowserRouter(
         <Route path="/creator/signup" element={<CreatorRegisterScreen />} />
         <Route path="/user/signup" element={<UserRegisterScreen />} />
         <Route path="/verify-otp" element={<OTPVerificationScreen />} />
-        {/**admin routes change it */}
-        <Route path="/admin/home" element={<AdminHome />} />
-        <Route path="/admin/users" element={<AdminUserList />} />
 
         <Route
           path="/forgot-password-email"
           element={<ForgotPasswordEmail />}
         />
         <Route path="/forgot-password-otp" element={<ForgotPasswordOTP />} />
-        <Route path="/admin/signin" element={<AdminSignIn />} />
       </Route>
 
+      <Route path="/admin/signin" element={<AdminSignIn />} />
+
       <Route element={<ProtectedRoute />}>
-        {/**user */}
+        {/** User routes */}
         <Route path="/user/profile" element={<UserProfile />} />
         <Route path="/user/home" element={<UserHome />} />
         <Route path="/user/survey" element={<ActiveSurveys />} />
         <Route path="/user/attendsurvey" element={<AttendSurvey />} />
 
-        {/**creator */}
+        {/** Creator routes */}
         <Route path="/creator/home" element={<CreatorHome />} />
         <Route path="/creator/profile" element={<CreatorProfile />} />
         <Route path="/creator/surveylist" element={<CreatorSurveyList />} />
         <Route path="/creator/survey" element={<CreateSurvey />} />
         <Route path="/creator/surveycreate" element={<MakeSurvey />} />
         <Route path="/creator/surveyinfo" element={<SurveyInfo />} />
+      </Route>
+
+      {/** Admin routes */}
+      <Route element={<AdminRoute />}>
+        <Route path="/admin/home" element={<AdminHome />} />
+        <Route path="/admin/users" element={<AdminUserList />} />
       </Route>
     </Route>
   )

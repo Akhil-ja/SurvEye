@@ -9,10 +9,6 @@ import { AppError } from "../utils/AppError";
 import { ISurvey } from "../models/surveyModel";
 import { Survey } from "../models/surveyModel";
 
-interface IIncomingOption {
-  text: string;
-}
-
 interface IIncomingQuestion {
   type: "mcq" | "checkbox" | "text" | "rating";
   question: string;
@@ -495,7 +491,6 @@ export class CreatorService {
   async makeSurvey(surveyData: IIncomingSurveyData): Promise<ISurvey> {
     const { surveyId, pages } = surveyData;
 
-    // If surveyId exists, update existing survey
     if (surveyId) {
       const existingSurvey = await Survey.findById(surveyId);
       if (!existingSurvey) {
@@ -504,6 +499,10 @@ export class CreatorService {
 
       existingSurvey.questions = this.transformQuestions(pages);
       existingSurvey.updated_at = new Date();
+
+      existingSurvey.status = "active";
+      existingSurvey.isPublished = true;
+
       await existingSurvey.save();
       return existingSurvey;
     }

@@ -20,12 +20,15 @@ export default function UserNavbar() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const authInfo = useSelector((state) => state.auth.authInfo);
+
+  const state = useSelector((state) => state.auth);
+  const authInfo = state.user?.authInfo || state.creator?.authInfo;
 
   const handleLogout = () => {
-    if (authInfo) {
+    if (authInfo && authInfo.user) {
+      const role = authInfo.user.role;
       dispatch(logout());
-      localStorage.removeItem("authInfo");
+      localStorage.removeItem(`authInfo_${role}`);
       setTimeout(() => {
         navigate("/signin");
       }, 100);
@@ -41,7 +44,7 @@ export default function UserNavbar() {
       .toUpperCase()
       .slice(0, 2);
   };
-
+  console.log("User Information:", authInfo);
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar
@@ -92,12 +95,33 @@ export default function UserNavbar() {
                     <User className="mr-2 h-4 w-4" />
                     <span>Profile</span>
                   </DropdownMenuItem>
+
+                  {/* Role-based navigation */}
+                  {authInfo.user.role === "creator" && (
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onClick={() => navigate("/creator/dashboard")}
+                    >
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Creator Dashboard</span>
+                    </DropdownMenuItem>
+                  )}
+                  {authInfo.user.role === "user" && (
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onClick={() => navigate("/user/dashboard")}
+                    >
+                      <User className="mr-2 h-4 w-4" />
+                      <span>User Dashboard</span>
+                    </DropdownMenuItem>
+                  )}
+
                   <DropdownMenuItem
                     className="cursor-pointer text-red-600"
                     onClick={handleLogout}
                   >
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span onClick={handleLogout}>Log out</span>
+                    <span>Log out</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

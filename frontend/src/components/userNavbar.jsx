@@ -4,7 +4,7 @@ import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
 import { Button } from "@/components/ui/button";
 import { LinkContainer } from "react-router-bootstrap";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { logout } from "../slices/authSlice";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -20,12 +20,13 @@ export default function UserNavbar() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const authInfo = useSelector((state) => state.auth.authInfo);
+
+  const authInfo = JSON.parse(sessionStorage.getItem("authInfo"));
 
   const handleLogout = () => {
     if (authInfo) {
       dispatch(logout());
-      localStorage.removeItem("authInfo");
+      sessionStorage.removeItem("authInfo");
       setTimeout(() => {
         navigate("/signin");
       }, 100);
@@ -40,6 +41,11 @@ export default function UserNavbar() {
       .join("")
       .toUpperCase()
       .slice(0, 2);
+  };
+
+  const handleProfileNavigation = () => {
+    const rolePath = authInfo?.user?.role === "creator" ? "creator" : "user";
+    navigate(`/${rolePath}/profile`);
   };
 
   return (
@@ -79,7 +85,9 @@ export default function UserNavbar() {
                   >
                     <Avatar className="h-10 w-10">
                       <AvatarFallback className="bg-orange-500 text-white">
-                        {getInitials(authInfo.name || authInfo.creator_name)}
+                        {getInitials(
+                          authInfo.creator_name || authInfo.user.name
+                        )}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
@@ -87,7 +95,7 @@ export default function UserNavbar() {
                 <DropdownMenuContent className="w-56" align="end">
                   <DropdownMenuItem
                     className="cursor-pointer"
-                    onClick={() => navigate(`/${authInfo.user.role}/profile`)}
+                    onClick={handleProfileNavigation}
                   >
                     <User className="mr-2 h-4 w-4" />
                     <span>Profile</span>
@@ -97,7 +105,7 @@ export default function UserNavbar() {
                     onClick={handleLogout}
                   >
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span onClick={handleLogout}>Log out</span>
+                    <span>Log out</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

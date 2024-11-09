@@ -20,11 +20,12 @@ export default function UserNavbar() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const authInfo = useSelector((state) => state.auth.authInfo);
+
+  // Get auth info from sessionStorage
+  const authInfo = JSON.parse(sessionStorage.getItem("authInfo"));
 
   const handleLogout = () => {
     if (authInfo && authInfo.user) {
-      const role = authInfo.user.role;
       dispatch(logout());
       sessionStorage.removeItem("authInfo");
       setTimeout(() => {
@@ -42,10 +43,12 @@ export default function UserNavbar() {
       .toUpperCase()
       .slice(0, 2);
   };
+
   const handleProfileNavigation = () => {
     const rolePath = authInfo?.user?.role === "creator" ? "creator" : "user";
     navigate(`/${rolePath}/profile`);
   };
+
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar
@@ -100,19 +103,18 @@ export default function UserNavbar() {
                   </DropdownMenuItem>
 
                   {/* Role-based navigation */}
-                  {authInfo.user.role === "creator" && (
+                  {authInfo.user.role === "creator" ? (
                     <DropdownMenuItem
                       className="cursor-pointer"
-                      onClick={() => navigate("/creator/dashboard")}
+                      onClick={() => navigate("/creator/home")}
                     >
                       <User className="mr-2 h-4 w-4" />
                       <span>Creator Dashboard</span>
                     </DropdownMenuItem>
-                  )}
-                  {authInfo.user.role === "user" && (
+                  ) : (
                     <DropdownMenuItem
                       className="cursor-pointer"
-                      onClick={() => navigate("/user/dashboard")}
+                      onClick={() => navigate("/user/home")}
                     >
                       <User className="mr-2 h-4 w-4" />
                       <span>User Dashboard</span>

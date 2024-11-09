@@ -1,26 +1,39 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { useSelector } from "react-redux";
-import PropTypes from "prop-types";
 import React from "react";
 
-export const AuthenticatedRoute = ({ redirectPath }) => {
-  const authInfo = useSelector((state) => state.auth.authInfo);
+export const AuthenticatedRoute = () => {
+  try {
+    const authInfo = JSON.parse(sessionStorage.getItem("authInfo"));
+    const currentPath = window.location.pathname;
 
-  if (authInfo) {
-    const role = authInfo.role;
-    const dynamicRedirectPath = redirectPath.replace("${role}", role);
-    return <Navigate to={dynamicRedirectPath} replace />;
+    const publicOnlyRoutes = [
+      "/",
+      "/signin",
+      "/creator/signup",
+      "/user/signup",
+    ];
+
+    if (authInfo) {
+      if (publicOnlyRoutes.includes(currentPath)) {
+        const role = authInfo.user?.role;
+        if (!role) {
+          sessionStorage.removeItem("authInfo");
+          return <Navigate to="/signin" replace />;
+        }
+        return <Navigate to={`/${role}/home`} replace />;
+      }
+    } else {
+      if (!publicOnlyRoutes.includes(currentPath)) {
+        return <Navigate to="/signin" replace />;
+      }
+    }
+
+    return <Outlet />;
+  } catch (error) {
+    console.error("Error parsing auth info:", error);
+    sessionStorage.removeItem("authInfo");
+    return <Navigate to="/signin" replace />;
   }
-
-  return <Outlet />;
-};
-
-AuthenticatedRoute.propTypes = {
-  redirectPath: PropTypes.string,
-};
-
-AuthenticatedRoute.defaultProps = {
-  redirectPath: "/${role}/home",
 };
 
 export default AuthenticatedRoute;

@@ -1,3 +1,4 @@
+/* eslint-disable react/react-in-jsx-scope */
 import { Navigate, Outlet } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { useEffect } from "react";

@@ -15,8 +15,8 @@ const AdminNavbar = () => {
   const handleLogout = () => {
     if (adminInfo) {
       dispatch(adminLogout());
-      localStorage.removeItem("adminInfo");
-      localStorage.removeItem("token");
+      sessionStorage.removeItem("adminInfo");
+      sessionStorage.removeItem("token");
       navigate("/admin/signin");
     }
   };

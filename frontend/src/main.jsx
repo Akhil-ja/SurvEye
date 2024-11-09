@@ -54,8 +54,6 @@ const router = createBrowserRouter(
         <Route path="/forgot-password-otp" element={<ForgotPasswordOTP />} />
       </Route>
 
-      <Route path="/admin/signin" element={<AdminSignIn />} />
-
       <Route element={<ProtectedRoute />}>
         {/** User routes */}
         <Route path="/user/profile" element={<UserProfile />} />
@@ -72,6 +70,7 @@ const router = createBrowserRouter(
         <Route path="/creator/surveyinfo" element={<SurveyInfo />} />
       </Route>
 
+      <Route path="/admin/signin" element={<AdminSignIn />} />
       {/** Admin routes */}
       <Route element={<AdminRoute />}>
         <Route path="/admin/home" element={<AdminHome />} />

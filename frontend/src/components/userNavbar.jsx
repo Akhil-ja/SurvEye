@@ -20,11 +20,11 @@ export default function UserNavbar() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-
-  const authInfo = JSON.parse(sessionStorage.getItem("authInfo"));
+  const authInfo = useSelector((state) => state.auth.authInfo);
 
   const handleLogout = () => {
-    if (authInfo) {
+    if (authInfo && authInfo.user) {
+      const role = authInfo.user.role;
       dispatch(logout());
       sessionStorage.removeItem("authInfo");
       setTimeout(() => {
@@ -42,12 +42,10 @@ export default function UserNavbar() {
       .toUpperCase()
       .slice(0, 2);
   };
-
   const handleProfileNavigation = () => {
     const rolePath = authInfo?.user?.role === "creator" ? "creator" : "user";
     navigate(`/${rolePath}/profile`);
   };
-
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar
@@ -100,6 +98,27 @@ export default function UserNavbar() {
                     <User className="mr-2 h-4 w-4" />
                     <span>Profile</span>
                   </DropdownMenuItem>
+
+                  {/* Role-based navigation */}
+                  {authInfo.user.role === "creator" && (
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onClick={() => navigate("/creator/dashboard")}
+                    >
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Creator Dashboard</span>
+                    </DropdownMenuItem>
+                  )}
+                  {authInfo.user.role === "user" && (
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onClick={() => navigate("/user/dashboard")}
+                    >
+                      <User className="mr-2 h-4 w-4" />
+                      <span>User Dashboard</span>
+                    </DropdownMenuItem>
+                  )}
+
                   <DropdownMenuItem
                     className="cursor-pointer text-red-600"
                     onClick={handleLogout}

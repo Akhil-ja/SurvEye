@@ -9,7 +9,7 @@ export const checkBlockStatus = createAsyncThunk(
       return response.data;
     } catch (error) {
       if (error.response?.status === 403) {
-        localStorage.removeItem("authInfo");
+        sessionStorage.removeItem("authInfo");
         dispatch(logout());
       }
       return rejectWithValue(error.response?.data);
@@ -40,7 +40,7 @@ export const verifyOTP = createAsyncThunk(
         role,
         otp,
       });
-      localStorage.setItem("authInfo", JSON.stringify(response.data));
+      sessionStorage.setItem("authInfo", JSON.stringify(response.data));
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -55,7 +55,7 @@ export const signIn = createAsyncThunk(
   async ({ role, credentials }, { rejectWithValue }) => {
     try {
       const response = await api.post(`/${role}/signin`, credentials);
-      localStorage.setItem("authInfo", JSON.stringify(response.data));
+      sessionStorage.setItem("authInfo", JSON.stringify(response.data));
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data);
@@ -82,7 +82,7 @@ export const logout = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       await api.post("/logout");
-      localStorage.removeItem("authInfo");
+      sessionStorage.removeItem("authInfo");
       return null;
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -112,7 +112,7 @@ export const verifyForgotPasswordOTP = createAsyncThunk(
         email,
         otp,
       });
-      localStorage.setItem("authInfo", JSON.stringify(response.data));
+      sessionStorage.setItem("authInfo", JSON.stringify(response.data));
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -123,7 +123,7 @@ export const verifyForgotPasswordOTP = createAsyncThunk(
 );
 
 const getInitialAuthState = () => {
-  const authInfo = localStorage.getItem("authInfo");
+  const authInfo = sessionStorage.getItem("authInfo");
   return authInfo ? JSON.parse(authInfo) : null;
 };
 

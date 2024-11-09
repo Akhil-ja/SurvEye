@@ -43,26 +43,35 @@ const CreateSurvey = () => {
   const [minAge, setMinAge] = React.useState("");
   const [maxAge, setMaxAge] = React.useState("");
 
+  const handleChange = (e) => {
+    const { id, value } = e.target;
+    setFormData({
+      ...formData,
+      [id]: value.trimStart(),
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.surveyName || !formData.creatorName) {
+    // Check required fields after trimming
+    if (!formData.surveyName.trim() || !formData.creatorName.trim()) {
       toast.error("Survey Name and Creator's Name are required.");
       return;
     }
 
     if (!isAllAges) {
-      if (!minAge || !maxAge) {
+      if (!minAge.trim() || !maxAge.trim()) {
         toast.error("Please enter both minimum and maximum age.");
-        return false;
+        return;
       }
       if (minAge <= 0 || maxAge <= 0) {
         toast.error("Age cannot be zero or negative.");
-        return false;
+        return;
       }
       if (parseInt(minAge) > parseInt(maxAge)) {
         toast.error("Minimum age cannot be greater than maximum age.");
-        return false;
+        return;
       }
     }
 
@@ -80,19 +89,19 @@ const CreateSurvey = () => {
       return;
     }
 
-    if (!formData.category) {
+    if (!formData.category.trim()) {
       toast.error("Please select a category.");
-      return false;
+      return;
     }
 
-    if (!formData.sampleSize) {
+    if (!formData.sampleSize.trim()) {
       toast.error("Sample size must be filled.");
-      return false;
+      return;
     }
 
     if (parseInt(formData.sampleSize) <= 0) {
       toast.error("Sample size must be greater than zero.");
-      return false;
+      return;
     }
 
     const surveyData = {
@@ -116,6 +125,7 @@ const CreateSurvey = () => {
       console.error("Failed to create survey:", error);
     }
   };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <Card className="max-w-xl mx-auto">
@@ -132,9 +142,7 @@ const CreateSurvey = () => {
                   id="surveyName"
                   placeholder="Enter survey name"
                   value={formData.surveyName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, surveyName: e.target.value })
-                  }
+                  onChange={handleChange}
                 />
               </div>
 
@@ -146,7 +154,10 @@ const CreateSurvey = () => {
                   placeholder="Enter survey description"
                   value={formData.description}
                   onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
+                    setFormData({
+                      ...formData,
+                      description: e.target.value.trimStart(),
+                    })
                   }
                   className="h-24"
                 />
@@ -180,9 +191,7 @@ const CreateSurvey = () => {
                   id="creatorName"
                   placeholder="Enter creator's name"
                   value={formData.creatorName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, creatorName: e.target.value })
-                  }
+                  onChange={handleChange}
                 />
               </div>
 
@@ -194,9 +203,7 @@ const CreateSurvey = () => {
                   type="number"
                   placeholder="Enter sample size"
                   value={formData.sampleSize}
-                  onChange={(e) =>
-                    setFormData({ ...formData, sampleSize: e.target.value })
-                  }
+                  onChange={handleChange}
                 />
               </div>
 
@@ -218,7 +225,7 @@ const CreateSurvey = () => {
                       type="number"
                       placeholder="Min age"
                       value={minAge}
-                      onChange={(e) => setMinAge(e.target.value)}
+                      onChange={(e) => setMinAge(e.target.value.trimStart())}
                       className="mt-1"
                       id="minAge"
                     />
@@ -230,7 +237,7 @@ const CreateSurvey = () => {
                       type="number"
                       placeholder="Max age"
                       value={maxAge}
-                      onChange={(e) => setMaxAge(e.target.value)}
+                      onChange={(e) => setMaxAge(e.target.value.trimStart())}
                     />
                   </div>
                 </div>

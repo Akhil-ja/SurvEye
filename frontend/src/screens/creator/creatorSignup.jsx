@@ -84,8 +84,8 @@ export default function CreatorRegisterScreen() {
         const { pendingUserId, message } = resultAction.payload;
         toast.success(message || "Registration successful!");
 
-        localStorage.setItem("pendingUserId", pendingUserId);
-        localStorage.setItem("userRole", "creator");
+        sessionStorage.setItem("pendingUserId", pendingUserId);
+        sessionStorage.setItem("userRole", "creator");
         navigate(`/verify-otp`);
       } else {
         const errorMessage = resultAction.payload?.message || "Sign-up failed";

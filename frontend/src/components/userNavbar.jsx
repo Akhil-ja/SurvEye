@@ -21,7 +21,6 @@ export default function UserNavbar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Get auth info from sessionStorage
   const authInfo = JSON.parse(sessionStorage.getItem("authInfo"));
 
   const handleLogout = () => {

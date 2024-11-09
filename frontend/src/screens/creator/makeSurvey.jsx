@@ -42,7 +42,7 @@ const SurveyBuilder = () => {
   }, [dispatch, surveyId]);
 
   useEffect(() => {
-    const savedPages = localStorage.getItem("surveyProgress");
+    const savedPages = sessionStorage.getItem("surveyProgress");
     if (savedPages) {
       try {
         setPages(JSON.parse(savedPages));
@@ -53,7 +53,7 @@ const SurveyBuilder = () => {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("surveyProgress", JSON.stringify(pages));
+    sessionStorage.setItem("surveyProgress", JSON.stringify(pages));
   }, [pages, currentPage]);
 
   const surveyData = {
@@ -92,17 +92,16 @@ const SurveyBuilder = () => {
     const newQuestion = {
       type,
       question: "",
-      options: type === "mcq" || type === "checkbox" ? ["", ""] : [], // Use empty strings for placeholders
+      options: type === "mcq" || type === "checkbox" ? ["", ""] : [],
     };
 
     const updatedPages = [...pages];
 
-    // Check if the current page already has a question
     if (
       updatedPages[currentPage].questions.length === 0 ||
       updatedPages[currentPage].questions[0].question !== ""
     ) {
-      updatedPages[currentPage].questions = [newQuestion]; // Only allow one question
+      updatedPages[currentPage].questions = [newQuestion];
       setPages(updatedPages);
       setShowQuestionTypes(false);
     } else {
@@ -177,12 +176,12 @@ const SurveyBuilder = () => {
     }
 
     toast.success("Survey submitted");
-    localStorage.removeItem("surveyProgress");
+    sessionStorage.removeItem("surveyProgress");
     dispatch(submitSurvey(surveyData))
       .unwrap()
       .then((result) => {
         console.log("Survey submitted successfully:", result);
-        localStorage.removeItem("surveyProgress");
+        sessionStorage.removeItem("surveyProgress");
         navigate(`/creator/surveyinfo?surveyId=${surveyId}`);
       })
       .catch((error) => {

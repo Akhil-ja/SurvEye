@@ -1,4 +1,5 @@
 import { useState } from "react";
+import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,12 +16,14 @@ import { LinkContainer } from "react-router-bootstrap";
 import { signIn } from "../../slices/authSlice";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css"; // Import toastify styles
+import "react-toastify/dist/ReactToastify.css";
+import { auth, googleProvider } from "../../../firebase";
+import { signInWithPopup } from "firebase/auth";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("user"); // Set default role to "user"
+  const [role, setRole] = useState("user");
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -49,6 +52,21 @@ export default function LoginScreen() {
     } else if (signIn.rejected.match(resultAction)) {
       // Show error message as toast
       toast.error(resultAction.payload?.message || "Sign-in failed");
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+
+      const { email, displayName } = result.user;
+
+      // Log user information
+      console.log("Email:", email);
+      console.log("Name:", displayName);
+    } catch (error) {
+      console.error("Error during Google sign-in:", error);
+      toast.error("Google sign-in failed");
     }
   };
 
@@ -150,9 +168,17 @@ export default function LoginScreen() {
                 </Button>
               </CardFooter>
             </form>
+            <div className="mt-4 text-center">
+              <Button
+                onClick={handleGoogleSignIn}
+                className="bg-gray-400 hover:bg-gray-500 text-white w-full py-2 px-4 rounded"
+              >
+                Sign In with Google
+              </Button>
+            </div>
           </CardContent>
           <div className="text-center mt-4 text-sm">
-            <p>Don't have an account? Sign up as:</p>
+            <p>Don&apos;t have an account? Sign up as:</p>
             <div className="flex justify-center space-x-4 mt-2">
               <LinkContainer to="/user/signup">
                 <Button variant="link" className="text-blue-600">

@@ -1,3 +1,4 @@
+import React from "react";
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { verifyOTP, resendOTP } from "../../slices/authSlice";
@@ -41,8 +42,8 @@ const OTPVerificationScreen = () => {
   const submitHandler = async (e) => {
     e.preventDefault();
 
-    const pendingUserId = localStorage.getItem("pendingUserId");
-    const userRole = localStorage.getItem("userRole");
+    const pendingUserId = sessionStorage.getItem("pendingUserId");
+    const userRole = sessionStorage.getItem("userRole");
 
     if (!pendingUserId) {
       toast.error("No pending user ID found. Please sign up first.");
@@ -59,8 +60,8 @@ const OTPVerificationScreen = () => {
       );
 
       if (verifyOTP.fulfilled.match(resultAction)) {
-        localStorage.removeItem("pendingUserId");
-        localStorage.removeItem("userRole");
+        sessionStorage.removeItem("pendingUserId");
+        sessionStorage.removeItem("userRole");
         toast.success(
           resultAction.payload.message || "OTP verified successfully!"
         );
@@ -78,7 +79,7 @@ const OTPVerificationScreen = () => {
 
   // Resend OTP handler
   const handleResendOTP = async () => {
-    const pendingUserId = localStorage.getItem("pendingUserId");
+    const pendingUserId = sessionStorage.getItem("pendingUserId");
 
     if (!pendingUserId) {
       toast.error("No pending user ID found. Please sign up first.");

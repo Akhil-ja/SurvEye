@@ -83,27 +83,22 @@ export const toggleUserStatus = createAsyncThunk(
 const adminSlice = createSlice({
   name: "admin",
   initialState: {
-    // Authentication state
     adminInfo: null,
     token: null,
     isAuthenticated: false,
 
-    // Loading and error states
     isLoading: false,
     error: null,
 
-    // Users list state
     users: [],
     totalUsers: 0,
 
-    // Filtering state
     filters: {
       role: "all",
       status: "all",
       search: "",
     },
 
-    // Pagination state
     pagination: {
       currentPage: 1,
       itemsPerPage: 10,

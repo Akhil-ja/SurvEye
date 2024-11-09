@@ -1,4 +1,3 @@
-/* eslint-disable react/react-in-jsx-scope */
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -33,17 +32,17 @@ const AttendSurvey = () => {
 
   // Initialize state from local storage if available
   const [currentPage, setCurrentPage] = useState(() => {
-    const saved = localStorage.getItem(`${storageKey}_page`);
+    const saved = sessionStorage.getItem(`${storageKey}_page`);
     return saved ? parseInt(saved) : 1;
   });
 
   const [answers, setAnswers] = useState(() => {
-    const saved = localStorage.getItem(`${storageKey}_answers`);
+    const saved = sessionStorage.getItem(`${storageKey}_answers`);
     return saved ? JSON.parse(saved) : {};
   });
 
   const [lastUpdated, setLastUpdated] = useState(() => {
-    const saved = localStorage.getItem(`${storageKey}_lastUpdated`);
+    const saved = sessionStorage.getItem(`${storageKey}_lastUpdated`);
     return saved ? new Date(saved) : new Date();
   });
 
@@ -54,9 +53,12 @@ const AttendSurvey = () => {
 
   // Save to local storage whenever answers or page changes
   useEffect(() => {
-    localStorage.setItem(`${storageKey}_answers`, JSON.stringify(answers));
-    localStorage.setItem(`${storageKey}_page`, currentPage.toString());
-    localStorage.setItem(`${storageKey}_lastUpdated`, new Date().toISOString());
+    sessionStorage.setItem(`${storageKey}_answers`, JSON.stringify(answers));
+    sessionStorage.setItem(`${storageKey}_page`, currentPage.toString());
+    sessionStorage.setItem(
+      `${storageKey}_lastUpdated`,
+      new Date().toISOString()
+    );
   }, [answers, currentPage, storageKey]);
 
   // Check survey expiration
@@ -64,7 +66,7 @@ const AttendSurvey = () => {
     if (survey?.data?.survey) {
       const endDate = new Date(survey.data.survey.duration.endDate);
       if (endDate < new Date()) {
-        clearLocalStorage();
+        clearsessionStorage();
         navigate("/surveys/expired");
       }
     }
@@ -81,16 +83,16 @@ const AttendSurvey = () => {
 
   useEffect(() => {
     if (submissionStatus === "succeeded") {
-      clearLocalStorage();
+      clearsessionStorage();
       alert("Survey submitted successfully!");
       navigate("/user/surveys");
     }
   }, [submissionStatus, navigate]);
 
-  const clearLocalStorage = () => {
-    localStorage.removeItem(`${storageKey}_answers`);
-    localStorage.removeItem(`${storageKey}_page`);
-    localStorage.removeItem(`${storageKey}_lastUpdated`);
+  const clearsessionStorage = () => {
+    sessionStorage.removeItem(`${storageKey}_answers`);
+    sessionStorage.removeItem(`${storageKey}_page`);
+    sessionStorage.removeItem(`${storageKey}_lastUpdated`);
   };
 
   const handleAnswer = (questionId, answer) => {
@@ -135,7 +137,7 @@ const AttendSurvey = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={clearLocalStorage}
+              onClick={clearsessionStorage}
               className="text-blue-700 hover:text-blue-800"
             >
               Clear Progress

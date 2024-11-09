@@ -99,8 +99,8 @@ export default function UserRegisterScreen() {
 
       if (initiateSignUp.fulfilled.match(resultAction)) {
         const { pendingUserId } = resultAction.payload;
-        localStorage.setItem("pendingUserId", pendingUserId);
-        localStorage.setItem("userRole", "user");
+        sessionStorage.setItem("pendingUserId", pendingUserId);
+        sessionStorage.setItem("userRole", "user");
         console.log("Pending User ID for OTP:", pendingUserId);
         navigate(`/verify-otp`);
       } else {

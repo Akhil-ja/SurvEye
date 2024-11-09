@@ -1,3 +1,4 @@
+/* eslint-disable react/react-in-jsx-scope */
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Card, CardContent } from "@/components/ui/card";
@@ -211,8 +212,8 @@ const CreatorProfile = () => {
           <DialogHeader>
             <DialogTitle>Change Password</DialogTitle>
             <DialogDescription>
-              Enter your current password and the new password you'd like to
-              set.
+              Enter your current password and the new password you&apos;d like
+              to set.
             </DialogDescription>
           </DialogHeader>
 

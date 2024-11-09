@@ -1,30 +1,30 @@
-import bcrypt from "bcrypt";
-import User from "../models/usersModel";
-import { IUser } from "../models/usersModel";
-import { generateToken } from "../utils/jwtUtils";
-import PendingUser from "../models/pendingUserModel";
-import { generateOTP, sendOTP } from "../utils/otpUtils";
-import { Request, Response } from "express";
-import { AppError } from "../utils/AppError";
-import { ISurvey } from "../models/surveyModel";
-import { Survey } from "../models/surveyModel";
-import { SurveyResponse } from "../models/surveyresponse";
-import { Types } from "mongoose";
-import { ResponseData, IQuestion } from "../types/responseSurveyTypes";
+import bcrypt from 'bcrypt';
+import User from '../models/usersModel';
+import { IUser } from '../models/usersModel';
+import { generateToken } from '../utils/jwtUtils';
+import PendingUser from '../models/pendingUserModel';
+import { generateOTP, sendOTP } from '../utils/otpUtils';
+import { Request, Response } from 'express';
+import { AppError } from '../utils/AppError';
+import { ISurvey } from '../models/surveyModel';
+import { Survey } from '../models/surveyModel';
+import { SurveyResponse } from '../models/surveyresponse';
+import { Types } from 'mongoose';
+import { ResponseData } from '../types/responseSurveyTypes';
 
 export class UserService {
   async initiateSignUp(userData: {
     email: string;
     phoneNumber: string;
     password: string;
-    role: "user";
+    role: 'user';
     firstName: string;
     lastName: string;
     dateOfBirth?: string;
   }): Promise<{ message: string; pendingUserId: string }> {
     const existingUser = await User.findOne({ email: userData.email });
     if (existingUser) {
-      throw new AppError("User already exists", 400); // Use AppError for user already exists
+      throw new AppError('User already exists', 400);
     }
 
     const existingPendingUser = await PendingUser.find({
@@ -54,7 +54,7 @@ export class UserService {
     console.log(`The OTP for ${userData.email} is ${otp}`);
 
     return {
-      message: "OTP sent for verification",
+      message: 'OTP sent for verification',
       pendingUserId: pendingUser.id,
     };
   }
@@ -66,15 +66,15 @@ export class UserService {
   ): Promise<IUser> {
     const pendingUser = await PendingUser.findById(pendingUserId);
     if (!pendingUser) {
-      throw new AppError("Invalid or expired signup request", 400); // Use AppError for invalid signup request
+      throw new AppError('Invalid or expired signup request', 400);
     }
 
     if (pendingUser.otp !== otp) {
-      throw new AppError("Invalid OTP", 400); // Use AppError for invalid OTP
+      throw new AppError('Invalid OTP', 400);
     }
 
     if (pendingUser.otpExpires < new Date()) {
-      throw new AppError("OTP has expired", 400); // Use AppError for expired OTP
+      throw new AppError('OTP has expired', 400);
     }
 
     const phoneNumber = pendingUser.phoneNumber || undefined;
@@ -83,7 +83,7 @@ export class UserService {
       email: pendingUser.email,
       phoneNumber: phoneNumber,
       password: pendingUser.password,
-      role: "user",
+      role: 'user',
       first_name: pendingUser.firstName,
       last_name: pendingUser.lastName,
       date_of_birth: pendingUser.dateOfBirth,
@@ -97,11 +97,11 @@ export class UserService {
 
     const token = generateToken(newUser.id, newUser.role);
 
-    res.cookie("user", token, {
+    res.cookie('user', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === 'production',
       maxAge: 3 * 24 * 60 * 60 * 1000,
-      sameSite: "strict",
+      sameSite: 'strict',
     });
 
     return newUser;
@@ -116,30 +116,30 @@ export class UserService {
     const user = await User.findOne({ email });
 
     if (!user) {
-      throw new AppError("Email not registered", 404); // Use AppError for unregistered email
+      throw new AppError('Email not registered', 404);
     }
 
-    if (user.role !== "user") {
-      throw new AppError("User is not authorized as a user", 403);
+    if (user.role !== 'user') {
+      throw new AppError('User is not authorized as a user', 403);
     }
 
-    if (user.status === "blocked") {
-      throw new AppError("User is blocked", 403);
+    if (user.status === 'blocked') {
+      throw new AppError('User is blocked', 403);
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      throw new AppError("Incorrect password", 401);
+      throw new AppError('Incorrect password', 401);
     }
 
     const token = generateToken(user.id, user.role);
 
-    res.cookie("user", token, {
+    res.cookie('user', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === 'production',
       maxAge: 3 * 24 * 60 * 60 * 1000,
-      sameSite: "strict",
+      sameSite: 'strict',
     });
 
     return { user, token };
@@ -148,25 +148,25 @@ export class UserService {
   async sendOTPForForgotPassword(email: string, res: Response): Promise<void> {
     const user = await User.findOne({ email });
     if (!user) {
-      throw new AppError("Email not registered", 404);
+      throw new AppError('Email not registered', 404);
     }
 
-    if (user.role !== "user") {
-      throw new AppError("User is not authorized as a user", 403);
+    if (user.role !== 'user') {
+      throw new AppError('User is not authorized as a user', 403);
     }
 
-    if (user.status === "blocked") {
-      throw new AppError("User is blocked or inactive", 403);
+    if (user.status === 'blocked') {
+      throw new AppError('User is blocked or inactive', 403);
     }
 
     const otp = generateOTP();
     console.log(`the Forgot OTP is ${otp}`);
 
-    res.cookie("resetOTP", otp, {
+    res.cookie('resetOTP', otp, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === 'production',
       maxAge: 10 * 60 * 1000,
-      sameSite: "strict",
+      sameSite: 'strict',
     });
 
     await sendOTP(user.email, otp);
@@ -181,61 +181,61 @@ export class UserService {
     const user = await User.findOne({ email });
 
     if (!user) {
-      throw new AppError("Email not registered", 404);
+      throw new AppError('Email not registered', 404);
     }
 
-    if (user.role !== "user") {
-      throw new AppError("User is not authorized as a user", 403);
+    if (user.role !== 'user') {
+      throw new AppError('User is not authorized as a user', 403);
     }
 
-    if (user.status === "blocked") {
-      throw new AppError("User is blocked", 403);
+    if (user.status === 'blocked') {
+      throw new AppError('User is blocked', 403);
     }
 
     const storedOTP = req.cookies.resetOTP;
 
     if (!storedOTP) {
-      console.log("OTP not found in cookies");
-      throw new AppError("No OTP found", 400);
+      console.log('OTP not found in cookies');
+      throw new AppError('No OTP found', 400);
     }
 
     if (otp !== storedOTP) {
-      console.log("OTP mismatch. Provided:", otp, "Stored:", storedOTP);
-      throw new AppError("Invalid OTP", 400);
+      console.log('OTP mismatch. Provided:', otp, 'Stored:', storedOTP);
+      throw new AppError('Invalid OTP', 400);
     }
 
-    res.clearCookie("resetOTP");
+    res.clearCookie('resetOTP');
 
     const token = generateToken(user.id, user.role);
-    res.cookie("user", token, {
+    res.cookie('user', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === 'production',
       maxAge: 3 * 24 * 60 * 60 * 1000,
-      sameSite: "strict",
+      sameSite: 'strict',
     });
     return { user, token };
   }
 
   async Logout(res: Response, req: Request): Promise<void> {
-    res.clearCookie("user", {
+    res.clearCookie('user', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
     });
   }
   async getProfile(userId: string): Promise<any> {
-    const user = await User.findById(userId).select("-password"); // Exclude sensitive fields
+    const user = await User.findById(userId).select('-password');
 
     if (!user) {
-      throw new AppError("User not found", 404);
+      throw new AppError('User not found', 404);
     }
 
-    if (user.role !== "user") {
-      throw new AppError("User is not authorized as a user", 401);
+    if (user.role !== 'user') {
+      throw new AppError('User is not authorized as a user', 401);
     }
 
-    if (user.status === "blocked") {
-      throw new AppError("User is blocked", 403);
+    if (user.status === 'blocked') {
+      throw new AppError('User is blocked', 403);
     }
 
     return {
@@ -258,23 +258,23 @@ export class UserService {
     const user = await User.findById(userId);
 
     if (!user) {
-      throw new AppError("User not found", 404);
+      throw new AppError('User not found', 404);
     }
 
-    if (user.role !== "user") {
-      throw new AppError("User is not authorized as a user", 401);
+    if (user.role !== 'user') {
+      throw new AppError('User is not authorized as a user', 401);
     }
 
-    if (user.status === "blocked") {
-      throw new AppError("User is blocked", 403);
+    if (user.status === 'blocked') {
+      throw new AppError('User is blocked', 403);
     }
 
     if (updates.firstName && updates.firstName.trim().length === 0) {
-      throw new AppError("First name cannot be empty", 400);
+      throw new AppError('First name cannot be empty', 400);
     }
 
     if (updates.lastName && updates.lastName.trim().length === 0) {
-      throw new AppError("Last name cannot be empty", 400);
+      throw new AppError('Last name cannot be empty', 400);
     }
 
     if (updates.firstName) {
@@ -300,22 +300,22 @@ export class UserService {
     const user = await User.findById(userId);
 
     if (!user) {
-      throw new AppError("User not found", 404);
+      throw new AppError('User not found', 404);
     }
 
-    if (user.role !== "user") {
-      throw new AppError("User is not authorized as a user", 401);
+    if (user.role !== 'user') {
+      throw new AppError('User is not authorized as a user', 401);
     }
 
-    if (user.status === "blocked") {
-      throw new AppError("User is blocked", 403);
+    if (user.status === 'blocked') {
+      throw new AppError('User is blocked', 403);
     }
 
     if (updates.oldPassword && updates.newPassword) {
       const isMatch = await bcrypt.compare(updates.oldPassword, user.password);
 
       if (!isMatch) {
-        throw new AppError("Old password is incorrect", 400);
+        throw new AppError('Old password is incorrect', 400);
       }
 
       const isSamePassword = await bcrypt.compare(
@@ -325,7 +325,7 @@ export class UserService {
 
       if (isSamePassword) {
         throw new AppError(
-          "New password cannot be the same as the old password",
+          'New password cannot be the same as the old password',
           400
         );
       }
@@ -342,8 +342,8 @@ export class UserService {
   async getActiveSurveys(
     page: number = 1,
     limit: number = 6,
-    sortBy: string = "createdAt",
-    order: "asc" | "desc" = "desc"
+    sortBy: string = 'createdAt',
+    order: 'asc' | 'desc' = 'desc'
   ): Promise<{
     surveys: ISurvey[];
     currentPage: number;
@@ -351,28 +351,28 @@ export class UserService {
     totalSurveys: number;
   }> {
     const skip = (page - 1) * limit;
-    const sortOrder = order === "asc" ? 1 : -1;
+    const sortOrder = order === 'asc' ? 1 : -1;
 
     const currentDate = new Date();
 
     const [surveys, totalSurveys] = await Promise.all([
       Survey.find({
-        status: "active",
-        "duration.startDate": { $lte: currentDate },
-        "duration.endDate": { $gte: currentDate },
+        status: 'active',
+        'duration.startDate': { $lte: currentDate },
+        'duration.endDate': { $gte: currentDate },
       })
         .sort({ [sortBy]: sortOrder })
         .skip(skip)
         .limit(limit),
       Survey.countDocuments({
-        status: "active",
-        "duration.startDate": { $lte: currentDate },
-        "duration.endDate": { $gte: currentDate },
+        status: 'active',
+        'duration.startDate': { $lte: currentDate },
+        'duration.endDate': { $gte: currentDate },
       }),
     ]);
 
     if (surveys.length === 0) {
-      throw new AppError("No active surveys found", 404);
+      throw new AppError('No active surveys found', 404);
     }
 
     return {
@@ -388,7 +388,7 @@ export class UserService {
   }> {
     const survey = await Survey.findOne({
       _id: surveyId,
-      status: "active",
+      status: 'active',
     });
 
     return {
@@ -404,11 +404,11 @@ export class UserService {
     // Validate survey exists and is active
     const survey = (await Survey.findById(surveyId)) as ISurvey | null;
     if (!survey) {
-      throw new AppError("Survey not found", 404);
+      throw new AppError('Survey not found', 404);
     }
 
-    if (survey.status !== "active") {
-      throw new AppError("Survey is not active", 400);
+    if (survey.status !== 'active') {
+      throw new AppError('Survey is not active', 400);
     }
 
     const currentDate = new Date();
@@ -416,7 +416,7 @@ export class UserService {
       currentDate < survey.duration.startDate ||
       currentDate > survey.duration.endDate
     ) {
-      throw new AppError("Survey is not within its active duration", 400);
+      throw new AppError('Survey is not within its active duration', 400);
     }
 
     // Check if user has already submitted a response
@@ -427,7 +427,7 @@ export class UserService {
 
     if (existingResponse) {
       throw new AppError(
-        "You have already submitted a response to this survey",
+        'You have already submitted a response to this survey',
         400
       );
     }
@@ -443,7 +443,7 @@ export class UserService {
     );
 
     if (missingRequiredQuestions.length > 0) {
-      throw new AppError("All required questions must be answered", 400);
+      throw new AppError('All required questions must be answered', 400);
     }
 
     const formattedAnswers = await Promise.all(
@@ -459,7 +459,7 @@ export class UserService {
           );
         }
 
-        let formattedAnswer: {
+        const formattedAnswer: {
           questionText: string;
           selectedOptions?: Types.ObjectId[];
           textAnswer?: string;
@@ -469,15 +469,15 @@ export class UserService {
         };
 
         switch (question.questionType) {
-          case "single_choice":
-          case "rating":
+          case 'single_choice':
+          case 'rating':
             if (Array.isArray(response.answer)) {
               throw new AppError(
                 `Question ${response.questionId} requires a single answer`,
                 400
               );
             }
-            if (question.questionType === "single_choice") {
+            if (question.questionType === 'single_choice') {
               const validOption = question.options.find(
                 (opt) => opt.value.toString() === response.answer
               );
@@ -502,7 +502,7 @@ export class UserService {
             }
             break;
 
-          case "multiple_choice":
+          case 'multiple_choice':
             if (!Array.isArray(response.answer)) {
               throw new AppError(
                 `Question ${response.questionId} requires multiple answers`,
@@ -525,7 +525,7 @@ export class UserService {
 
             break;
 
-          case "text":
+          case 'text':
             if (Array.isArray(response.answer)) {
               throw new AppError(
                 `Question ${response.questionId} requires a text answer`,

@@ -1,16 +1,16 @@
-import bcrypt from "bcrypt";
-import User from "../models/usersModel";
-import { IUser } from "../models/usersModel";
-import { generateToken } from "../utils/jwtUtils";
-import { generateOTP, sendOTP } from "../utils/otpUtils";
-import PendingUser from "../models/pendingUserModel";
-import { Request, Response } from "express";
-import { AppError } from "../utils/AppError";
-import { ISurvey } from "../models/surveyModel";
-import { Survey } from "../models/surveyModel";
+import bcrypt from 'bcrypt';
+import User from '../models/usersModel';
+import { IUser } from '../models/usersModel';
+import { generateToken } from '../utils/jwtUtils';
+import { generateOTP, sendOTP } from '../utils/otpUtils';
+import PendingUser from '../models/pendingUserModel';
+import { Request, Response } from 'express';
+import { AppError } from '../utils/AppError';
+import { ISurvey } from '../models/surveyModel';
+import { Survey } from '../models/surveyModel';
 
 interface IIncomingQuestion {
-  type: "mcq" | "checkbox" | "text" | "rating";
+  type: 'mcq' | 'checkbox' | 'text' | 'rating';
   question: string;
   options: string[];
 }
@@ -36,12 +36,12 @@ export class CreatorService {
 
     const existingCreatorByEmail = await User.findOne({ email });
     if (existingCreatorByEmail) {
-      throw new AppError("Creator already exists with this email.", 400);
+      throw new AppError('Creator already exists with this email.', 400);
     }
 
     const existingCreatorByPhone = await User.findOne({ phoneNumber });
     if (existingCreatorByPhone) {
-      throw new AppError("Creator already exists with this phone number.", 400);
+      throw new AppError('Creator already exists with this phone number.', 400);
     }
 
     const existingPendingCreatorByEmail = await PendingUser.find({ email });
@@ -66,7 +66,7 @@ export class CreatorService {
       email,
       phoneNumber,
       password: hashedPassword,
-      role: "creator",
+      role: 'creator',
       creatorName,
       industry,
       otp,
@@ -78,7 +78,7 @@ export class CreatorService {
     console.log(`The OTP for ${email} is ${otp}`);
 
     return {
-      message: "OTP sent for verification",
+      message: 'OTP sent for verification',
       pendingUserId: pendingCreator.id,
     };
   }
@@ -91,15 +91,15 @@ export class CreatorService {
   ): Promise<IUser> {
     const pendingCreator = await PendingUser.findById(pendingUserId);
     if (!pendingCreator) {
-      throw new AppError("Invalid or expired signup request", 400);
+      throw new AppError('Invalid or expired signup request', 400);
     }
 
     if (pendingCreator.otp !== otp) {
-      throw new AppError("Invalid OTP", 400);
+      throw new AppError('Invalid OTP', 400);
     }
 
     if (pendingCreator.otpExpires < new Date()) {
-      throw new AppError("OTP has expired", 400);
+      throw new AppError('OTP has expired', 400);
     }
 
     const phoneNumber = pendingCreator.phoneNumber || undefined;
@@ -108,7 +108,7 @@ export class CreatorService {
       email: pendingCreator.email,
       phoneNumber: phoneNumber,
       password: pendingCreator.password,
-      role: "creator",
+      role: 'creator',
       creator_name: pendingCreator.creatorName,
       industry: pendingCreator.industry,
       created_at: new Date(),
@@ -121,11 +121,11 @@ export class CreatorService {
 
     const token = generateToken(newCreator.id, newCreator.role);
 
-    res.cookie("user", token, {
+    res.cookie('user', token, {
       httpOnly: true,
       secure: false,
       maxAge: 3 * 24 * 60 * 60 * 1000,
-      sameSite: "strict",
+      sameSite: 'strict',
     });
 
     return newCreator;
@@ -141,34 +141,31 @@ export class CreatorService {
     const user = await User.findOne({ email });
 
     if (!user) {
-      throw new AppError("User not found", 404);
+      throw new AppError('User not found', 404);
     }
 
-    if (user.role !== "creator") {
-      throw new AppError("User is not authorized as a creator", 401);
+    if (user.role !== 'creator') {
+      throw new AppError('User is not authorized as a creator', 401);
     }
 
-    if (user.status === "blocked") {
-      throw new AppError("Creator is blocked", 403);
+    if (user.status === 'blocked') {
+      throw new AppError('Creator is blocked', 403);
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      throw new AppError("Incorrect password", 401);
+      throw new AppError('Incorrect password', 401);
     }
 
     const token = generateToken(user.id, user.role);
 
-    res.cookie("user", token, {
+    res.cookie('user', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === 'production',
       maxAge: 3 * 24 * 60 * 60 * 1000,
-      sameSite: "strict",
+      sameSite: 'strict',
     });
-
-    console.log("Cookie set. Response headers:", res.getHeaders());
-    console.log("All cookies after signIn:", req.cookies);
 
     return { user, token };
   }
@@ -177,28 +174,26 @@ export class CreatorService {
   async sendOTPForForgotPassword(email: string, res: Response): Promise<void> {
     const user = await User.findOne({ email });
     if (!user) {
-      throw new AppError("Email not registered", 404);
+      throw new AppError('Email not registered', 404);
     }
 
-    if (user.role !== "creator") {
-      throw new AppError("User is not authorized as a creator", 401);
+    if (user.role !== 'creator') {
+      throw new AppError('User is not authorized as a creator', 401);
     }
 
-    if (user.status === "blocked") {
-      throw new AppError("User is blocked", 403);
+    if (user.status === 'blocked') {
+      throw new AppError('User is blocked', 403);
     }
 
     const otp = generateOTP();
     console.log(`The Forgot OTP for ${email} is ${otp}`);
 
-    res.cookie("resetOTP", otp, {
+    res.cookie('resetOTP', otp, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === 'production',
       maxAge: 10 * 60 * 1000,
-      sameSite: "strict",
+      sameSite: 'strict',
     });
-
-    console.log("Cookie set for OTP reset:", res.getHeaders());
 
     await sendOTP(user.email, otp);
   }
@@ -213,56 +208,53 @@ export class CreatorService {
     const user = await User.findOne({ email });
 
     if (!user) {
-      throw new AppError("Email not registered", 404);
+      throw new AppError('Email not registered', 404);
     }
 
-    if (user.role !== "creator") {
-      throw new AppError("User is not authorized as a creator", 401);
+    if (user.role !== 'creator') {
+      throw new AppError('User is not authorized as a creator', 401);
     }
 
-    if (user.status === "blocked") {
-      throw new AppError("Creator is blocked", 403);
+    if (user.status === 'blocked') {
+      throw new AppError('Creator is blocked', 403);
     }
-
-    console.log("All cookies:", req.cookies);
-    console.log("resetOTP cookie:", req.cookies.resetOTP);
 
     const storedOTP = req.cookies.resetOTP;
 
     if (!storedOTP) {
-      throw new AppError("No OTP found", 400);
+      throw new AppError('No OTP found', 400);
     }
 
     if (otp !== storedOTP) {
-      throw new AppError("Invalid OTP", 400);
+      throw new AppError('Invalid OTP', 400);
     }
 
-    res.clearCookie("resetOTP");
+    res.clearCookie('resetOTP');
 
     const token = generateToken(user.id, user.role);
-    res.cookie("user", token, {
+    res.cookie('user', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === 'production',
       maxAge: 3 * 24 * 60 * 60 * 1000,
-      sameSite: "strict",
+      sameSite: 'strict',
     });
 
     return { user, token };
   }
 
   async getProfile(userId: string): Promise<any> {
-    const creator = await User.findById(userId).select("-password"); // Exclude sensitive fields
+    const creator = await User.findById(userId).select('-password');
 
     if (!creator) {
-      throw new AppError("Creator not found", 404);
+      throw new AppError('Creator not found', 404);
     }
 
-    if (creator.role !== "creator") {
-      throw new AppError("User is not authorized as a creator", 401);
+    if (creator.role !== 'creator') {
+      throw new AppError('User is not authorized as a creator', 401);
     }
 
-    if (creator.status === "blocked") {
-      throw new AppError("Creator is blocked", 403);
+    if (creator.status === 'blocked') {
+      throw new AppError('Creator is blocked', 403);
     }
 
     return {
@@ -285,23 +277,23 @@ export class CreatorService {
     const creator = await User.findById(userId);
 
     if (!creator) {
-      throw new AppError("Creator not found", 404);
+      throw new AppError('Creator not found', 404);
     }
 
-    if (creator.role !== "creator") {
-      throw new AppError("User is not authorized as a creator", 401);
+    if (creator.role !== 'creator') {
+      throw new AppError('User is not authorized as a creator', 401);
     }
 
-    if (creator.status === "blocked") {
-      throw new AppError("Creator is blocked", 403);
+    if (creator.status === 'blocked') {
+      throw new AppError('Creator is blocked', 403);
     }
 
     if (updates.creator_name && updates.creator_name.trim().length === 0) {
-      throw new AppError("Creator name cannot be empty", 400);
+      throw new AppError('Creator name cannot be empty', 400);
     }
 
     if (updates.industry && updates.industry.trim().length === 0) {
-      throw new AppError("Industry cannot be empty", 400);
+      throw new AppError('Industry cannot be empty', 400);
     }
 
     if (updates.creator_name) {
@@ -327,15 +319,15 @@ export class CreatorService {
     const creator = await User.findById(userId);
 
     if (!creator) {
-      throw new AppError("Creator not found", 404);
+      throw new AppError('Creator not found', 404);
     }
 
-    if (creator.role !== "creator") {
-      throw new AppError("User is not authorized as a creator", 401);
+    if (creator.role !== 'creator') {
+      throw new AppError('User is not authorized as a creator', 401);
     }
 
-    if (creator.status === "blocked") {
-      throw new AppError("Creator is blocked", 403);
+    if (creator.status === 'blocked') {
+      throw new AppError('Creator is blocked', 403);
     }
 
     if (updates.oldPassword && updates.newPassword) {
@@ -345,7 +337,7 @@ export class CreatorService {
       );
 
       if (!isMatch) {
-        throw new AppError("Old password is incorrect", 400);
+        throw new AppError('Old password is incorrect', 400);
       }
 
       const isSamePassword = await bcrypt.compare(
@@ -355,7 +347,7 @@ export class CreatorService {
 
       if (isSamePassword) {
         throw new AppError(
-          "New password cannot be the same as the old password",
+          'New password cannot be the same as the old password',
           400
         );
       }
@@ -374,7 +366,7 @@ export class CreatorService {
     surveyData: {
       surveyName: string;
       description: string;
-      category: "market" | "product" | "customer";
+      category: 'market' | 'product' | 'customer';
       creatorName: string;
       sampleSize: number;
       targetAgeRange: {
@@ -388,7 +380,7 @@ export class CreatorService {
       };
       questions: Array<{
         questionText: string;
-        questionType: "multiple_choice" | "single_choice" | "text" | "rating";
+        questionType: 'multiple_choice' | 'single_choice' | 'text' | 'rating';
         options?: Array<{ text: string; value: number }>;
         required: boolean;
         pageNumber: number;
@@ -398,15 +390,15 @@ export class CreatorService {
     const creator = await User.findById(creatorId);
 
     if (!creator) {
-      throw new AppError("Creator not found", 404);
+      throw new AppError('Creator not found', 404);
     }
 
-    if (creator.role !== "creator") {
-      throw new AppError("User is not authorized as a creator", 401);
+    if (creator.role !== 'creator') {
+      throw new AppError('User is not authorized as a creator', 401);
     }
 
-    if (creator.status === "blocked") {
-      throw new AppError("Creator is blocked", 403);
+    if (creator.status === 'blocked') {
+      throw new AppError('Creator is blocked', 403);
     }
 
     const survey = new Survey({
@@ -432,7 +424,7 @@ export class CreatorService {
     const survey = await Survey.findById(surveyId);
 
     if (!survey) {
-      throw new AppError("Survey not found", 404);
+      throw new AppError('Survey not found', 404);
     }
 
     return survey;
@@ -442,7 +434,7 @@ export class CreatorService {
     const surveys = await Survey.find({ creator: creatorId });
 
     if (surveys.length === 0) {
-      throw new AppError("No active surveys found for this creator", 404);
+      throw new AppError('No active surveys found for this creator', 404);
     }
 
     return { surveys };
@@ -450,16 +442,16 @@ export class CreatorService {
 
   private mapQuestionType(
     type: string
-  ): "multiple_choice" | "single_choice" | "text" | "rating" {
+  ): 'multiple_choice' | 'single_choice' | 'text' | 'rating' {
     switch (type) {
-      case "mcq":
-        return "single_choice";
-      case "checkbox":
-        return "multiple_choice";
-      case "text":
-        return "text";
-      case "rating":
-        return "rating";
+      case 'mcq':
+        return 'single_choice';
+      case 'checkbox':
+        return 'multiple_choice';
+      case 'text':
+        return 'text';
+      case 'rating':
+        return 'rating';
       default:
         throw new Error(`Invalid question type: ${type}`);
     }
@@ -494,13 +486,13 @@ export class CreatorService {
     if (surveyId) {
       const existingSurvey = await Survey.findById(surveyId);
       if (!existingSurvey) {
-        throw new Error("Survey not found");
+        throw new Error('Survey not found');
       }
 
       existingSurvey.questions = this.transformQuestions(pages);
       existingSurvey.updated_at = new Date();
 
-      existingSurvey.status = "active";
+      existingSurvey.status = 'active';
       existingSurvey.isPublished = true;
 
       await existingSurvey.save();
@@ -509,7 +501,7 @@ export class CreatorService {
 
     const survey = new Survey({
       questions: this.transformQuestions(pages),
-      status: "active",
+      status: 'active',
       isPublished: true,
     });
 

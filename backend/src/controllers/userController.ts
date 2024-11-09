@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from "express";
-import { userService } from "../services/userServices";
-import { AppError } from "../utils/AppError"; // Import AppError
+import { Request, Response, NextFunction } from 'express';
+import { userService } from '../services/userServices';
+import { AppError } from '../utils/AppError'; // Import AppError
 
 export const initiateSignUp = async (
   req: Request,
@@ -15,7 +15,7 @@ export const initiateSignUp = async (
       email,
       phoneNumber,
       password,
-      role: "user",
+      role: 'user',
       firstName,
       lastName,
       dateOfBirth,
@@ -23,11 +23,11 @@ export const initiateSignUp = async (
 
     res.status(200).json(result);
   } catch (error) {
-    console.error("Error during OTP resend:", error);
+    console.error('Error during OTP resend:', error);
     next(
       error instanceof AppError
         ? error
-        : new AppError("Failed to resend OTP", 400)
+        : new AppError('Failed to resend OTP', 400)
     );
   }
 };
@@ -46,7 +46,7 @@ export const verifyOTPAndCreateUser = async (
       res
     );
     res.status(201).json({
-      message: "User created successfully",
+      message: 'User created successfully',
       user: {
         id: newUser.id,
         email: newUser.email,
@@ -57,11 +57,11 @@ export const verifyOTPAndCreateUser = async (
       },
     });
   } catch (error) {
-    console.error("Error during OTP resend:", error);
+    console.error('Error during OTP resend:', error);
     next(
       error instanceof AppError
         ? error
-        : new AppError("Failed to send OTP", 400)
+        : new AppError('Failed to send OTP', 400)
     );
   }
 };
@@ -76,7 +76,7 @@ export const signIn = async (
   try {
     const { user, token } = await userService.signIn(email, password, res, req);
     res.status(200).json({
-      message: "Sign in successful",
+      message: 'Sign in successful',
       user: {
         id: user.id,
         email: user.email,
@@ -87,9 +87,9 @@ export const signIn = async (
       token,
     });
   } catch (error) {
-    console.error("Error during Sign-in:", error);
+    console.error('Error during Sign-in:', error);
     next(
-      error instanceof AppError ? error : new AppError("Failed to signin", 400)
+      error instanceof AppError ? error : new AppError('Failed to signin', 400)
     );
   }
 };
@@ -104,14 +104,14 @@ export const forgotPassword = async (
   try {
     await userService.sendOTPForForgotPassword(email, res);
     res.status(200).json({
-      message: "OTP sent for verification",
+      message: 'OTP sent for verification',
     });
   } catch (error) {
-    console.error("Error during OTP resend:", error);
+    console.error('Error during OTP resend:', error);
     next(
       error instanceof AppError
         ? error
-        : new AppError("Failed to resend OTP", 400)
+        : new AppError('Failed to resend OTP', 400)
     );
   }
 };
@@ -131,7 +131,7 @@ export const verifyForgotOTP = async (
       req
     );
     res.status(200).json({
-      message: "Sign in successful",
+      message: 'Sign in successful',
       user: {
         id: user.id,
         email: user.email,
@@ -142,11 +142,11 @@ export const verifyForgotOTP = async (
       token,
     });
   } catch (error) {
-    console.error("Error during OTP verification:", error);
+    console.error('Error during OTP verification:', error);
     next(
       error instanceof AppError
         ? error
-        : new AppError("Failed to verify OTP", 400)
+        : new AppError('Failed to verify OTP', 400)
     );
   }
 };
@@ -158,10 +158,10 @@ export const logout = async (
 ): Promise<void> => {
   try {
     await userService.Logout(res, req);
-    res.status(200).json({ message: "Logout successful" });
+    res.status(200).json({ message: 'Logout successful' });
   } catch (error) {
-    console.error("Error during logout:", error);
-    next(new AppError("Logout failed", 500));
+    console.error('Error during logout:', error);
+    next(new AppError('Logout failed', 500));
   }
 };
 
@@ -171,26 +171,24 @@ export const fetchUserProfile = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    console.log("in fetch profile");
-
     const userId = req.user?.id;
 
     if (!userId) {
-      throw new AppError("Authentication required", 401);
+      throw new AppError('Authentication required', 401);
     }
 
     const userProfile = await userService.getProfile(userId);
 
     res.status(200).json({
-      message: "Profile fetched successfully",
+      message: 'Profile fetched successfully',
       user: userProfile,
     });
   } catch (error) {
-    console.error("Error fetching profile:", error);
+    console.error('Error fetching profile:', error);
     next(
       error instanceof AppError
         ? error
-        : new AppError("Profile fetch failed", 500)
+        : new AppError('Profile fetch failed', 500)
     );
   }
 };
@@ -201,18 +199,18 @@ export const editUserProfile = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    console.log("in edit profile");
+    console.log('in edit profile');
 
     const userId = req.user?.id;
 
     if (!userId) {
-      throw new AppError("Authentication required", 401);
+      throw new AppError('Authentication required', 401);
     }
 
     const { firstName, lastName } = req.body;
 
     if (!firstName && !lastName) {
-      throw new AppError("No updates provided", 400);
+      throw new AppError('No updates provided', 400);
     }
 
     const updatedUser = await userService.editProfile(userId, {
@@ -221,7 +219,7 @@ export const editUserProfile = async (
     });
 
     res.status(200).json({
-      message: "Profile updated successfully",
+      message: 'Profile updated successfully',
       user: {
         id: updatedUser.id,
         email: updatedUser.email,
@@ -232,11 +230,11 @@ export const editUserProfile = async (
       },
     });
   } catch (error) {
-    console.error("Error updating profile:", error);
+    console.error('Error updating profile:', error);
     next(
       error instanceof AppError
         ? error
-        : new AppError("Profile update failed", 500)
+        : new AppError('Profile update failed', 500)
     );
   }
 };
@@ -250,13 +248,13 @@ export const changePasswordController = async (
     const userId = req.user?.id;
 
     if (!userId) {
-      throw new AppError("Authentication required", 401);
+      throw new AppError('Authentication required', 401);
     }
 
     const { oldPassword, newPassword } = req.body;
 
     if (!oldPassword || !newPassword) {
-      throw new AppError("Both old and new passwords are required", 400);
+      throw new AppError('Both old and new passwords are required', 400);
     }
 
     const updatedUser = await userService.changePassword(userId, {
@@ -265,7 +263,7 @@ export const changePasswordController = async (
     });
 
     res.status(200).json({
-      message: "Password updated successfully",
+      message: 'Password updated successfully',
       user: {
         id: updatedUser.id,
         email: updatedUser.email,
@@ -276,11 +274,11 @@ export const changePasswordController = async (
       },
     });
   } catch (error) {
-    console.error("Error changing password:", error);
+    console.error('Error changing password:', error);
     next(
       error instanceof AppError
         ? error
-        : new AppError("Password update failed", 500)
+        : new AppError('Password update failed', 500)
     );
   }
 };
@@ -293,8 +291,8 @@ export const getActiveSurveys = async (
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 6;
-    const sortBy = (req.query.sortBy as string) || "createdAt";
-    const order = (req.query.order as "asc" | "desc") || "desc";
+    const sortBy = (req.query.sortBy as string) || 'createdAt';
+    const order = (req.query.order as 'asc' | 'desc') || 'desc';
 
     const result = await userService.getActiveSurveys(
       page,
@@ -304,7 +302,7 @@ export const getActiveSurveys = async (
     );
 
     res.status(200).json({
-      status: "success",
+      status: 'success',
       data: {
         surveys: result.surveys,
         pagination: {
@@ -318,7 +316,7 @@ export const getActiveSurveys = async (
     next(
       error instanceof AppError
         ? error
-        : new AppError("Failed to fetch surveys", 500)
+        : new AppError('Failed to fetch surveys', 500)
     );
   }
 };
@@ -329,20 +327,20 @@ export const getSurveyinfo = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    console.log("in get survey info");
+    console.log('in get survey info');
 
     const surveyId = req.query.surveyId;
-    if (typeof surveyId !== "string") {
-      throw new AppError("Invalid survey ID format", 400);
+    if (typeof surveyId !== 'string') {
+      throw new AppError('Invalid survey ID format', 400);
     }
     const result = await userService.getSurveyinfo(surveyId);
 
     if (!result.survey) {
-      throw new AppError("Survey not found", 404);
+      throw new AppError('Survey not found', 404);
     }
 
     res.status(200).json({
-      status: "success",
+      status: 'success',
       data: {
         survey: result.survey,
       },
@@ -351,7 +349,7 @@ export const getSurveyinfo = async (
     next(
       error instanceof AppError
         ? error
-        : new AppError("Failed to fetch survey", 500)
+        : new AppError('Failed to fetch survey', 500)
     );
   }
 };
@@ -366,11 +364,11 @@ export const submitSurveyResponse = async (
     const { surveyId, responses } = req.body;
 
     if (!userId) {
-      throw new AppError("Authentication required", 401);
+      throw new AppError('Authentication required', 401);
     }
 
     if (!surveyId || !responses || !Array.isArray(responses)) {
-      throw new AppError("Invalid submission data", 400);
+      throw new AppError('Invalid submission data', 400);
     }
 
     const result = await userService.submitResponse(
@@ -380,16 +378,16 @@ export const submitSurveyResponse = async (
     );
 
     res.status(201).json({
-      status: "success",
-      message: "Survey response submitted successfully",
+      status: 'success',
+      message: 'Survey response submitted successfully',
       data: result,
     });
   } catch (error) {
-    console.error("Error submitting survey response:", error);
+    console.error('Error submitting survey response:', error);
     next(
       error instanceof AppError
         ? error
-        : new AppError("Failed to submit survey response", 500)
+        : new AppError('Failed to submit survey response', 500)
     );
   }
 };

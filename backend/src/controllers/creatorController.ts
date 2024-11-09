@@ -1,7 +1,8 @@
-import { Request, Response, NextFunction } from "express";
-import { AppError } from "../utils/AppError";
-import { creatorService } from "../services/creatorServices";
-import { IIncomingSurveyData } from "../types/surveyTypes";
+import { Request, Response, NextFunction } from 'express';
+import { AppError } from '../utils/AppError';
+import { creatorService } from '../services/creatorServices';
+import { IIncomingSurveyData } from '../types/surveyTypes';
+import HTTP_statusCode from '../Enums/httpStatusCode';
 
 // Initiate Sign Up
 export const initiateSignUp = async (
@@ -22,9 +23,11 @@ export const initiateSignUp = async (
 
     res.status(200).json(result);
   } catch (error) {
-    console.error("Error during sign-up initiation:", error);
+    console.error('Error during sign-up initiation:', error);
     next(
-      error instanceof AppError ? error : new AppError("Signup failed", 500)
+      error instanceof AppError
+        ? error
+        : new AppError('Signup failed', HTTP_statusCode.InternalServerError)
     );
   }
 };
@@ -45,7 +48,7 @@ export const verifyOTPAndCreateCreator = async (
     );
 
     res.status(201).json({
-      message: "Creator sign-up successfully",
+      message: 'Creator sign-up successfully',
       creator: {
         id: newCreator.id,
         email: newCreator.email,
@@ -56,11 +59,14 @@ export const verifyOTPAndCreateCreator = async (
       },
     });
   } catch (error) {
-    console.error("Error during OTP verification:", error);
+    console.error('Error during OTP verification:', error);
     next(
       error instanceof AppError
         ? error
-        : new AppError("OTP verification failed", 500)
+        : new AppError(
+            'OTP verification failed',
+            HTTP_statusCode.InternalServerError
+          )
     );
   }
 };
@@ -81,8 +87,8 @@ export const signIn = async (
       req
     );
 
-    res.status(200).json({
-      message: "Sign in successful",
+    res.status(HTTP_statusCode.OK).json({
+      message: 'Sign in successful',
       user: {
         id: user.id,
         email: user.email,
@@ -92,11 +98,11 @@ export const signIn = async (
       token,
     });
   } catch (error) {
-    console.error("Error during sign-in:", error);
+    console.error('Error during sign-in:', error);
     next(
       new AppError(
-        error instanceof Error ? error.message : "Sign in failed",
-        401
+        error instanceof Error ? error.message : 'Sign in failed',
+        HTTP_statusCode.Unauthorized
       )
     );
   }
@@ -113,14 +119,17 @@ export const forgotPassword = async (
   try {
     await creatorService.sendOTPForForgotPassword(email, res);
     res.status(200).json({
-      message: "OTP sent for password reset",
+      message: 'OTP sent for password reset',
     });
   } catch (error) {
-    console.error("Error during OTP sending:", error);
+    console.error('Error during OTP sending:', error);
     next(
       error instanceof AppError
         ? error
-        : new AppError("OTP sending failed", 500)
+        : new AppError(
+            'OTP sending failed',
+            HTTP_statusCode.InternalServerError
+          )
     );
   }
 };
@@ -142,7 +151,7 @@ export const verifyForgotOTP = async (
     );
 
     res.status(200).json({
-      message: "Sign in successful",
+      message: 'Sign in successful',
       user: {
         id: user.id,
         email: user.email,
@@ -152,11 +161,14 @@ export const verifyForgotOTP = async (
       token,
     });
   } catch (error) {
-    console.error("Error during OTP verification:", error);
+    console.error('Error during OTP verification:', error);
     next(
       error instanceof AppError
         ? error
-        : new AppError("OTP verification failed", 500)
+        : new AppError(
+            'OTP verification failed',
+            HTTP_statusCode.InternalServerError
+          )
     );
   }
 };
@@ -170,21 +182,27 @@ export const fetchCreatorProfile = async (
     const userId = req.user?.id;
 
     if (!userId) {
-      throw new AppError("Authentication required", 401);
+      throw new AppError(
+        'Authentication required',
+        HTTP_statusCode.Unauthorized
+      );
     }
 
     const creatorProfile = await creatorService.getProfile(userId);
 
     res.status(200).json({
-      message: "Profile fetched successfully",
+      message: 'Profile fetched successfully',
       user: creatorProfile,
     });
   } catch (error) {
-    console.error("Error fetching profile:", error);
+    console.error('Error fetching profile:', error);
     next(
       error instanceof AppError
         ? error
-        : new AppError("Profile fetch failed", 500)
+        : new AppError(
+            'Profile fetch failed',
+            HTTP_statusCode.InternalServerError
+          )
     );
   }
 };
@@ -195,19 +213,19 @@ export const editCreatorProfile = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    console.log("in edid profile");
+    console.log('in edid profile');
 
     const userId = req.user?.id;
-    console.log("userid:", userId);
+    console.log('userid:', userId);
 
     if (!userId) {
-      throw new AppError("Authentication required", 401);
+      throw new AppError('Authentication required', 401);
     }
 
     const { creator_name, industry } = req.body;
 
     if (!creator_name && !industry) {
-      throw new AppError("No updates provided", 400);
+      throw new AppError('No updates provided', 400);
     }
 
     const updatedCreator = await creatorService.editProfile(userId, {
@@ -216,7 +234,7 @@ export const editCreatorProfile = async (
     });
 
     res.status(200).json({
-      message: "Profile updated successfully",
+      message: 'Profile updated successfully',
       user: {
         id: updatedCreator.id,
         email: updatedCreator.email,
@@ -227,11 +245,11 @@ export const editCreatorProfile = async (
       },
     });
   } catch (error) {
-    console.error("Error updating profile:", error);
+    console.error('Error updating profile:', error);
     next(
       error instanceof AppError
         ? error
-        : new AppError("Profile update failed", 500)
+        : new AppError('Profile update failed', 500)
     );
   }
 };
@@ -242,19 +260,19 @@ export const changePasswordController = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    console.log("In change password");
+    console.log('In change password');
 
     const userId = req.user?.id;
-    console.log("User ID:", userId);
+    console.log('User ID:', userId);
 
     if (!userId) {
-      throw new AppError("Authentication required", 401);
+      throw new AppError('Authentication required', 401);
     }
 
     const { oldPassword, newPassword } = req.body;
 
     if (!oldPassword || !newPassword) {
-      throw new AppError("Both old and new passwords are required", 400);
+      throw new AppError('Both old and new passwords are required', 400);
     }
 
     const updatedCreator = await creatorService.changePassword(userId, {
@@ -263,7 +281,7 @@ export const changePasswordController = async (
     });
 
     res.status(200).json({
-      message: "Password updated successfully",
+      message: 'Password updated successfully',
       user: {
         id: updatedCreator.id,
         email: updatedCreator.email,
@@ -274,11 +292,11 @@ export const changePasswordController = async (
       },
     });
   } catch (error) {
-    console.error("Error changing password:", error);
+    console.error('Error changing password:', error);
     next(
       error instanceof AppError
         ? error
-        : new AppError("Password update failed", 500)
+        : new AppError('Password update failed', 500)
     );
   }
 };
@@ -290,10 +308,10 @@ export const createSurvey = async (
 ): Promise<void> => {
   try {
     const creatorId = req.user?.id;
-    console.log("User ID:", creatorId);
+    console.log('User ID:', creatorId);
 
     if (!creatorId) {
-      throw new AppError("Authentication required", 401);
+      throw new AppError('Authentication required', 401);
     }
 
     const {
@@ -319,15 +337,15 @@ export const createSurvey = async (
     });
 
     res.status(200).json({
-      message: "Survey created successfully",
+      message: 'Survey created successfully',
       survey,
     });
   } catch (error) {
-    console.error("Error creating survey:", error);
+    console.error('Error creating survey:', error);
     next(
       error instanceof AppError
         ? error
-        : new AppError("Survey creation failed", 500)
+        : new AppError('Survey creation failed', 500)
     );
   }
 };
@@ -340,8 +358,8 @@ export const getSurvey = async (
   try {
     const surveyId = req.query.surveyId;
 
-    if (!surveyId || typeof surveyId !== "string") {
-      throw new AppError("Survey ID required", 400);
+    if (!surveyId || typeof surveyId !== 'string') {
+      throw new AppError('Survey ID required', 400);
     }
 
     const survey = await creatorService.getSurvey(surveyId);
@@ -352,13 +370,13 @@ export const getSurvey = async (
     });
   } catch (error) {
     console.error(
-      "Error fetching survey:",
-      error instanceof Error ? error.message : "Unknown error"
+      'Error fetching survey:',
+      error instanceof Error ? error.message : 'Unknown error'
     );
     next(
       error instanceof AppError
         ? error
-        : new AppError("Failed to fetch survey", 500)
+        : new AppError('Failed to fetch survey', 500)
     );
   }
 };
@@ -371,7 +389,7 @@ export const getAllSurveys = async (
   try {
     const creatorId = req.user.id;
 
-    console.log("in fetatch survey", creatorId);
+    console.log('in fetatch survey', creatorId);
 
     const { surveys } = await creatorService.getAllSurveys(creatorId);
 
@@ -381,13 +399,13 @@ export const getAllSurveys = async (
     });
   } catch (error) {
     console.error(
-      "Error fetching surveys:",
-      error instanceof Error ? error.message : "Unknown error"
+      'Error fetching surveys:',
+      error instanceof Error ? error.message : 'Unknown error'
     );
     next(
       error instanceof AppError
         ? error
-        : new AppError("Failed to fetch surveys", 500)
+        : new AppError('Failed to fetch surveys', 500)
     );
   }
 };
@@ -401,12 +419,12 @@ export const makeSurvey = async (
     const surveyData = req.body;
 
     if (!surveyData || !surveyData.pages) {
-      throw new AppError("Survey data missing", 400);
+      throw new AppError('Survey data missing', 400);
     }
 
     // Validate the incoming data structure
     if (!Array.isArray(surveyData.pages)) {
-      throw new AppError("Invalid survey data format", 400);
+      throw new AppError('Invalid survey data format', 400);
     }
 
     const survey = await creatorService.makeSurvey(surveyData);
@@ -417,13 +435,13 @@ export const makeSurvey = async (
     });
   } catch (error) {
     console.error(
-      "Error creating/updating survey:",
-      error instanceof Error ? error.message : "Unknown error"
+      'Error creating/updating survey:',
+      error instanceof Error ? error.message : 'Unknown error'
     );
     next(
       error instanceof AppError
         ? error
-        : new AppError("Failed to create/update survey", 500)
+        : new AppError('Failed to create/update survey', 500)
     );
   }
 };

@@ -1,20 +1,19 @@
-import { generateOTP, sendOTP } from "../utils/otpUtils";
-import PendingUser from "../models/pendingUserModel";
-import User from "../models/usersModel";
-import { Response, Request } from "express";
-import { generateToken } from "../utils/jwtUtils";
-import bcrypt from "bcryptjs";
-import { IUser } from "../models/usersModel";
-import { AppError } from "../utils/AppError";
+import { generateOTP, sendOTP } from '../utils/otpUtils';
+import PendingUser from '../models/pendingUserModel';
+import User from '../models/usersModel';
+import { Response, Request } from 'express';
+import { generateToken } from '../utils/jwtUtils';
+import bcrypt from 'bcryptjs';
+import { IUser } from '../models/usersModel';
+import { AppError } from '../utils/AppError';
 
 export class SharedService {
-  // Resend OTP for pending users
   async resendOTP(
     pendingUserId: string
   ): Promise<{ message: string; otp: string }> {
     const pendingUser = await PendingUser.findById(pendingUserId);
     if (!pendingUser) {
-      throw new AppError("Pending user not found", 404);
+      throw new AppError('Pending user not found', 404);
     }
 
     const newOtp = generateOTP();
@@ -27,19 +26,19 @@ export class SharedService {
     await sendOTP(pendingUser.email, newOtp);
 
     return {
-      message: "New OTP sent for verification",
+      message: 'New OTP sent for verification',
       otp: newOtp,
     };
   }
 
   // Logout user
   async logout(res: Response): Promise<void> {
-    console.log("Logging out...");
+    console.log('Logging out...');
 
-    res.clearCookie("user", {
+    res.clearCookie('user', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
     });
   }
 
@@ -50,7 +49,7 @@ export class SharedService {
   ): Promise<{ message: string }> {
     const user = await User.findOne({ email });
     if (!user) {
-      throw new AppError("Email not registered", 404);
+      throw new AppError('Email not registered', 404);
     }
 
     const otp = generateOTP();
@@ -58,11 +57,11 @@ export class SharedService {
 
     const hashedOTP = await bcrypt.hash(otp, 10);
 
-    res.cookie("resetOTP", hashedOTP, {
+    res.cookie('resetOTP', hashedOTP, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === 'production',
       maxAge: 10 * 60 * 1000,
-      sameSite: "strict",
+      sameSite: 'strict',
     });
 
     await sendOTP(email, otp);
@@ -79,7 +78,7 @@ export class SharedService {
   ): Promise<{ message: string }> {
     const user = await User.findOne({ email });
     if (!user) {
-      throw new AppError("Email not registered", 404);
+      throw new AppError('Email not registered', 404);
     }
 
     const otp = generateOTP();
@@ -87,11 +86,11 @@ export class SharedService {
 
     const hashedOTP = await bcrypt.hash(otp, 10);
 
-    res.cookie("resetOTP", hashedOTP, {
+    res.cookie('resetOTP', hashedOTP, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === 'production',
       maxAge: 10 * 60 * 1000,
-      sameSite: "strict",
+      sameSite: 'strict',
     });
 
     await sendOTP(email, otp);
@@ -111,28 +110,28 @@ export class SharedService {
   ): Promise<{ user: IUser; token: string }> {
     const user = await User.findOne({ email });
     if (!user) {
-      throw new AppError("Email not registered", 404);
+      throw new AppError('Email not registered', 404);
     }
 
     const storedHashedOTP = req.cookies.resetOTP;
     if (!storedHashedOTP) {
-      throw new AppError("No OTP found", 400);
+      throw new AppError('No OTP found', 400);
     }
 
     const isMatch = await bcrypt.compare(otp, storedHashedOTP);
     if (!isMatch) {
-      throw new AppError("Invalid OTP", 400);
+      throw new AppError('Invalid OTP', 400);
     }
 
-    res.clearCookie("resetOTP");
+    res.clearCookie('resetOTP');
 
     const token = generateToken(user.id, user.role);
 
-    res.cookie("user", token, {
+    res.cookie('user', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === 'production',
       maxAge: 3 * 24 * 60 * 60 * 1000,
-      sameSite: "strict",
+      sameSite: 'strict',
     });
 
     return {

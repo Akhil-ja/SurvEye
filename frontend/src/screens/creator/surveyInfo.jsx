@@ -28,7 +28,6 @@ function SurveyDetails() {
     if (surveyId) {
       dispatch(getSurvey({ surveyId }))
         .unwrap()
-        .then((result) => console.log("Survey data:", result))
         .catch((error) => console.error("Error fetching survey:", error));
     }
   }, [dispatch, surveyId]);

@@ -3,6 +3,7 @@ import { FaBars, FaHome, FaUserAlt } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { RiSurveyFill } from "react-icons/ri";
+import { SiLimesurvey } from "react-icons/si";
 
 const UserSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -35,7 +36,7 @@ const UserSidebar = () => {
             <li>
               <Link
                 to="/user/home"
-                onClick={handleLinkClick} // Close sidebar on click
+                onClick={handleLinkClick}
                 className="flex items-center space-x-2 py-2 px-4 hover:bg-gray-700 rounded"
               >
                 <FaHome className="text-xl text-white" />
@@ -45,7 +46,7 @@ const UserSidebar = () => {
             <li>
               <Link
                 to="/user/profile"
-                onClick={handleLinkClick} // Close sidebar on click
+                onClick={handleLinkClick}
                 className="flex items-center space-x-2 py-2 px-4 hover:bg-gray-700 rounded"
               >
                 <FaUserAlt className="text-xl text-white" />
@@ -54,8 +55,18 @@ const UserSidebar = () => {
             </li>
             <li>
               <Link
+                to="/user/attendedsurveys"
+                onClick={handleLinkClick}
+                className="flex items-center space-x-2 py-2 px-4 hover:bg-gray-700 rounded"
+              >
+                <SiLimesurvey className="text-xl text-white" />
+                <span className="text-white">Attended Survey</span>
+              </Link>
+            </li>
+            <li>
+              <Link
                 to="/user/survey"
-                onClick={handleLinkClick} // Close sidebar on click
+                onClick={handleLinkClick}
                 className="flex items-center space-x-2 py-2 px-4 hover:bg-gray-700 rounded"
               >
                 <RiSurveyFill className="text-xl text-white" />

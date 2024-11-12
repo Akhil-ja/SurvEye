@@ -343,7 +343,9 @@ export class UserService {
     page: number = 1,
     limit: number = 6,
     sortBy: string = 'createdAt',
-    order: 'asc' | 'desc' = 'desc'
+    order: 'asc' | 'desc' = 'desc',
+    attended: boolean,
+    userId?: string
   ): Promise<{
     surveys: ISurvey[];
     currentPage: number;
@@ -352,24 +354,43 @@ export class UserService {
   }> {
     const skip = (page - 1) * limit;
     const sortOrder = order === 'asc' ? 1 : -1;
-
     const currentDate = new Date();
+    let surveys, totalSurveys;
 
-    const [surveys, totalSurveys] = await Promise.all([
-      Survey.find({
-        status: 'active',
-        'duration.startDate': { $lte: currentDate },
-        'duration.endDate': { $gte: currentDate },
-      })
-        .sort({ [sortBy]: sortOrder })
-        .skip(skip)
-        .limit(limit),
-      Survey.countDocuments({
-        status: 'active',
-        'duration.startDate': { $lte: currentDate },
-        'duration.endDate': { $gte: currentDate },
-      }),
-    ]);
+    if (attended && userId) {
+      const attendedSurveyResponses = await SurveyResponse.find(
+        { user: userId },
+        'survey'
+      ).lean();
+
+      const attendedSurveyIds = attendedSurveyResponses.map(
+        (response) => response.survey
+      );
+
+      [surveys, totalSurveys] = await Promise.all([
+        Survey.find({ _id: { $in: attendedSurveyIds } })
+          .sort({ [sortBy]: sortOrder })
+          .skip(skip)
+          .limit(limit),
+        Survey.countDocuments({ _id: { $in: attendedSurveyIds } }),
+      ]);
+    } else {
+      [surveys, totalSurveys] = await Promise.all([
+        Survey.find({
+          status: 'active',
+          'duration.startDate': { $lte: currentDate },
+          'duration.endDate': { $gte: currentDate },
+        })
+          .sort({ [sortBy]: sortOrder })
+          .skip(skip)
+          .limit(limit),
+        Survey.countDocuments({
+          status: 'active',
+          'duration.startDate': { $lte: currentDate },
+          'duration.endDate': { $gte: currentDate },
+        }),
+      ]);
+    }
 
     if (surveys.length === 0) {
       throw new AppError('No active surveys found', 404);
@@ -401,7 +422,6 @@ export class UserService {
     userId: string,
     responses: ResponseData[]
   ) {
-    // Validate survey exists and is active
     const survey = (await Survey.findById(surveyId)) as ISurvey | null;
     if (!survey) {
       throw new AppError('Survey not found', 404);
@@ -419,7 +439,6 @@ export class UserService {
       throw new AppError('Survey is not within its active duration', 400);
     }
 
-    // Check if user has already submitted a response
     const existingResponse = await SurveyResponse.findOne({
       survey: new Types.ObjectId(surveyId),
       user: new Types.ObjectId(userId),
@@ -432,7 +451,6 @@ export class UserService {
       );
     }
 
-    // Validate all required questions are answered
     const requiredQuestionIds = survey.questions
       .filter((q) => q.required)
       .map((q) => q._id.toString());
@@ -502,7 +520,7 @@ export class UserService {
             }
             break;
 
-          case 'multiple_choice':
+          case 'multiple_choice': {
             if (!Array.isArray(response.answer)) {
               throw new AppError(
                 `Question ${response.questionId} requires multiple answers`,
@@ -524,6 +542,7 @@ export class UserService {
             formattedAnswer.selectedOptions = validOptions as Types.ObjectId[];
 
             break;
+          }
 
           case 'text':
             if (Array.isArray(response.answer)) {
@@ -546,7 +565,6 @@ export class UserService {
       })
     );
 
-    // Create survey response
     const surveyResponse = new SurveyResponse({
       survey: surveyId,
       user: userId,

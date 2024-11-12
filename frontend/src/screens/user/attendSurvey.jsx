@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, React } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -8,6 +8,7 @@ import {
   Users,
   Clock,
 } from "lucide-react";
+import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -84,8 +85,8 @@ const AttendSurvey = () => {
   useEffect(() => {
     if (submissionStatus === "succeeded") {
       clearsessionStorage();
-      alert("Survey submitted successfully!");
-      navigate("/user/surveys");
+      toast.success("Survey submitted successfully!");
+      navigate("/user/survey");
     }
   }, [submissionStatus, navigate]);
 

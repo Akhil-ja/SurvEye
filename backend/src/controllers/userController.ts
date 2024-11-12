@@ -284,7 +284,7 @@ export const changePasswordController = async (
 };
 
 export const getActiveSurveys = async (
-  req: Request,
+  req: any,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -293,12 +293,23 @@ export const getActiveSurveys = async (
     const limit = parseInt(req.query.limit as string) || 6;
     const sortBy = (req.query.sortBy as string) || 'createdAt';
     const order = (req.query.order as 'asc' | 'desc') || 'desc';
+    const attended = req.query.attended === 'true';
+    const userId = req.user?.id;
+
+    if (attended && !userId) {
+      throw new AppError(
+        'Authentication required to view attended surveys',
+        401
+      );
+    }
 
     const result = await userService.getActiveSurveys(
       page,
       limit,
       sortBy,
-      order
+      order,
+      attended,
+      userId
     );
 
     res.status(200).json({
@@ -327,8 +338,6 @@ export const getSurveyinfo = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    console.log('in get survey info');
-
     const surveyId = req.query.surveyId;
     if (typeof surveyId !== 'string') {
       throw new AppError('Invalid survey ID format', 400);
@@ -361,13 +370,14 @@ export const submitSurveyResponse = async (
 ): Promise<void> => {
   try {
     const userId = req.user?.id;
-    const { surveyId, responses } = req.body;
+    const { surveyId } = req.params;
+    const { responses } = req.body;
 
     if (!userId) {
       throw new AppError('Authentication required', 401);
     }
 
-    if (!surveyId || !responses || !Array.isArray(responses)) {
+    if (!responses || !Array.isArray(responses)) {
       throw new AppError('Invalid submission data', 400);
     }
 

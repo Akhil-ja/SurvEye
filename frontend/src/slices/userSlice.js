@@ -58,7 +58,7 @@ export const changePassword = createAsyncThunk(
 export const getSurvey = createAsyncThunk(
   "user/getSurvey",
   async (
-    { page = 1, sort = "date", order = "desc" } = {},
+    { page = 1, sort = "date", order = "desc", attended = false } = {},
     { rejectWithValue }
   ) => {
     try {
@@ -67,6 +67,7 @@ export const getSurvey = createAsyncThunk(
           page,
           sort,
           order,
+          attended,
         },
       });
       return response.data;

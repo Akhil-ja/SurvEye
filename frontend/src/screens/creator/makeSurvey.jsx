@@ -26,7 +26,6 @@ const SurveyBuilder = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const surveyId = searchParams.get("surveyId");
-  console.log(surveyId);
 
   const dispatch = useDispatch();
 
@@ -180,7 +179,6 @@ const SurveyBuilder = () => {
     dispatch(submitSurvey(surveyData))
       .unwrap()
       .then((result) => {
-        console.log("Survey submitted successfully:", result);
         sessionStorage.removeItem("surveyProgress");
         navigate(`/creator/surveyinfo?surveyId=${surveyId}`);
       })

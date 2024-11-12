@@ -389,8 +389,6 @@ export const getAllSurveys = async (
   try {
     const creatorId = req.user.id;
 
-    console.log('in fetatch survey', creatorId);
-
     const { surveys } = await creatorService.getAllSurveys(creatorId);
 
     res.status(200).json({

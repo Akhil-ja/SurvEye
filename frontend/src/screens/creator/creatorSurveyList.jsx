@@ -20,6 +20,14 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllSurveys } from "@/slices/creatorSlice";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { PlusCircle } from "lucide-react";
 
 const CreatorHome = () => {
   const dispatch = useDispatch();
@@ -42,15 +50,12 @@ const CreatorHome = () => {
         endDate: new Date(survey.duration.endDate).toLocaleDateString(),
         status: survey.isPublished ? "active" : "draft",
         amount: survey.amount,
-        impressions: survey.impressions,
-        remaining: survey.remaining,
+        impressions: survey.totalResponses,
+        remaining: survey.sampleSize,
       }));
       setFormattedSurveys(newFormattedSurveys);
     }
   }, [surveys]);
-
-  if (isLoading) return <div>Loading surveys...</div>;
-  if (error) return <div>Error fetching surveys: {error.message}</div>;
 
   const indexOfLastSurvey = currentPage * surveysPerPage;
   const indexOfFirstSurvey = indexOfLastSurvey - surveysPerPage;
@@ -65,148 +70,189 @@ const CreatorHome = () => {
   };
 
   return (
-    <div className="p-6 bg-white">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Survey List</h1>
-        <div className="flex items-center space-x-2">
-          <span>Sort by:</span>
-          <Select>
-            <SelectTrigger className="w-[120px]">
-              <SelectValue placeholder="Cost" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="cost">Cost</SelectItem>
-              <SelectItem value="date">Date</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select>
-            <SelectTrigger className="w-[120px]">
-              <SelectValue placeholder="Posted Time" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">Newest</SelectItem>
-              <SelectItem value="oldest">Oldest</SelectItem>
-            </SelectContent>
-          </Select>
-          <Link to={"/creator/survey"}>
-            <Button>Create Survey</Button>
-          </Link>
-        </div>
-      </div>
-
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[50px]">
-              <Checkbox />
-            </TableHead>
-            <TableHead>Survey Name</TableHead>
-            <TableHead>Creator Name</TableHead>
-            <TableHead>Start Date</TableHead>
-            <TableHead>End Date</TableHead>
-            <TableHead>Amount</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Impressions</TableHead>
-            <TableHead>Remaining</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {currentSurveys.length > 0 ? (
-            currentSurveys.map((survey) => (
-              <TableRow key={survey.id}>
-                <TableCell>
-                  <Checkbox />
-                </TableCell>
-                <TableCell>
-                  <Link to={`/creator/surveyinfo?surveyId=${survey.id}`}>
-                    {survey.name}
-                  </Link>
-                </TableCell>
-                <TableCell>
-                  <Link to={`/creator/surveyinfo?surveyId=${survey.id}`}>
-                    {survey.creatorName}
-                  </Link>
-                </TableCell>
-                <TableCell>
-                  <Link to={`/creator/surveyinfo?surveyId=${survey.id}`}>
-                    {survey.startDate}
-                  </Link>
-                </TableCell>
-                <TableCell>
-                  <Link to={`/creator/surveyinfo?surveyId=${survey.id}`}>
-                    {survey.endDate}
-                  </Link>
-                </TableCell>
-                <TableCell>
-                  <Link to={`/creator/surveyinfo?surveyId=${survey.id}`}>
-                    {survey.amount}
-                  </Link>
-                </TableCell>
-                <TableCell>
-                  <Link to={`/creator/surveyinfo?surveyId=${survey.id}`}>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs ${
-                        survey.status === "active"
-                          ? "bg-green-200 text-green-800"
-                          : "bg-gray-200 text-gray-800"
-                      }`}
-                    >
-                      {survey.status}
-                    </span>
-                  </Link>
-                </TableCell>
-                <TableCell>
-                  <Link to={`/creator/surveyinfo?surveyId=${survey.id}`}>
-                    {survey.impressions}
-                  </Link>
-                </TableCell>
-                <TableCell>
-                  <Link to={`/creator/surveyinfo?surveyId=${survey.id}`}>
-                    {survey.remaining}
-                  </Link>
-                </TableCell>
-              </TableRow>
-            ))
+    <div className="p-6 bg-gray-100">
+      <Card>
+        <CardHeader>
+          <CardTitle>Survey List</CardTitle>
+          <div className="flex items-center space-x-2">
+            <span className="text-gray-500">Sort by:</span>
+            <Select>
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="Cost" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="cost">Cost</SelectItem>
+                <SelectItem value="date">Date</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select>
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="Posted Time" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest</SelectItem>
+                <SelectItem value="oldest">Oldest</SelectItem>
+              </SelectContent>
+            </Select>
+            <Link to={"/creator/survey"}>
+              <Button variant="primary" className="flex items-center space-x-2">
+                <PlusCircle className="h-4 w-4" />
+                <span>Create Survey</span>
+              </Button>
+            </Link>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="text-center py-8 text-gray-500">
+              Loading surveys...
+            </div>
+          ) : error ? (
+            <div className="text-center py-8 text-red-500">{error}</div>
+          ) : formattedSurveys.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              No active surveys found for this creator.{" "}
+              <Link
+                to={"/creator/survey"}
+                className="text-blue-500 hover:underline"
+              >
+                Create a new survey
+              </Link>
+            </div>
           ) : (
-            <TableRow>
-              <TableCell colSpan={8} className="text-center">
-                No surveys found
-              </TableCell>
-            </TableRow>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[50px]">
+                    <Checkbox />
+                  </TableHead>
+                  <TableHead>Survey Name</TableHead>
+                  <TableHead>Creator Name</TableHead>
+                  <TableHead>Start Date</TableHead>
+                  <TableHead>End Date</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Impressions</TableHead>
+                  <TableHead>Remaining</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {currentSurveys.map((survey) => (
+                  <TableRow key={survey.id}>
+                    <TableCell>
+                      <Checkbox />
+                    </TableCell>
+                    <TableCell>
+                      <Link
+                        to={`/creator/surveyinfo?surveyId=${survey.id}`}
+                        className="text-blue-500 hover:underline"
+                      >
+                        {survey.name}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <Link
+                        to={`/creator/surveyinfo?surveyId=${survey.id}`}
+                        className="text-blue-500 hover:underline"
+                      >
+                        {survey.creatorName}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <Link
+                        to={`/creator/surveyinfo?surveyId=${survey.id}`}
+                        className="text-blue-500 hover:underline"
+                      >
+                        {survey.startDate}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <Link
+                        to={`/creator/surveyinfo?surveyId=${survey.id}`}
+                        className="text-blue-500 hover:underline"
+                      >
+                        {survey.endDate}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <Link
+                        to={`/creator/surveyinfo?surveyId=${survey.id}`}
+                        className="text-blue-500 hover:underline"
+                      >
+                        {survey.amount}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <Link
+                        to={`/creator/surveyinfo?surveyId=${survey.id}`}
+                        className="text-blue-500 hover:underline"
+                      >
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs ${
+                            survey.status === "active"
+                              ? "bg-green-200 text-green-800"
+                              : "bg-gray-200 text-gray-800"
+                          }`}
+                        >
+                          {survey.status}
+                        </span>
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <Link
+                        to={`/creator/surveyinfo?surveyId=${survey.id}`}
+                        className="text-blue-500 hover:underline"
+                      >
+                        {survey.impressions}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <Link
+                        to={`/creator/surveyinfo?surveyId=${survey.id}`}
+                        className="text-blue-500 hover:underline"
+                      >
+                        {survey.remaining}
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
-        </TableBody>
-      </Table>
-
-      <div className="flex justify-center items-center mt-4">
-        <div className="flex space-x-1 text-sm">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={currentPage === 1}
-            onClick={() => handlePageChange(currentPage - 1)}
-          >
-            Previous
-          </Button>
-          {[...Array(totalPages)].map((_, index) => (
-            <Button
-              key={index + 1}
-              variant={index + 1 === currentPage ? "default" : "outline"}
-              size="sm"
-              onClick={() => handlePageChange(index + 1)}
-            >
-              {index + 1}
-            </Button>
-          ))}
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={currentPage === totalPages}
-            onClick={() => handlePageChange(currentPage + 1)}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
+        </CardContent>
+        <CardFooter>
+          <div className="flex justify-center items-center">
+            <div className="flex space-x-1 text-sm">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage === 1}
+                onClick={() => handlePageChange(currentPage - 1)}
+              >
+                Previous
+              </Button>
+              {[...Array(totalPages)].map((_, index) => (
+                <Button
+                  key={index + 1}
+                  variant={index + 1 === currentPage ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handlePageChange(index + 1)}
+                >
+                  {index + 1}
+                </Button>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage === totalPages}
+                onClick={() => handlePageChange(currentPage + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </CardFooter>
+      </Card>
     </div>
   );
 };

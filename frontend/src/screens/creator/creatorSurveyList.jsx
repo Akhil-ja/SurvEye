@@ -48,10 +48,10 @@ const CreatorHome = () => {
         creatorName: survey.creatorName,
         startDate: new Date(survey.duration.startDate).toLocaleDateString(),
         endDate: new Date(survey.duration.endDate).toLocaleDateString(),
-        status: survey.isPublished ? "active" : "draft",
+        status: survey.status,
         amount: survey.amount,
         impressions: survey.totalResponses,
-        remaining: survey.sampleSize,
+        remaining: survey.sampleSize - survey.totalResponses,
       }));
       setFormattedSurveys(newFormattedSurveys);
     }

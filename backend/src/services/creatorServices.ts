@@ -480,20 +480,25 @@ export class CreatorService {
     return transformedQuestions;
   }
 
-  async makeSurvey(surveyData: IIncomingSurveyData): Promise<ISurvey> {
+  async makeSurvey(
+    surveyData: IIncomingSurveyData,
+    actionType: string
+  ): Promise<ISurvey> {
     const { surveyId, pages } = surveyData;
+
+    const status = actionType === 'publish' ? 'active' : 'draft';
+    let isPublished = false;
 
     if (surveyId) {
       const existingSurvey = await Survey.findById(surveyId);
       if (!existingSurvey) {
         throw new Error('Survey not found');
       }
-
+      isPublished = existingSurvey.duration?.startDate < new Date();
+      existingSurvey.isPublished = isPublished;
       existingSurvey.questions = this.transformQuestions(pages);
       existingSurvey.updated_at = new Date();
-
-      existingSurvey.status = 'active';
-      existingSurvey.isPublished = true;
+      existingSurvey.status = status;
 
       await existingSurvey.save();
       return existingSurvey;
@@ -501,8 +506,8 @@ export class CreatorService {
 
     const survey = new Survey({
       questions: this.transformQuestions(pages),
-      status: 'active',
-      isPublished: true,
+      status,
+      isPublished,
     });
 
     await survey.save();

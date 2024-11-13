@@ -409,23 +409,22 @@ export const getAllSurveys = async (
 };
 
 export const makeSurvey = async (
-  req: Request<{}, any, IIncomingSurveyData>,
+  req: Request<{}, any, IIncomingSurveyData & { actionType: string }>,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const surveyData = req.body;
+    const { actionType, ...surveyData } = req.body;
 
     if (!surveyData || !surveyData.pages) {
       throw new AppError('Survey data missing', 400);
     }
 
-    // Validate the incoming data structure
     if (!Array.isArray(surveyData.pages)) {
       throw new AppError('Invalid survey data format', 400);
     }
 
-    const survey = await creatorService.makeSurvey(surveyData);
+    const survey = await creatorService.makeSurvey(surveyData, actionType);
 
     res.status(200).json({
       success: true,

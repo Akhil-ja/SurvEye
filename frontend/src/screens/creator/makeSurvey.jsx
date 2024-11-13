@@ -38,10 +38,8 @@ const SurveyBuilder = () => {
         .then((result) => console.log("Survey data:", result))
         .catch((error) => console.error("Error fetching survey:", error));
     }
-  }, [dispatch, surveyId]);
 
-  useEffect(() => {
-    const savedPages = sessionStorage.getItem("surveyProgress");
+    const savedPages = sessionStorage.getItem(`surveyProgress-${surveyId}`);
     if (savedPages) {
       try {
         setPages(JSON.parse(savedPages));
@@ -49,11 +47,11 @@ const SurveyBuilder = () => {
         console.error("Error loading saved survey:", e);
       }
     }
-  }, []);
+  }, [dispatch, surveyId]);
 
   useEffect(() => {
-    sessionStorage.setItem("surveyProgress", JSON.stringify(pages));
-  }, [pages, currentPage]);
+    sessionStorage.setItem(`surveyProgress-${surveyId}`, JSON.stringify(pages));
+  }, [pages, currentPage, surveyId]);
 
   const surveyData = {
     surveyId: surveyId,
@@ -67,31 +65,11 @@ const SurveyBuilder = () => {
     { id: "rating", label: "Rating Scale", icon: "⭐" },
   ];
 
-  const validateFields = (question) => {
-    if (!question.text) {
-      toast.error("Question text cannot be empty");
-      return false;
-    }
-    if (question.options.length === 0) {
-      toast.error("Options cannot be empty");
-      return false;
-    }
-    if (question.options.some((option) => option.text.trim() === "")) {
-      toast.error("Option fields cannot be empty");
-      return false;
-    }
-    if (question.options.length > 5) {
-      toast.error("A maximum of 5 options is allowed for each question");
-      return false;
-    }
-    return true;
-  };
-
   const addQuestion = (type) => {
     const newQuestion = {
       type,
       question: "",
-      options: type === "mcq" || type === "checkbox" ? ["", ""] : [],
+      options: type === "mcq" || type === "checkbox" ? [""] : [],
     };
 
     const updatedPages = [...pages];
@@ -110,18 +88,6 @@ const SurveyBuilder = () => {
     }
   };
 
-  const updateQuestion = (questionIndex, field, value) => {
-    const updatedPages = [...pages];
-
-    if (field === "question" && value.trim() === "") {
-      toast.error("Question cannot be empty!");
-      return;
-    }
-
-    updatedPages[currentPage].questions[questionIndex][field] = value;
-    setPages(updatedPages);
-  };
-
   const addOption = (questionIndex) => {
     const updatedPages = [...pages];
     const options = updatedPages[currentPage].questions[questionIndex].options;
@@ -135,11 +101,23 @@ const SurveyBuilder = () => {
     }
 
     if (options.length < 5) {
-      options.push(`Option ${options.length + 1}`);
+      options.push("");
       setPages(updatedPages);
     } else {
       toast.error("Maximum of 5 options allowed!");
     }
+  };
+
+  const updateQuestion = (questionIndex, field, value) => {
+    const updatedPages = [...pages];
+
+    if (field === "question" && value.trim() === "") {
+      toast.error("Question cannot be empty!");
+      return;
+    }
+
+    updatedPages[currentPage].questions[questionIndex][field] = value;
+    setPages(updatedPages);
   };
 
   const removeOption = (questionIndex, optionIndex) => {
@@ -162,24 +140,61 @@ const SurveyBuilder = () => {
     setCurrentPage(pages.length);
   };
 
-  const handleSubmit = () => {
-    const isValid = pages.every(
-      (page) =>
-        page.questions.length > 0 &&
-        page.questions.every((question) => question.question.trim() !== "")
-    );
-
+  const isValid = pages.every(
+    (page) =>
+      page.questions.length > 0 &&
+      page.questions.every((question) => question.question.trim() !== "") &&
+      page.questions.every(
+        (question) =>
+          question.options.length > 0 &&
+          question.options.every((option) => option.trim() !== "")
+      )
+  );
+  const handleSave = () => {
     if (!isValid) {
-      toast.error("Please fill in all questions before submitting!");
+      toast.error(
+        "Please fill in all questions and options before submitting!"
+      );
       return;
     }
 
-    toast.success("Survey submitted");
-    sessionStorage.removeItem("surveyProgress");
-    dispatch(submitSurvey(surveyData))
+    sessionStorage.removeItem(`surveyProgress-${surveyId}`);
+    dispatch(
+      submitSurvey({
+        surveyData: surveyData,
+        actionType: "draft",
+      })
+    )
       .unwrap()
-      .then((result) => {
-        sessionStorage.removeItem("surveyProgress");
+      .then(() => {
+        toast.success("Survey Saved succesfully");
+        sessionStorage.removeItem(`surveyProgress-${surveyId}`);
+        navigate(`/creator/surveylist`);
+      })
+      .catch((error) => {
+        console.error("Error saving survey:", error);
+      });
+  };
+
+  const handleSubmit = () => {
+    if (!isValid) {
+      toast.error(
+        "Please fill in all questions and options before submitting!"
+      );
+      return;
+    }
+
+    sessionStorage.removeItem(`surveyProgress-${surveyId}`);
+    dispatch(
+      submitSurvey({
+        surveyData: surveyData,
+        actionType: "active",
+      })
+    )
+      .unwrap()
+      .then(() => {
+        toast.success("Survey submitted");
+        sessionStorage.removeItem(`surveyProgress-${surveyId}`);
         navigate(`/creator/surveyinfo?surveyId=${surveyId}`);
       })
       .catch((error) => {
@@ -203,6 +218,9 @@ const SurveyBuilder = () => {
               onClick={handleSubmit}
             >
               Finish
+            </Button>
+            <Button variant="" className="" onClick={handleSave}>
+              Save
             </Button>
           </div>
         </div>

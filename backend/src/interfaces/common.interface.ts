@@ -120,3 +120,8 @@ export interface IAdmin extends Document {
   created_at: Date;
   edited_at: Date;
 }
+
+export interface ICategory extends Document {
+  name: string;
+  description: string;
+}

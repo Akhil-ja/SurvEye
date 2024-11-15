@@ -124,4 +124,5 @@ export interface IAdmin extends Document {
 export interface ICategory extends Document {
   name: string;
   description: string;
+  status: boolean;
 }

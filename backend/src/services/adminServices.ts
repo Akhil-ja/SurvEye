@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { AppError } from '../utils/AppError';
-import { IUser } from '../interfaces/common.interface';
+import { ICategory, IUser } from '../interfaces/common.interface';
 import { AdminRepository } from '../repositories/adminRepository';
 
 export class AdminService {
@@ -59,5 +59,9 @@ export class AdminService {
 
   async getAllUsers(): Promise<IUser[]> {
     return this.adminRepository.getAllUsers();
+  }
+
+  async getAllCategories(): Promise<ICategory[]> {
+    return this.adminRepository.getAllCategories();
   }
 }

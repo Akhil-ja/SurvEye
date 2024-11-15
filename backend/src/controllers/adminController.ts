@@ -79,4 +79,21 @@ export class AdminController {
       next(new AppError('Failed to fetch users', 500));
     }
   }
+
+  async getAllCategories(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const categories = await this.adminService.getAllCategories();
+      res.status(200).json({
+        message: 'Categories fetched successfully',
+        categories,
+      });
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      next(new AppError('Failed to fetch users', 500));
+    }
+  }
 }

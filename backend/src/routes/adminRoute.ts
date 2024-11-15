@@ -26,4 +26,8 @@ router.get('/getcategories', (req, res, next) => {
   adminController.getAllCategories(req, res, next);
 });
 
+router.put('/category/togglestatus', (req, res, next) => {
+  adminController.toggleCategoryStatus(req, res, next);
+});
+
 export default router;

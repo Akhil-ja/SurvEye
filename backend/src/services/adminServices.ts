@@ -64,4 +64,15 @@ export class AdminService {
   async getAllCategories(): Promise<ICategory[]> {
     return this.adminRepository.getAllCategories();
   }
+
+  async toggleCategoryStatus(CategoryId: string): Promise<ICategory> {
+    const category = await this.adminRepository.findCategoryById(CategoryId);
+
+    if (!category) {
+      throw new AppError('Category not found', 404);
+    }
+
+    category.status = category.status === true ? false : true;
+    return this.adminRepository.saveCategory(category);
+  }
 }

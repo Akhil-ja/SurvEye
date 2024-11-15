@@ -96,4 +96,28 @@ export class AdminController {
       next(new AppError('Failed to fetch users', 500));
     }
   }
+
+  async toggleCategoryStatus(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    const CategoryId = req.query.catrgoryId as string | undefined;
+
+    if (!CategoryId) {
+      return next(new AppError('Invalid user ID', 400));
+    }
+
+    try {
+      const updatedcategory =
+        await this.adminService.toggleCategoryStatus(CategoryId);
+      res.status(200).json({
+        message: `category status changed to ${updatedcategory.status}`,
+        category: updatedcategory,
+      });
+    } catch (error) {
+      console.error(error);
+      next(new AppError('Toggle status failed', 500));
+    }
+  }
 }

@@ -37,4 +37,12 @@ export class AdminRepository {
     }
     return categories;
   }
+
+  async saveCategory(category: ICategory): Promise<ICategory> {
+    return category.save();
+  }
+
+  async findCategoryById(CategoryId: string): Promise<ICategory | null> {
+    return Category.findById(CategoryId);
+  }
 }

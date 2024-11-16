@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { IUser, IAdmin } from '../interfaces/common.interface';
+import { IUser, IAdmin, ICategory } from '../interfaces/common.interface';
 
 export interface IAdminService {
   signIn(
@@ -13,4 +13,8 @@ export interface IAdminService {
   logout(res: Response): Promise<void>;
   toggleUserStatus(userId: string): Promise<IUser>;
   getAllUsers(): Promise<IUser[]>;
+  //category
+  getAllCategories(): Promise<ICategory[]>;
+  createCategory(categoryData: Partial<ICategory>): Promise<ICategory>;
+  toggleCategoryStatus(categoryId: string): Promise<ICategory>;
 }

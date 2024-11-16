@@ -75,4 +75,26 @@ export class AdminService {
     category.status = category.status === true ? false : true;
     return this.adminRepository.saveCategory(category);
   }
+
+  async createCategory(categoryData: Partial<ICategory>): Promise<ICategory> {
+    try {
+      if (!categoryData.name || !categoryData.description) {
+        throw new AppError('Name and description are required', 400);
+      }
+
+      const newCategoryData = {
+        ...categoryData,
+        status: categoryData.status ?? true,
+      };
+
+      const category =
+        await this.adminRepository.createCategory(newCategoryData);
+      return category;
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError('Failed to create category', 500);
+    }
+  }
 }

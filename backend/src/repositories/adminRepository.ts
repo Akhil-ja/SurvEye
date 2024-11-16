@@ -45,4 +45,19 @@ export class AdminRepository {
   async findCategoryById(CategoryId: string): Promise<ICategory | null> {
     return Category.findById(CategoryId);
   }
+  async createCategory(categoryData: Partial<ICategory>): Promise<ICategory> {
+    try {
+      const newCategory = new Category(categoryData);
+      const savedCategory = await newCategory.save();
+      if (!savedCategory) {
+        throw new AppError('Failed to create category', 400);
+      }
+      return savedCategory;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new AppError(error.message, 400);
+      }
+      throw new AppError('Failed to create category', 400);
+    }
+  }
 }

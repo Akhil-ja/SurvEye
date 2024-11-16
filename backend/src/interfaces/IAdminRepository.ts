@@ -1,4 +1,4 @@
-import { IAdmin, IUser } from '../interfaces/common.interface';
+import { IAdmin, IUser, ICategory } from '../interfaces/common.interface';
 import { Types } from 'mongoose';
 
 export interface IAdminRepository {
@@ -7,4 +7,9 @@ export interface IAdminRepository {
   findUserById(userId: string): Promise<IUser | null>;
   getAllUsers(): Promise<IUser[]>;
   saveUser(user: IUser): Promise<IUser>;
+  //category
+  getAllCategories(): Promise<ICategory[]>;
+  createCategory(categoryData: Partial<ICategory>): Promise<ICategory>;
+  findCategoryById(categoryId: string): Promise<ICategory | null>;
+  saveCategory(category: ICategory): Promise<ICategory>;
 }

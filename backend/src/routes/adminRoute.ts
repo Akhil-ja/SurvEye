@@ -30,4 +30,12 @@ router.put('/category/togglestatus', (req, res, next) => {
   adminController.toggleCategoryStatus(req, res, next);
 });
 
+router.post('/category', (req, res, next) => {
+  adminController.createCategory(req, res, next);
+});
+
+router.put('/category', (req, res, next) => {
+  adminController.toggleCategoryStatus(req, res, next);
+});
+
 export default router;

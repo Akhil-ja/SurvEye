@@ -102,10 +102,10 @@ export class AdminController {
     res: Response,
     next: NextFunction
   ): Promise<void> {
-    const CategoryId = req.query.catrgoryId as string | undefined;
+    const CategoryId = req.query.categoryId as string | undefined;
 
     if (!CategoryId) {
-      return next(new AppError('Invalid user ID', 400));
+      return next(new AppError('Invalid category ID', 400));
     }
 
     try {
@@ -118,6 +118,31 @@ export class AdminController {
     } catch (error) {
       console.error(error);
       next(new AppError('Toggle status failed', 500));
+    }
+  }
+
+  async createCategory(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const categoryData = req.body;
+
+      const newCategory = await this.adminService.createCategory(categoryData);
+
+      res.status(201).json({
+        status: 'success',
+        message: 'Category created successfully',
+        category: newCategory,
+      });
+    } catch (error) {
+      console.error('Error creating category:', error);
+      if (error instanceof AppError) {
+        next(error);
+      } else {
+        next(new AppError('Failed to create category', 500));
+      }
     }
   }
 }

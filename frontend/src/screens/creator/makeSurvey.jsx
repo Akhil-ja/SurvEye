@@ -140,16 +140,21 @@ const SurveyBuilder = () => {
     setCurrentPage(pages.length);
   };
 
-  const isValid = pages.every(
-    (page) =>
-      page.questions.length > 0 &&
-      page.questions.every((question) => question.question.trim() !== "") &&
-      page.questions.every(
-        (question) =>
-          question.options.length > 0 &&
-          question.options.every((option) => option.trim() !== "")
-      )
-  );
+  const isValid = pages.every((page) => {
+    if (page.questions.length === 0) return false;
+
+    return page.questions.every((question) => {
+      const trimmedQuestion = question.question.trim();
+      if (trimmedQuestion === "") return false;
+
+      if (question.type === "mcq" || question.type === "checkbox") {
+        return question.options.every((option) => option.trim() !== "");
+      }
+
+      return true;
+    });
+  });
+
   const handleSave = () => {
     if (!isValid) {
       toast.error(
@@ -228,7 +233,7 @@ const SurveyBuilder = () => {
         {data?.data && (
           <div className="mb-4 p-4 bg-white rounded-lg shadow-sm">
             <h2 className="text-xl font-bold">{data.data.surveyName}</h2>
-            <p className="text-sm text-gray-600">{data.data.category}</p>
+            <p className="text-sm text-gray-600">{data.data.category.name}</p>
           </div>
         )}
 

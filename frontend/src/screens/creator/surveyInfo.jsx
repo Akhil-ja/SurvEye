@@ -86,7 +86,7 @@ function SurveyDetails() {
               <span className="font-semibold" style={{ color: theme.primary }}>
                 Category:
               </span>{" "}
-              {data.data.category}
+              {data.data.category.name}
             </Typography>
           </CardContent>
         </Card>

@@ -1,5 +1,5 @@
 // Survey.ts
-import { Schema, model, Document, Types } from "mongoose";
+import { Schema, model, Document, Types } from 'mongoose';
 
 interface IOption extends Document {
   text: string;
@@ -9,7 +9,7 @@ interface IOption extends Document {
 interface IQuestion {
   _id: Types.ObjectId;
   questionText: string;
-  questionType: "multiple_choice" | "single_choice" | "text" | "rating";
+  questionType: 'multiple_choice' | 'single_choice' | 'text' | 'rating';
   options: IOption[];
   required: boolean;
   pageNumber: number;
@@ -30,12 +30,12 @@ interface ISurvey extends Document {
   creator: Types.ObjectId;
   surveyName: string;
   description: string;
-  category: "market" | "product" | "customer";
+  category: Types.ObjectId;
   creatorName: string;
   sampleSize: number;
   targetAgeRange: ITargetAgeRange;
   duration: IDuration;
-  status: "draft" | "active" | "completed" | "cancelled";
+  status: 'draft' | 'active' | 'completed' | 'cancelled';
   questions: IQuestion[];
   created_at: Date;
   updated_at: Date;
@@ -52,7 +52,7 @@ const questionSchema = new Schema<IQuestion>({
   questionText: { type: String, required: true },
   questionType: {
     type: String,
-    enum: ["multiple_choice", "single_choice", "text", "rating"],
+    enum: ['multiple_choice', 'single_choice', 'text', 'rating'],
     required: true,
   },
   options: [optionSchema],
@@ -61,14 +61,15 @@ const questionSchema = new Schema<IQuestion>({
 });
 
 const surveySchema = new Schema<ISurvey>({
-  creator: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  creator: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   surveyName: { type: String, required: true },
   description: { type: String, required: true },
   category: {
-    type: String,
-    enum: ["market", "product", "customer"],
+    type: Schema.Types.ObjectId,
+    ref: 'Category',
     required: true,
   },
+
   creatorName: { type: String, required: true },
   sampleSize: { type: Number, required: true },
   targetAgeRange: {
@@ -82,8 +83,8 @@ const surveySchema = new Schema<ISurvey>({
   },
   status: {
     type: String,
-    enum: ["draft", "active", "completed", "cancelled"],
-    default: "draft",
+    enum: ['draft', 'active', 'completed', 'cancelled'],
+    default: 'draft',
   },
   questions: [questionSchema],
   created_at: { type: Date, default: Date.now },
@@ -92,12 +93,11 @@ const surveySchema = new Schema<ISurvey>({
   isPublished: { type: Boolean, default: false },
 });
 
-// Middleware to update `updated_at` field
-surveySchema.pre("save", function (next) {
+surveySchema.pre('save', function (next) {
   this.updated_at = new Date();
   next();
 });
 
-const Survey = model<ISurvey>("Survey", surveySchema);
+const Survey = model<ISurvey>('Survey', surveySchema);
 
 export { Survey, ISurvey };

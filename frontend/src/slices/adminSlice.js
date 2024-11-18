@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../api/axiosConfig";
 
+// Admin Sign In
 export const adminSignIn = createAsyncThunk(
   "admin/signIn",
   async ({ email, password }, { rejectWithValue }) => {
@@ -20,6 +21,7 @@ export const adminSignIn = createAsyncThunk(
   }
 );
 
+// Admin Logout
 export const adminLogout = createAsyncThunk(
   "admin/logout",
   async (_, { rejectWithValue }) => {
@@ -36,6 +38,7 @@ export const adminLogout = createAsyncThunk(
   }
 );
 
+// Get Users
 export const getUsers = createAsyncThunk(
   "admin/users",
   async ({ role, status, search, page, limit } = {}, { rejectWithValue }) => {
@@ -59,17 +62,93 @@ export const getUsers = createAsyncThunk(
   }
 );
 
+// Toggle User Status
 export const toggleUserStatus = createAsyncThunk(
   "admin/toggleUserStatus",
   async (userId, { rejectWithValue, getState, dispatch }) => {
     try {
       const response = await api.put(`/admin/users/toggleStatus?id=${userId}`);
 
-      // Optionally refresh the users list after toggling status
       const { filters, pagination } = getState().admin;
       dispatch(getUsers({ ...filters, ...pagination }));
 
       return response.data.user;
+    } catch (error) {
+      return rejectWithValue(
+        error.response && error.response.data
+          ? error.response.data.message
+          : error.message
+      );
+    }
+  }
+);
+
+// Get Categories
+export const getCategories = createAsyncThunk(
+  "admin/categories",
+  async (isActive, { rejectWithValue }) => {
+    try {
+      console.log(isActive);
+
+      const response = await api.get(`/admin/getcategories/${isActive}`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response && error.response.data
+          ? error.response.data.message
+          : error.message
+      );
+    }
+  }
+);
+
+// Toggle Category Status
+export const toggleCategoryStatus = createAsyncThunk(
+  "admin/toggleCategoryStatus",
+  async (categoryId, { rejectWithValue }) => {
+    try {
+      const response = await api.put(
+        `/admin/category/toggleStatus?categoryId=${categoryId}`
+      );
+      return response.data.category;
+    } catch (error) {
+      return rejectWithValue(
+        error.response && error.response.data
+          ? error.response.data.message
+          : error.message
+      );
+    }
+  }
+);
+
+// Create Category
+export const createCategory = createAsyncThunk(
+  "admin/createCategory",
+  async (newCategory, { rejectWithValue }) => {
+    try {
+      const response = await api.post("/admin/category", newCategory);
+
+      return response.data.category;
+    } catch (error) {
+      return rejectWithValue(
+        error.response && error.response.data
+          ? error.response.data.message
+          : error.message
+      );
+    }
+  }
+);
+
+// Update Category
+export const updateCategory = createAsyncThunk(
+  "admin/updateCategory",
+  async ({ categoryId, data }, { rejectWithValue }) => {
+    try {
+      const response = await api.put(
+        `/admin/category?categoryid=${categoryId}`,
+        data
+      );
+      return response.data.category;
     } catch (error) {
       return rejectWithValue(
         error.response && error.response.data
@@ -93,6 +172,8 @@ const adminSlice = createSlice({
     users: [],
     totalUsers: 0,
 
+    categories: [],
+
     filters: {
       role: "all",
       status: "all",
@@ -114,6 +195,7 @@ const adminSlice = createSlice({
       state.error = null;
       state.users = [];
       state.totalUsers = 0;
+      state.categories = [];
     },
 
     setFilters: (state, action) => {
@@ -148,8 +230,8 @@ const adminSlice = createSlice({
         state.adminInfo = payload.admin;
         state.token = payload.token;
         state.isAuthenticated = true;
-        localStorage.setItem("adminInfo", JSON.stringify(payload.admin));
-        localStorage.setItem("token", payload.token);
+        sessionStorage.setItem("adminInfo", JSON.stringify(payload.admin));
+        sessionStorage.setItem("token", payload.token);
       })
       .addCase(adminSignIn.rejected, (state, { payload }) => {
         state.isLoading = false;
@@ -168,8 +250,8 @@ const adminSlice = createSlice({
         state.token = null;
         state.isAuthenticated = false;
         state.users = [];
-        localStorage.removeItem("adminInfo");
-        localStorage.removeItem("token");
+        sessionStorage.removeItem("adminInfo");
+        sessionStorage.removeItem("token");
       })
       .addCase(adminLogout.rejected, (state, { payload }) => {
         state.isLoading = false;
@@ -195,7 +277,6 @@ const adminSlice = createSlice({
         state.error = payload;
       });
 
-    // Toggle User Status
     builder
       .addCase(toggleUserStatus.pending, (state) => {
         state.isLoading = true;
@@ -203,12 +284,69 @@ const adminSlice = createSlice({
       })
       .addCase(toggleUserStatus.fulfilled, (state, { payload }) => {
         state.isLoading = false;
-        // Update the user in the list
         state.users = state.users.map((user) =>
           user._id === payload._id ? payload : user
         );
       })
       .addCase(toggleUserStatus.rejected, (state, { payload }) => {
+        state.isLoading = false;
+        state.error = payload;
+      })
+      .addCase(getCategories.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getCategories.fulfilled, (state, { payload }) => {
+        state.isLoading = false;
+        state.categories = payload.categories;
+      })
+      .addCase(getCategories.rejected, (state, { payload }) => {
+        state.isLoading = false;
+        state.error = payload;
+      })
+      .addCase(toggleCategoryStatus.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(toggleCategoryStatus.fulfilled, (state, action) => {
+        state.isLoading = false;
+        const updatedCategory = action.payload;
+        const index = state.categories.findIndex(
+          (cat) => cat._id === updatedCategory._id
+        );
+        if (index !== -1) {
+          state.categories[index] = updatedCategory;
+        }
+      })
+      .addCase(toggleCategoryStatus.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+      .addCase(createCategory.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(createCategory.fulfilled, (state, { payload }) => {
+        state.isLoading = false;
+        state.categories.push(payload);
+      })
+      .addCase(createCategory.rejected, (state, { payload }) => {
+        state.isLoading = false;
+        state.error = payload;
+      })
+      .addCase(updateCategory.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateCategory.fulfilled, (state, { payload }) => {
+        state.isLoading = false;
+        const index = state.categories.findIndex(
+          (category) => category._id === payload._id
+        );
+        if (index !== -1) {
+          state.categories[index] = payload;
+        }
+      })
+      .addCase(updateCategory.rejected, (state, { payload }) => {
         state.isLoading = false;
         state.error = payload;
       });

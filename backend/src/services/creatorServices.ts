@@ -366,7 +366,7 @@ export class CreatorService {
     surveyData: {
       surveyName: string;
       description: string;
-      category: 'market' | 'product' | 'customer';
+      category: string;
       creatorName: string;
       sampleSize: number;
       targetAgeRange: {
@@ -421,7 +421,7 @@ export class CreatorService {
   }
 
   async getSurvey(surveyId: string): Promise<ISurvey> {
-    const survey = await Survey.findById(surveyId);
+    const survey = await Survey.findById(surveyId).populate('category', 'name');
 
     if (!survey) {
       throw new AppError('Survey not found', 404);
@@ -431,7 +431,10 @@ export class CreatorService {
   }
 
   async getAllSurveys(creatorId: string): Promise<{ surveys: ISurvey[] }> {
-    const surveys = await Survey.find({ creator: creatorId });
+    const surveys = await Survey.find({ creator: creatorId }).populate(
+      'category',
+      'name'
+    );
 
     if (surveys.length === 0) {
       throw new AppError('No active surveys found for this creator', 404);

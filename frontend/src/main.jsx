@@ -37,6 +37,7 @@ import SurveyInfo from "./screens/creator/surveyInfo";
 import ActiveSurveys from "./screens/user/surveyList";
 import AttendSurvey from "./screens/user/attendSurvey";
 import AttendedSurveyList from "./screens/user/attendedSurveyList";
+import CategoryPage from "./screens/admin/categoryPage";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -77,6 +78,7 @@ const router = createBrowserRouter(
       <Route element={<AdminRoute />}>
         <Route path="/admin/home" element={<AdminHome />} />
         <Route path="/admin/users" element={<AdminUserList />} />
+        <Route path="/admin/category" element={<CategoryPage />} />
       </Route>
     </Route>
   )

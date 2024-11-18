@@ -16,5 +16,9 @@ export interface IAdminService {
   //category
   getAllCategories(): Promise<ICategory[]>;
   createCategory(categoryData: Partial<ICategory>): Promise<ICategory>;
+  updateCategory(
+    categoryId: string,
+    categoryData: Partial<ICategory>
+  ): Promise<ICategory>;
   toggleCategoryStatus(categoryId: string): Promise<ICategory>;
 }

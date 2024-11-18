@@ -145,4 +145,40 @@ export class AdminController {
       }
     }
   }
+
+  async updateCategory(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const categoryId = req.query.categoryid as string;
+      const updateData = req.body;
+
+      console.log('updated data', updateData);
+      console.log('category id', categoryId);
+
+      if (!categoryId) {
+        throw new AppError('Category ID is required', 400);
+      }
+
+      const updatedCategory = await this.adminService.updateCategory(
+        categoryId,
+        updateData
+      );
+
+      res.status(200).json({
+        status: 'success',
+        message: 'Category updated successfully',
+        category: updatedCategory,
+      });
+    } catch (error) {
+      console.error('Error updating category:', error);
+      if (error instanceof AppError) {
+        next(error);
+      } else {
+        next(new AppError('Failed to update category', 500));
+      }
+    }
+  }
 }

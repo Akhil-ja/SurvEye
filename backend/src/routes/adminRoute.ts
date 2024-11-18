@@ -35,7 +35,7 @@ router.post('/category', (req, res, next) => {
 });
 
 router.put('/category', (req, res, next) => {
-  adminController.toggleCategoryStatus(req, res, next);
+  adminController.updateCategory(req, res, next);
 });
 
 export default router;

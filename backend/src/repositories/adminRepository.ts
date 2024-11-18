@@ -60,4 +60,32 @@ export class AdminRepository {
       throw new AppError('Failed to create category', 400);
     }
   }
+
+  async updateCategory(
+    categoryId: string,
+    categoryData: Partial<ICategory>
+  ): Promise<ICategory> {
+    try {
+      const category = await Category.findById(categoryId);
+
+      if (!category) {
+        throw new AppError('Category not found', 404);
+      }
+
+      Object.assign(category, categoryData);
+
+      const updatedCategory = await category.save();
+
+      if (!updatedCategory) {
+        throw new AppError('Failed to update category', 400);
+      }
+
+      return updatedCategory;
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError('Failed to update category', 500);
+    }
+  }
 }

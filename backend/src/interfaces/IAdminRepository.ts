@@ -12,4 +12,8 @@ export interface IAdminRepository {
   createCategory(categoryData: Partial<ICategory>): Promise<ICategory>;
   findCategoryById(categoryId: string): Promise<ICategory | null>;
   saveCategory(category: ICategory): Promise<ICategory>;
+  updateCategory(
+    categoryId: string,
+    categoryData: Partial<ICategory>
+  ): Promise<ICategory>;
 }

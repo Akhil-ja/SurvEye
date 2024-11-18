@@ -97,4 +97,39 @@ export class AdminService {
       throw new AppError('Failed to create category', 500);
     }
   }
+  async updateCategory(
+    categoryId: string,
+    categoryData: Partial<ICategory>
+  ): Promise<ICategory> {
+    try {
+      const existingCategory =
+        await this.adminRepository.findCategoryById(categoryId);
+      if (!existingCategory) {
+        throw new AppError('Category not found', 404);
+      }
+
+      if (categoryData.name !== undefined && !categoryData.name.trim()) {
+        throw new AppError('Category name cannot be empty', 400);
+      }
+
+      if (
+        categoryData.description !== undefined &&
+        !categoryData.description.trim()
+      ) {
+        throw new AppError('Category description cannot be empty', 400);
+      }
+
+      const updatedCategory = await this.adminRepository.updateCategory(
+        categoryId,
+        categoryData
+      );
+
+      return updatedCategory;
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError('Failed to update category', 500);
+    }
+  }
 }

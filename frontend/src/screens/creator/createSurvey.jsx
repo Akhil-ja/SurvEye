@@ -24,10 +24,13 @@ import { format } from "date-fns";
 import { useDispatch } from "react-redux";
 import { createSurvey } from "../../slices/creatorSlice";
 import { useNavigate } from "react-router-dom";
+import { getCategories } from "@/slices/adminSlice";
 
 const CreateSurvey = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  const [categories, setCategories] = React.useState([]);
 
   const [formData, setFormData] = React.useState({
     surveyName: "",
@@ -36,6 +39,18 @@ const CreateSurvey = () => {
     creatorName: "",
     sampleSize: "",
   });
+
+  React.useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const result = await dispatch(getCategories(true)).unwrap();
+        setCategories(result.categories);
+      } catch (error) {
+        toast.error("Failed to fetch categories");
+      }
+    };
+    fetchCategories();
+  }, [dispatch]);
 
   const [startDate, setStartDate] = React.useState(null);
   const [endDate, setEndDate] = React.useState(null);
@@ -175,11 +190,11 @@ const CreateSurvey = () => {
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="market">Market Research</SelectItem>
-                    <SelectItem value="product">Product Feedback</SelectItem>
-                    <SelectItem value="customer">
-                      Customer Satisfaction
-                    </SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category._id} value={category._id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

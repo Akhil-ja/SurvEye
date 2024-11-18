@@ -14,7 +14,7 @@ export interface IAdminService {
   toggleUserStatus(userId: string): Promise<IUser>;
   getAllUsers(): Promise<IUser[]>;
   //category
-  getAllCategories(): Promise<ICategory[]>;
+  getAllCategories(active: boolean): Promise<ICategory[]>;
   createCategory(categoryData: Partial<ICategory>): Promise<ICategory>;
   updateCategory(
     categoryId: string,

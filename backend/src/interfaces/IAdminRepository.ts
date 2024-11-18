@@ -8,7 +8,7 @@ export interface IAdminRepository {
   getAllUsers(): Promise<IUser[]>;
   saveUser(user: IUser): Promise<IUser>;
   //category
-  getAllCategories(): Promise<ICategory[]>;
+  getAllCategories(acive: boolean): Promise<ICategory[]>;
   createCategory(categoryData: Partial<ICategory>): Promise<ICategory>;
   findCategoryById(categoryId: string): Promise<ICategory | null>;
   saveCategory(category: ICategory): Promise<ICategory>;

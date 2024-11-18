@@ -38,7 +38,7 @@ const CategoryPage = () => {
   });
 
   useEffect(() => {
-    dispatch(getCategories());
+    dispatch(getCategories(false));
   }, [dispatch]);
 
   const handleAddEdit = (category = null) => {
@@ -71,11 +71,10 @@ const CategoryPage = () => {
         })
       );
     } else {
-      // Dispatch createCategory for adding a new category
       dispatch(createCategory(formData));
     }
 
-    setIsDialogOpen(false); // Close the dialog
+    setIsDialogOpen(false);
   };
 
   const handleToggleStatus = (categoryId) => {

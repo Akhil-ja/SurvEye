@@ -30,11 +30,19 @@ export class AdminRepository {
     return user.save();
   }
 
-  async getAllCategories(): Promise<ICategory[]> {
-    const categories = await Category.find();
+  async getAllCategories(active: boolean): Promise<ICategory[]> {
+    let categories: ICategory[];
+
+    if (active) {
+      categories = await Category.find({ status: active });
+    } else {
+      categories = await Category.find({});
+    }
+
     if (!categories || categories.length === 0) {
       throw new AppError('No categories found', 404);
     }
+
     return categories;
   }
 

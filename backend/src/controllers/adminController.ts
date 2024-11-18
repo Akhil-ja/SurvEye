@@ -86,7 +86,11 @@ export class AdminController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const categories = await this.adminService.getAllCategories();
+      const { isActive } = req.params;
+      const active = isActive === 'true';
+      console.log(isActive, active);
+
+      const categories = await this.adminService.getAllCategories(active);
       res.status(200).json({
         message: 'Categories fetched successfully',
         categories,

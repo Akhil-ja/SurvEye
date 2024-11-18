@@ -61,8 +61,8 @@ export class AdminService {
     return this.adminRepository.getAllUsers();
   }
 
-  async getAllCategories(): Promise<ICategory[]> {
-    return this.adminRepository.getAllCategories();
+  async getAllCategories(active: boolean): Promise<ICategory[]> {
+    return this.adminRepository.getAllCategories(active);
   }
 
   async toggleCategoryStatus(CategoryId: string): Promise<ICategory> {

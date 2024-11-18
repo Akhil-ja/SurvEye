@@ -22,7 +22,7 @@ router.put('/users/toggleStatus', (req, res, next) =>
   adminController.toggleStatus(req, res, next)
 );
 
-router.get('/getcategories', (req, res, next) => {
+router.get('/getcategories/:isActive', (req, res, next) => {
   adminController.getAllCategories(req, res, next);
 });
 

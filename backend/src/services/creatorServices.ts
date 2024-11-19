@@ -518,7 +518,7 @@ export class CreatorService {
   ): Promise<ISurvey> {
     const { surveyId, pages } = surveyData;
 
-    const status = actionType === 'publish' ? 'active' : 'draft';
+    const status = actionType === 'active' ? 'active' : 'draft';
     let isPublished = false;
 
     if (surveyId) {
@@ -543,6 +543,22 @@ export class CreatorService {
     });
 
     await survey.save();
+    return survey;
+  }
+
+  async publishSurvey(surveyId: string): Promise<ISurvey> {
+    const survey = await Survey.findById(surveyId).populate('category', 'name');
+
+    if (!survey) {
+      throw new AppError('Survey not found', 404);
+    }
+
+    if (survey.status === 'active') {
+      throw new AppError('Survey is already published', 400);
+    }
+    survey.status = 'active';
+    await survey.save();
+
     return survey;
   }
 }

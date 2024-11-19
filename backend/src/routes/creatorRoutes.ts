@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router } from 'express';
 import {
   initiateSignUp,
   verifyOTPAndCreateCreator,
@@ -12,34 +12,36 @@ import {
   getSurvey,
   makeSurvey,
   getAllSurveys,
-} from "../controllers/creatorController";
-import { checkBlockedUser } from "../middlewares/statusMiddleware";
-import { protect } from "../middlewares/authMiddleware";
+  publishSurvey,
+} from '../controllers/creatorController';
+import { checkBlockedUser } from '../middlewares/statusMiddleware';
+import { protect } from '../middlewares/authMiddleware';
 
 const router = Router();
 
 // Public routes
-router.post("/signup", initiateSignUp);
-router.post("/verify-otp", verifyOTPAndCreateCreator);
-router.post("/signin", signIn);
-router.post("/forgot-password", forgotPassword);
-router.post("/forgot-password/verify-otp", verifyForgotOTP);
+router.post('/signup', initiateSignUp);
+router.post('/verify-otp', verifyOTPAndCreateCreator);
+router.post('/signin', signIn);
+router.post('/forgot-password', forgotPassword);
+router.post('/forgot-password/verify-otp', verifyForgotOTP);
 
 // Protected routes
 router.put(
-  "/change-password",
+  '/change-password',
   protect,
   checkBlockedUser,
   changePasswordController
 );
 router
-  .route("/profile")
+  .route('/profile')
   .get(protect, checkBlockedUser, fetchCreatorProfile)
   .put(protect, checkBlockedUser, editCreatorProfile);
 
-router.post("/survey", protect, checkBlockedUser, createSurvey);
-router.get("/survey", protect, checkBlockedUser, getSurvey);
-router.get("/surveys", protect, checkBlockedUser, getAllSurveys);
-router.post("/createsurvey", protect, checkBlockedUser, makeSurvey);
+router.post('/survey', protect, checkBlockedUser, createSurvey);
+router.get('/survey', protect, checkBlockedUser, getSurvey);
+router.get('/surveys', protect, checkBlockedUser, getAllSurveys);
+router.post('/createsurvey', protect, checkBlockedUser, makeSurvey);
+router.put('/publishsurvey', protect, checkBlockedUser, publishSurvey);
 
 export default router;

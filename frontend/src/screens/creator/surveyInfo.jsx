@@ -8,8 +8,9 @@ import {
   Typography,
   CircularProgress,
   Alert,
+  Button,
 } from "@mui/material";
-import { getSurvey } from "@/slices/creatorSlice";
+import { getSurvey, publishSurvey } from "@/slices/creatorSlice";
 
 const theme = {
   primary: "hsl(24.6, 95%, 43.1%)",
@@ -53,6 +54,23 @@ function SurveyDetails() {
   if (!data) {
     return null;
   }
+
+  const handlePublishSurvey = () => {
+    if (surveyId) {
+      dispatch(publishSurvey(surveyId))
+        .unwrap()
+        .then(() => {
+          console.log("Survey published successfully");
+          dispatch(getSurvey({ surveyId }))
+            .unwrap()
+            .then(() => console.log("Survey refreshed"))
+            .catch((error) => console.error("Error refreshing survey:", error));
+        })
+        .catch((error) =>
+          console.error("Error publishing survey:", error.message)
+        );
+    }
+  };
 
   return (
     <div
@@ -175,6 +193,16 @@ function SurveyDetails() {
               <span className="font-medium">Created:</span>{" "}
               {new Date(data.data.created_at).toLocaleString()}
             </Typography>
+            {data.data.status === "draft" && (
+              <Button
+                variant="contained"
+                color="primary"
+                style={{ marginTop: "16px", backgroundColor: theme.primary }}
+                onClick={handlePublishSurvey}
+              >
+                Publish Survey
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>

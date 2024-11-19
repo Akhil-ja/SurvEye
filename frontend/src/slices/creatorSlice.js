@@ -92,12 +92,20 @@ export const getAllSurveys = createAsyncThunk(
 export const submitSurvey = createAsyncThunk(
   "creator/submitSurvey",
   async ({ surveyData, actionType }) => {
-    console.log("Submitting Survey Data in slice:", surveyData);
-    console.log("Action Type:", actionType);
     const response = await api.post(`creator/createsurvey`, {
       ...surveyData,
       actionType,
     });
+    return response.data;
+  }
+);
+
+export const publishSurvey = createAsyncThunk(
+  "creator/publishSurvey",
+  async (surveyId) => {
+    const response = await api.put(
+      `creator/publishsurvey?surveyId=${surveyId}`
+    );
     return response.data;
   }
 );

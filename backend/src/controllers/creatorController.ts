@@ -442,3 +442,34 @@ export const makeSurvey = async (
     );
   }
 };
+
+export const publishSurvey = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { surveyId } = req.query;
+
+    if (!surveyId) {
+      throw new AppError('Survey ID is required', 400);
+    }
+
+    const survey = await creatorService.publishSurvey(surveyId);
+
+    res.status(200).json({
+      success: true,
+      data: survey,
+    });
+  } catch (error) {
+    console.error(
+      'Error publishing survey:',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError('Failed to publish survey', 500)
+    );
+  }
+};

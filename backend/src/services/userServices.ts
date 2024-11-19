@@ -11,6 +11,7 @@ import { Survey } from '../models/surveyModel';
 import { SurveyResponse } from '../models/surveyresponse';
 import { Types } from 'mongoose';
 import { ResponseData } from '../types/responseSurveyTypes';
+import moment from 'moment';
 
 interface AuthResponse {
   user: IUser;
@@ -257,6 +258,7 @@ export class UserService {
       sameSite: 'strict',
     });
   }
+
   async getProfile(userId: string): Promise<any> {
     const user = await User.findById(userId).select('-password');
 
@@ -272,6 +274,8 @@ export class UserService {
       throw new AppError('User is blocked', 403);
     }
 
+    const age = moment().diff(moment(user.date_of_birth), 'years');
+
     return {
       id: user.id,
       number: user.phoneNumber,
@@ -279,6 +283,7 @@ export class UserService {
       role: user.role,
       first_name: user.first_name,
       last_name: user.last_name,
+      age: age,
     };
   }
 

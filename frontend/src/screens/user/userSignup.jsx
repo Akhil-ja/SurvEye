@@ -83,6 +83,23 @@ export default function UserRegisterScreen() {
       return;
     }
 
+    const birthDate = new Date(trimmedDateOfBirth);
+    const currentDate = new Date();
+    let age = currentDate.getFullYear() - birthDate.getFullYear();
+    const monthDifference = currentDate.getMonth() - birthDate.getMonth();
+
+    if (
+      monthDifference < 0 ||
+      (monthDifference === 0 && currentDate.getDate() < birthDate.getDate())
+    ) {
+      age--;
+    }
+
+    if (age < 18) {
+      toast.error("You must be at least 18 years old to register.");
+      return;
+    }
+
     const userData = {
       email: trimmedEmail,
       phoneNumber: trimmedPhoneNumber,

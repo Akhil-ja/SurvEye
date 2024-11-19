@@ -25,7 +25,6 @@ const ProfileView = () => {
 
   // Add debugging log to check Redux state
   const userState = useSelector((state) => {
-    console.log("Redux State:", state);
     return (
       state?.user || {
         profile: null,
@@ -37,7 +36,6 @@ const ProfileView = () => {
     );
   });
 
-  // Safely destructure with default values
   const {
     profile = null,
     isLoading = false,
@@ -144,14 +142,12 @@ const ProfileView = () => {
     </div>
   );
 
-  // Show loading state
   if (isLoading) {
     return (
       <div className="flex justify-center p-4">Loading profile data...</div>
     );
   }
 
-  // Show error state if Redux store is not properly connected
   if (!userState) {
     return (
       <div className="flex justify-center p-4 text-red-600">
@@ -189,6 +185,7 @@ const ProfileView = () => {
           <Separator />
           <ProfileRow label="Email" value={profile?.email || "Loading..."} />
           <Separator />
+          <ProfileRow label="Age" value={profile?.age || "Loading..."} />
         </CardContent>
       </Card>
 

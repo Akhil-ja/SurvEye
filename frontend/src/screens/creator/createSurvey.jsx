@@ -84,6 +84,16 @@ const CreateSurvey = () => {
         toast.error("Age cannot be zero or negative.");
         return;
       }
+
+      if (parseInt(minAge) < 18) {
+        toast.error("Minimum age must be at least 18.");
+        return;
+      }
+      if (parseInt(maxAge) > 100) {
+        toast.error("Maximum age must be at most 100.");
+        return;
+      }
+
       if (parseInt(minAge) > parseInt(maxAge)) {
         toast.error("Minimum age cannot be greater than maximum age.");
         return;

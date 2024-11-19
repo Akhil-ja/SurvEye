@@ -74,7 +74,12 @@ export const signIn = async (
   const { email, password } = req.body;
 
   try {
-    const { user, token } = await userService.signIn(email, password, res, req);
+    const { user, tokens } = await userService.signIn(
+      email,
+      password,
+      res,
+      req
+    );
     res.status(200).json({
       message: 'Sign in successful',
       user: {
@@ -84,7 +89,7 @@ export const signIn = async (
         first_name: user.first_name,
         last_name: user.last_name,
       },
-      token,
+      tokens,
     });
   } catch (error) {
     console.error('Error during Sign-in:', error);
@@ -124,7 +129,7 @@ export const verifyForgotOTP = async (
   const { email, otp } = req.body;
 
   try {
-    const { user, token } = await userService.verifyOTPAndSignIn(
+    const { user, tokens } = await userService.verifyOTPAndSignIn(
       email,
       otp,
       res,
@@ -139,7 +144,7 @@ export const verifyForgotOTP = async (
         first_name: user.first_name,
         last_name: user.last_name,
       },
-      token,
+      tokens,
     });
   } catch (error) {
     console.error('Error during OTP verification:', error);

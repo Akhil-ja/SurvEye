@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import User from '../models/usersModel';
 import { IUser } from '../models/usersModel';
-import { generateToken } from '../utils/jwtUtils';
+import { generateTokens } from '../utils/jwtUtils';
 import PendingUser from '../models/pendingUserModel';
 import { generateOTP, sendOTP } from '../utils/otpUtils';
 import { Request, Response } from 'express';
@@ -11,6 +11,14 @@ import { Survey } from '../models/surveyModel';
 import { SurveyResponse } from '../models/surveyresponse';
 import { Types } from 'mongoose';
 import { ResponseData } from '../types/responseSurveyTypes';
+
+interface AuthResponse {
+  user: IUser;
+  tokens: {
+    accessToken: string;
+    refreshToken: string;
+  };
+}
 
 export class UserService {
   async initiateSignUp(userData: {
@@ -95,12 +103,19 @@ export class UserService {
     await newUser.save();
     await PendingUser.deleteOne({ _id: pendingUserId });
 
-    const token = generateToken(newUser.id, newUser.role);
+    const tokens = generateTokens(newUser.id, newUser.role);
 
-    res.cookie('user', token, {
+    res.cookie('user_accessToken', tokens.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 3 * 24 * 60 * 60 * 1000,
+      maxAge: 15 * 60 * 1000,
+      sameSite: 'strict',
+    });
+
+    res.cookie('user_refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
       sameSite: 'strict',
     });
 
@@ -112,7 +127,7 @@ export class UserService {
     password: string,
     res: Response,
     req: Request
-  ): Promise<{ user: IUser; token: string }> {
+  ): Promise<AuthResponse> {
     const user = await User.findOne({ email });
 
     if (!user) {
@@ -133,16 +148,23 @@ export class UserService {
       throw new AppError('Incorrect password', 401);
     }
 
-    const token = generateToken(user.id, user.role);
+    const tokens = generateTokens(user.id, user.role);
 
-    res.cookie('user', token, {
+    res.cookie('user_accessToken', tokens.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 3 * 24 * 60 * 60 * 1000,
+      maxAge: 15 * 60 * 1000,
       sameSite: 'strict',
     });
 
-    return { user, token };
+    res.cookie('user_refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      sameSite: 'strict',
+    });
+
+    return { user, tokens };
   }
 
   async sendOTPForForgotPassword(email: string, res: Response): Promise<void> {
@@ -177,7 +199,7 @@ export class UserService {
     otp: string,
     res: Response,
     req: Request
-  ): Promise<{ user: IUser; token: string }> {
+  ): Promise<AuthResponse> {
     const user = await User.findOne({ email });
 
     if (!user) {
@@ -206,14 +228,26 @@ export class UserService {
 
     res.clearCookie('resetOTP');
 
-    const token = generateToken(user.id, user.role);
-    res.cookie('user', token, {
+    const tokens = generateTokens(user.id, user.role);
+
+    res.cookie('user_accessToken', tokens.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 3 * 24 * 60 * 60 * 1000,
+      maxAge: 15 * 60 * 1000,
       sameSite: 'strict',
     });
-    return { user, token };
+
+    res.cookie('user_refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      sameSite: 'strict',
+    });
+
+    return {
+      user,
+      tokens,
+    };
   }
 
   async Logout(res: Response, req: Request): Promise<void> {

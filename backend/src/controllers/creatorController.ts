@@ -80,7 +80,7 @@ export const signIn = async (
   const { email, password } = req.body;
 
   try {
-    const { user, token } = await creatorService.signIn(
+    const { user, tokens } = await creatorService.signIn(
       email,
       password,
       res,
@@ -95,7 +95,7 @@ export const signIn = async (
         role: user.role,
         creator_name: user.creator_name,
       },
-      token,
+      tokens,
     });
   } catch (error) {
     console.error('Error during sign-in:', error);
@@ -143,7 +143,7 @@ export const verifyForgotOTP = async (
   const { email, otp } = req.body;
 
   try {
-    const { user, token } = await creatorService.verifyOTPAndSignIn(
+    const { user, tokens } = await creatorService.verifyOTPAndSignIn(
       email,
       otp,
       res,
@@ -158,7 +158,7 @@ export const verifyForgotOTP = async (
         role: user.role,
         creator_name: user.creator_name,
       },
-      token,
+      tokens,
     });
   } catch (error) {
     console.error('Error during OTP verification:', error);

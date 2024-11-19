@@ -2,11 +2,18 @@ import { generateOTP, sendOTP } from '../utils/otpUtils';
 import PendingUser from '../models/pendingUserModel';
 import User from '../models/usersModel';
 import { Response, Request } from 'express';
-import { generateToken } from '../utils/jwtUtils';
+import { generateTokens } from '../utils/jwtUtils';
 import bcrypt from 'bcryptjs';
 import { IUser } from '../models/usersModel';
 import { AppError } from '../utils/AppError';
 
+interface AuthResponse {
+  user: IUser;
+  tokens: {
+    accessToken: string;
+    refreshToken: string;
+  };
+}
 export class SharedService {
   async resendOTP(
     pendingUserId: string
@@ -35,7 +42,13 @@ export class SharedService {
   async logout(res: Response): Promise<void> {
     console.log('Logging out...');
 
-    res.clearCookie('user', {
+    res.clearCookie('user_accessToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+
+    res.clearCookie('user_refreshToken', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
@@ -107,7 +120,7 @@ export class SharedService {
     otp: string,
     req: Request,
     res: Response
-  ): Promise<{ user: IUser; token: string }> {
+  ): Promise<AuthResponse> {
     const user = await User.findOne({ email });
     if (!user) {
       throw new AppError('Email not registered', 404);
@@ -125,18 +138,76 @@ export class SharedService {
 
     res.clearCookie('resetOTP');
 
-    const token = generateToken(user.id, user.role);
+    const tokens = generateTokens(user.id, user.role);
 
-    res.cookie('user', token, {
+    res.cookie('user_accessToken', tokens.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 3 * 24 * 60 * 60 * 1000,
+      maxAge: 15 * 60 * 1000,
+      sameSite: 'strict',
+    });
+
+    res.cookie('user_refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
       sameSite: 'strict',
     });
 
     return {
       user,
-      token,
+      tokens,
+    };
+  }
+
+  async googleAuth({
+    email,
+    displayName,
+    role,
+    res,
+  }: {
+    email: string;
+    displayName: string;
+    role?: string;
+    res: Response;
+  }): Promise<AuthResponse> {
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      const [first_name, ...last_nameParts] = displayName.split(' ');
+      const last_name = last_nameParts.join(' ');
+
+      user = new User({
+        email,
+        role: role || 'user',
+        first_name,
+        last_name,
+        wallets: [],
+        days_active: 0,
+      });
+
+      await user.save();
+    }
+
+    const tokens = generateTokens(user.id, user.role);
+
+    res.cookie('user_accessToken', tokens.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 15 * 60 * 1000,
+      sameSite: 'strict',
+    });
+
+    res.cookie('user_refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      sameSite: 'strict',
+    });
+
+    return {
+      user,
+      tokens,
     };
   }
 }

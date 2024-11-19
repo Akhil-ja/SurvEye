@@ -52,7 +52,6 @@ const AttendSurvey = () => {
   const error = useSelector(selectCurrentSurveyError);
   const submissionStatus = useSelector(selectSubmissionStatus);
 
-  // Save to local storage whenever answers or page changes
   useEffect(() => {
     sessionStorage.setItem(`${storageKey}_answers`, JSON.stringify(answers));
     sessionStorage.setItem(`${storageKey}_page`, currentPage.toString());
@@ -62,7 +61,6 @@ const AttendSurvey = () => {
     );
   }, [answers, currentPage, storageKey]);
 
-  // Check survey expiration
   useEffect(() => {
     if (survey?.data?.survey) {
       const endDate = new Date(survey.data.survey.duration.endDate);
@@ -87,8 +85,9 @@ const AttendSurvey = () => {
       clearsessionStorage();
       toast.success("Survey submitted successfully!");
       navigate("/user/survey");
+      dispatch(resetSubmissionStatus());
     }
-  }, [submissionStatus, navigate]);
+  }, [submissionStatus, navigate, dispatch]);
 
   const clearsessionStorage = () => {
     sessionStorage.removeItem(`${storageKey}_answers`);
@@ -121,7 +120,6 @@ const AttendSurvey = () => {
     );
   };
 
-  // Add a resume banner if there's saved progress
   const ResumeBanner = () => {
     if (Object.keys(answers).length > 0) {
       return (

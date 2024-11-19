@@ -1,5 +1,5 @@
-/* eslint-disable react/react-in-jsx-scope */
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -33,22 +33,49 @@ import {
 
 const ActiveSurveys = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate(); // Initialize navigate
+  const navigate = useNavigate();
   const surveys = useSelector(selectSurveys);
   const pagination = useSelector(selectSurveyPagination);
   const loading = useSelector(selectSurveyLoading);
   const error = useSelector(selectSurveyError);
   const sortBy = useSelector(selectSortBy);
   const sortOrder = useSelector(selectSortOrder);
+  const [mergedSurveys, setMergedSurveys] = useState([]);
 
   useEffect(() => {
-    dispatch(
-      getSurvey({
-        page: pagination.currentPage,
-        sort: sortBy,
-        order: sortOrder,
-      })
-    );
+    const fetchSurveys = async () => {
+      const activeSurveys = await dispatch(
+        getSurvey({
+          page: pagination.currentPage,
+          limit: 6,
+          sort: sortBy,
+          order: sortOrder,
+        })
+      ).unwrap();
+
+      const attendedSurveys = await dispatch(
+        getSurvey({
+          page: pagination.currentPage,
+          limit: 6,
+          sort: sortBy,
+          order: sortOrder,
+          attended: true,
+        })
+      ).unwrap();
+
+      const attendedIds = new Set(
+        attendedSurveys.data.surveys.map((survey) => survey._id)
+      );
+
+      const updatedSurveys = activeSurveys.data.surveys.map((survey) => ({
+        ...survey,
+        userHasAttended: attendedIds.has(survey._id),
+      }));
+
+      setMergedSurveys(updatedSurveys);
+    };
+
+    fetchSurveys();
   }, [dispatch, pagination.currentPage, sortBy, sortOrder]);
 
   const handlePageChange = (page) => {
@@ -57,6 +84,18 @@ const ActiveSurveys = () => {
 
   const handleSortChange = (value) => {
     dispatch(setSortBy(value));
+
+    dispatch(
+      setSortOrder(
+        value === "name"
+          ? "asc"
+          : value === "date"
+            ? "desc"
+            : value === "responses"
+              ? "desc"
+              : "desc"
+      )
+    );
   };
 
   const handleOrderChange = (value) => {
@@ -75,6 +114,27 @@ const ActiveSurveys = () => {
     return <div className="text-center text-red-500 p-8">{error}</div>;
   }
 
+  const sortingConfig = {
+    name: {
+      options: [
+        { value: "asc", label: "A-Z" },
+        { value: "desc", label: "Z-A" },
+      ],
+    },
+    date: {
+      options: [
+        { value: "desc", label: "Newest First" },
+        { value: "asc", label: "Oldest First" },
+      ],
+    },
+    responses: {
+      options: [
+        { value: "desc", label: "Most Responses" },
+        { value: "asc", label: "Least Responses" },
+      ],
+    },
+  };
+
   return (
     <div className="min-h-screen bg-white p-8">
       <div className="max-w-7xl mx-auto">
@@ -88,26 +148,32 @@ const ActiveSurveys = () => {
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="date">Date</SelectItem>
                   <SelectItem value="name">Name</SelectItem>
+                  <SelectItem value="date">Date</SelectItem>
                   <SelectItem value="responses">Responses</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <Select value={sortOrder} onValueChange={handleOrderChange}>
+            <Select
+              value={sortOrder}
+              onValueChange={(value) => dispatch(setSortOrder(value))}
+            >
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="Order" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="desc">Newest First</SelectItem>
-                <SelectItem value="asc">Oldest First</SelectItem>
+                {sortingConfig[sortBy]?.options.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {surveys?.map((survey) => (
+          {mergedSurveys.map((survey) => (
             <Card key={survey._id} className="bg-pink-50">
               <CardHeader>
                 <CardTitle className="text-base font-medium">
@@ -136,13 +202,18 @@ const ActiveSurveys = () => {
                   <div className="flex justify-end">
                     <button
                       className="px-4 py-1 bg-red-200 text-red-600 rounded-full text-sm hover:bg-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={!survey.isPublished}
+                      disabled={!survey.isPublished || survey.userHasAttended}
                       onClick={() =>
                         survey.isPublished &&
+                        !survey.userHasAttended &&
                         navigate(`/user/attendsurvey?surveyId=${survey._id}`)
                       }
                     >
-                      {survey.isPublished ? "Attend" : "Coming Soon"}
+                      {survey.userHasAttended
+                        ? "Attended"
+                        : survey.isPublished
+                          ? "Attend"
+                          : "Coming Soon"}
                     </button>
                   </div>
                 </div>
@@ -151,49 +222,58 @@ const ActiveSurveys = () => {
           ))}
         </div>
 
-        {pagination.totalPages > 1 && (
-          <div className="flex justify-center mt-8">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() => handlePageChange(pagination.currentPage - 1)}
-                    className={`cursor-pointer ${
-                      pagination.currentPage === 1 ? "opacity-50" : ""
-                    }`}
-                  />
+        <div className="flex justify-center mt-8">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (pagination.currentPage > 1) {
+                      handlePageChange(pagination.currentPage - 1);
+                    }
+                  }}
+                  className={
+                    pagination.currentPage <= 1
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }
+                />
+              </PaginationItem>
+              {[...Array(pagination.totalPages)].map((_, index) => (
+                <PaginationItem key={index}>
+                  <PaginationLink
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePageChange(index + 1);
+                    }}
+                    isActive={pagination.currentPage === index + 1}
+                  >
+                    {index + 1}
+                  </PaginationLink>
                 </PaginationItem>
-
-                {Array.from(
-                  { length: pagination.totalPages },
-                  (_, i) => i + 1
-                ).map((pageNum) => (
-                  <PaginationItem key={pageNum}>
-                    <PaginationLink
-                      className={`cursor-pointer ${
-                        pageNum === pagination.currentPage ? "bg-red-100" : ""
-                      }`}
-                      onClick={() => handlePageChange(pageNum)}
-                    >
-                      {pageNum}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
-
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() => handlePageChange(pagination.currentPage + 1)}
-                    className={`cursor-pointer ${
-                      pagination.currentPage === pagination.totalPages
-                        ? "opacity-50"
-                        : ""
-                    }`}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
-        )}
+              ))}
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (pagination.currentPage < pagination.totalPages) {
+                      handlePageChange(pagination.currentPage + 1);
+                    }
+                  }}
+                  className={
+                    pagination.currentPage >= pagination.totalPages
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
       </div>
     </div>
   );

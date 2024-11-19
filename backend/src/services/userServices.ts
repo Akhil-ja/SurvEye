@@ -387,9 +387,18 @@ export class UserService {
     totalSurveys: number;
   }> {
     const skip = (page - 1) * limit;
-    const sortOrder = order === 'asc' ? 1 : -1;
+    const sortOptions: Record<string, any> = {
+      name: { surveyName: order === 'asc' ? 1 : -1 },
+      date: { 'duration.startDate': order === 'desc' ? -1 : 1 },
+      responses: { totalResponses: order === 'desc' ? -1 : 1 },
+      createdAt: { created_at: order === 'desc' ? -1 : 1 },
+    };
+
+    const sortCriteria = sortOptions[sortBy] || { created_at: -1 };
     const currentDate = new Date();
-    let surveys, totalSurveys;
+
+    let surveys: ISurvey[] = [];
+    let totalSurveys: number = 0;
 
     if (attended && userId) {
       const attendedSurveyResponses = await SurveyResponse.find(
@@ -403,7 +412,7 @@ export class UserService {
 
       [surveys, totalSurveys] = await Promise.all([
         Survey.find({ _id: { $in: attendedSurveyIds } })
-          .sort({ [sortBy]: sortOrder })
+          .sort(sortCriteria)
           .skip(skip)
           .limit(limit),
         Survey.countDocuments({ _id: { $in: attendedSurveyIds } }),
@@ -415,7 +424,7 @@ export class UserService {
           'duration.startDate': { $lte: currentDate },
           'duration.endDate': { $gte: currentDate },
         })
-          .sort({ [sortBy]: sortOrder })
+          .sort(sortCriteria)
           .skip(skip)
           .limit(limit),
         Survey.countDocuments({

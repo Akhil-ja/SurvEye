@@ -405,6 +405,32 @@ export class UserService {
     let surveys: ISurvey[] = [];
     let totalSurveys: number = 0;
 
+    // Fetch user's age if `userId` is provided
+    let userAge: number | undefined;
+    if (userId) {
+      const user = await User.findById(userId).lean();
+      if (user && user.date_of_birth) {
+        const birthDate = new Date(user.date_of_birth);
+        const ageDiff = currentDate.getTime() - birthDate.getTime();
+        userAge = Math.floor(ageDiff / (1000 * 60 * 60 * 24 * 365.25));
+      }
+    }
+
+    const ageCondition =
+      userAge !== undefined
+        ? {
+            $or: [
+              { 'targetAgeRange.isAllAges': true }, // Include surveys for all ages
+              {
+                $and: [
+                  { 'targetAgeRange.minAge': { $lte: userAge } },
+                  { 'targetAgeRange.maxAge': { $gte: userAge } },
+                ],
+              },
+            ],
+          }
+        : {};
+
     if (attended && userId) {
       const attendedSurveyResponses = await SurveyResponse.find(
         { user: userId },
@@ -416,11 +442,17 @@ export class UserService {
       );
 
       [surveys, totalSurveys] = await Promise.all([
-        Survey.find({ _id: { $in: attendedSurveyIds } })
+        Survey.find({
+          _id: { $in: attendedSurveyIds },
+          ...ageCondition,
+        })
           .sort(sortCriteria)
           .skip(skip)
           .limit(limit),
-        Survey.countDocuments({ _id: { $in: attendedSurveyIds } }),
+        Survey.countDocuments({
+          _id: { $in: attendedSurveyIds },
+          ...ageCondition,
+        }),
       ]);
     } else {
       [surveys, totalSurveys] = await Promise.all([
@@ -428,6 +460,7 @@ export class UserService {
           status: 'active',
           'duration.startDate': { $lte: currentDate },
           'duration.endDate': { $gte: currentDate },
+          ...ageCondition,
         })
           .sort(sortCriteria)
           .skip(skip)
@@ -436,6 +469,7 @@ export class UserService {
           status: 'active',
           'duration.startDate': { $lte: currentDate },
           'duration.endDate': { $gte: currentDate },
+          ...ageCondition,
         }),
       ]);
     }

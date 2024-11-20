@@ -3,7 +3,7 @@ export interface IIncomingOption {
 }
 
 export interface IIncomingQuestion {
-  type: "mcq" | "checkbox" | "text" | "rating";
+  type: 'mcq' | 'checkbox' | 'text' | 'rating';
   question: string;
   options: string[];
 }
@@ -15,4 +15,5 @@ export interface IIncomingPage {
 export interface IIncomingSurveyData {
   surveyId: string;
   pages: IIncomingPage[];
+  price: number;
 }

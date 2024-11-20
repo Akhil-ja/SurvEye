@@ -80,7 +80,7 @@ function SurveyDetails() {
       <Typography
         variant="h4"
         align="center"
-        className="text-[#333] mb-8 font-bold"
+        className="text-[#333] mb-3 font-bold "
       >
         Survey Details
       </Typography>
@@ -105,6 +105,12 @@ function SurveyDetails() {
                 Category:
               </span>{" "}
               {data.data.category.name}
+            </Typography>
+            <Typography variant="h6" className="text-[#333]">
+              <span className="font-semibold" style={{ color: theme.primary }}>
+                Price:
+              </span>{" "}
+              {data.data.price} $
             </Typography>
           </CardContent>
         </Card>

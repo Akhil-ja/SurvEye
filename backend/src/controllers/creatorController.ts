@@ -414,7 +414,7 @@ export const makeSurvey = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { actionType, ...surveyData } = req.body;
+    const { actionType, price, ...surveyData } = req.body;
 
     if (!surveyData || !surveyData.pages) {
       throw new AppError('Survey data missing', 400);
@@ -424,7 +424,11 @@ export const makeSurvey = async (
       throw new AppError('Invalid survey data format', 400);
     }
 
-    const survey = await creatorService.makeSurvey(surveyData, actionType);
+    const survey = await creatorService.makeSurvey(
+      surveyData,
+      actionType,
+      price
+    );
 
     res.status(200).json({
       success: true,

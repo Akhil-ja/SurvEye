@@ -514,7 +514,8 @@ export class CreatorService {
 
   async makeSurvey(
     surveyData: IIncomingSurveyData,
-    actionType: string
+    actionType: string,
+    price: number
   ): Promise<ISurvey> {
     const { surveyId, pages } = surveyData;
 
@@ -531,6 +532,7 @@ export class CreatorService {
       existingSurvey.questions = this.transformQuestions(pages);
       existingSurvey.updated_at = new Date();
       existingSurvey.status = status;
+      existingSurvey.price = price;
 
       await existingSurvey.save();
       return existingSurvey;

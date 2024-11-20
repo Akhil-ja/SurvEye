@@ -33,6 +33,7 @@ interface ISurvey extends Document {
   category: Types.ObjectId;
   creatorName: string;
   sampleSize: number;
+  price: number;
   targetAgeRange: ITargetAgeRange;
   duration: IDuration;
   status: 'draft' | 'active' | 'completed' | 'cancelled';
@@ -64,6 +65,7 @@ const surveySchema = new Schema<ISurvey>({
   creator: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   surveyName: { type: String, required: true },
   description: { type: String, required: true },
+  price: { type: Number },
   category: {
     type: Schema.Types.ObjectId,
     ref: 'Category',

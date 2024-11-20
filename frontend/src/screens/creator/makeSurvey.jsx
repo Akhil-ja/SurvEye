@@ -16,6 +16,8 @@ import { useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getSurvey, submitSurvey } from "@/slices/creatorSlice";
 import { useNavigate } from "react-router-dom";
+import SurveyPriceCalculator from "@/components/surveyPriceCalculator";
+import { calculateSurveyPrice } from "@/utils/calculatePrice";
 
 const SurveyBuilder = () => {
   const [pages, setPages] = useState([{ questions: [] }]);
@@ -38,6 +40,7 @@ const SurveyBuilder = () => {
         .then((result) => console.log("Survey data:", result))
         .catch((error) => console.error("Error fetching survey:", error));
     }
+    console.log(data);
 
     const savedPages = sessionStorage.getItem(`surveyProgress-${surveyId}`);
     if (savedPages) {
@@ -163,11 +166,22 @@ const SurveyBuilder = () => {
       return;
     }
 
+    const price = calculateSurveyPrice(
+      pages,
+      data.data.sampleSize,
+      Math.ceil(
+        (new Date(data.data.duration.endDate) -
+          new Date(data.data.duration.startDate)) /
+          (1000 * 60 * 60 * 24)
+      )
+    ).totalPrice;
+
     sessionStorage.removeItem(`surveyProgress-${surveyId}`);
     dispatch(
       submitSurvey({
         surveyData: surveyData,
         actionType: "draft",
+        price: price,
       })
     )
       .unwrap()
@@ -189,11 +203,22 @@ const SurveyBuilder = () => {
       return;
     }
 
+    const price = calculateSurveyPrice(
+      pages,
+      data.data.sampleSize,
+      Math.ceil(
+        (new Date(data.data.duration.endDate) -
+          new Date(data.data.duration.startDate)) /
+          (1000 * 60 * 60 * 24)
+      )
+    ).totalPrice;
+
     sessionStorage.removeItem(`surveyProgress-${surveyId}`);
     dispatch(
       submitSurvey({
         surveyData: surveyData,
         actionType: "active",
+        price: price,
       })
     )
       .unwrap()
@@ -231,10 +256,13 @@ const SurveyBuilder = () => {
         </div>
 
         {data?.data && (
-          <div className="mb-4 p-4 bg-white rounded-lg shadow-sm">
-            <h2 className="text-xl font-bold">{data.data.surveyName}</h2>
-            <p className="text-sm text-gray-600">{data.data.category.name}</p>
-          </div>
+          <>
+            <div className="mb-4 p-4 bg-white rounded-lg shadow-sm">
+              <h2 className="text-xl font-bold">{data.data.surveyName}</h2>
+              <p className="text-sm text-gray-600">{data.data.category.name}</p>
+            </div>
+            <SurveyPriceCalculator pages={pages} surveyData={data.data} />
+          </>
         )}
 
         {showReview ? (

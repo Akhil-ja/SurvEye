@@ -49,7 +49,7 @@ const CreatorHome = () => {
         startDate: new Date(survey.duration.startDate).toLocaleDateString(),
         endDate: new Date(survey.duration.endDate).toLocaleDateString(),
         status: survey.status,
-        amount: survey.amount,
+        amount: survey.price,
         impressions: survey.totalResponses,
         remaining: survey.sampleSize - survey.totalResponses,
       }));

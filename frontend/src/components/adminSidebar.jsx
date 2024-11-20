@@ -2,6 +2,7 @@
 import { FaBars, FaHome, FaUserAlt, FaSignOutAlt } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import { BiSolidCategory } from "react-icons/bi";
 
 const AdminSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -53,12 +54,12 @@ const AdminSidebar = () => {
             </li>
             <li>
               <Link
-                to="/logout"
+                to="/admin/category"
                 onClick={handleLinkClick}
                 className="flex items-center space-x-2 py-2 px-4 hover:bg-gray-700 rounded"
               >
-                <FaSignOutAlt className="text-xl text-white" />
-                <span className="text-white">Logout</span>
+                <BiSolidCategory className="text-xl text-white" />
+                <span className="text-white">Category</span>
               </Link>
             </li>
           </ul>

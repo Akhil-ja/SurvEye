@@ -25,6 +25,7 @@ import {
   createCategory,
   updateCategory,
 } from "@/slices/adminSlice";
+import { toast } from "react-toastify";
 
 const CategoryPage = () => {
   const dispatch = useDispatch();
@@ -63,15 +64,40 @@ const CategoryPage = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    const trimmedName = formData.name.trim();
+    const trimmedDescription = formData.description.trim();
+
+    if (!trimmedName || !trimmedDescription) {
+      toast.error("All fields are required and cannot be empty!");
+      return;
+    }
+
+    const isDuplicate = categories.some(
+      (category) =>
+        category.name.toLowerCase() === trimmedName.toLowerCase() &&
+        (!editingCategory || category._id !== editingCategory._id)
+    );
+
+    if (isDuplicate) {
+      toast.error("Category with this name already exists!");
+      return;
+    }
+
+    const updatedFormData = {
+      ...formData,
+      name: trimmedName,
+      description: trimmedDescription,
+    };
+
     if (editingCategory) {
       dispatch(
         updateCategory({
           categoryId: editingCategory._id,
-          data: formData,
+          data: updatedFormData,
         })
       );
     } else {
-      dispatch(createCategory(formData));
+      dispatch(createCategory(updatedFormData));
     }
 
     setIsDialogOpen(false);

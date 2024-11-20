@@ -1,12 +1,11 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { useSelector } from "react-redux";
 import PropTypes from "prop-types";
 import React from "react";
 
 const AdminRoute = ({ redirectPath }) => {
-  const { adminInfo, isAuthenticated } = useSelector((state) => state.admin);
+  const adminInfo = JSON.parse(sessionStorage.getItem("adminInfo"));
 
-  if (!isAuthenticated || !adminInfo) {
+  if (!adminInfo) {
     return <Navigate to={redirectPath} replace />;
   }
 

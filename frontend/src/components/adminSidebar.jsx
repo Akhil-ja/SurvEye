@@ -1,5 +1,5 @@
 /* eslint-disable react/react-in-jsx-scope */
-import { FaBars, FaHome, FaUserAlt, FaSignOutAlt } from "react-icons/fa";
+import { FaBars, FaHome, FaUserAlt } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { BiSolidCategory } from "react-icons/bi";

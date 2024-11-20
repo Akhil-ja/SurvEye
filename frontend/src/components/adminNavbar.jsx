@@ -1,16 +1,13 @@
 import { AppBar, Toolbar, Typography, Button, Box } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { adminLogout } from "../slices/adminSlice";
 import React from "react";
 
 const AdminNavbar = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { adminInfo, isAuthenticated } = useSelector((state) => state.admin);
-
-  console.log("Auth Info:", adminInfo);
-  console.log("Is Authenticated:", isAuthenticated);
+  const adminInfo = JSON.parse(sessionStorage.getItem("adminInfo"));
 
   const handleLogout = () => {
     if (adminInfo) {
@@ -37,7 +34,7 @@ const AdminNavbar = () => {
           Admin Dashboard
         </Typography>
         <Box sx={{ display: "flex", gap: 2 }}>
-          {isAuthenticated && (
+          {adminInfo && (
             <Button onClick={handleLogout} color="inherit" variant="outlined">
               Logout
             </Button>

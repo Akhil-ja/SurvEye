@@ -49,13 +49,14 @@ export const verifyOTPAndCreateCreator = async (
 
     res.status(201).json({
       message: 'Creator sign-up successfully',
-      creator: {
+      user: {
         id: newCreator.id,
         email: newCreator.email,
         phoneNumber: newCreator.phoneNumber,
         creator_name: newCreator.creator_name,
         industry: newCreator.industry,
         created_at: newCreator.created_at,
+        role: 'creator',
       },
     });
   } catch (error) {

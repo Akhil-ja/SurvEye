@@ -19,7 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getAllSurveys } from "@/slices/creatorSlice";
+import { getAllSurveys, clearMessage } from "@/slices/creatorSlice";
 import {
   Card,
   CardContent,
@@ -38,6 +38,7 @@ const CreatorHome = () => {
 
   useEffect(() => {
     dispatch(getAllSurveys());
+    clearMessage();
   }, [dispatch]);
 
   useEffect(() => {

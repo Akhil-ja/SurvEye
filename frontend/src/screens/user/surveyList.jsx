@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -40,7 +41,10 @@ const ActiveSurveys = () => {
   const error = useSelector(selectSurveyError);
   const sortBy = useSelector(selectSortBy);
   const sortOrder = useSelector(selectSortOrder);
+
   const [mergedSurveys, setMergedSurveys] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredSurveys, setFilteredSurveys] = useState([]);
 
   useEffect(() => {
     const fetchSurveys = async () => {
@@ -77,6 +81,13 @@ const ActiveSurveys = () => {
 
     fetchSurveys();
   }, [dispatch, pagination.currentPage, sortBy, sortOrder]);
+
+  useEffect(() => {
+    const filtered = mergedSurveys.filter((survey) =>
+      survey.surveyName.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredSurveys(filtered);
+  }, [mergedSurveys, searchTerm]);
 
   const handlePageChange = (page) => {
     dispatch(getSurvey({ page, sort: sortBy, order: sortOrder }));
@@ -141,6 +152,13 @@ const ActiveSurveys = () => {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-bold">Active Surveys</h1>
           <div className="flex gap-4">
+            <Input
+              type="text"
+              placeholder="Search surveys..."
+              className="w-64"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-500">Sort by:</span>
               <Select value={sortBy} onValueChange={handleSortChange}>
@@ -172,55 +190,63 @@ const ActiveSurveys = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {mergedSurveys.map((survey) => (
-            <Card key={survey._id} className="bg-pink-50">
-              <CardHeader>
-                <CardTitle className="text-base font-medium">
-                  {survey.surveyName}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <p className="text-sm text-gray-600">{survey.description}</p>
-                  <div className="text-xs text-gray-500 space-y-1">
-                    <p>Created by: {survey.creatorName}</p>
-                    <p>Category: {survey.category}</p>
-                    <p>Sample Size: {survey.sampleSize}</p>
-                    <p>
-                      Age Range:{" "}
-                      {survey.targetAgeRange.isAllAges
-                        ? "All Ages"
-                        : `${survey.targetAgeRange.minAge} - ${survey.targetAgeRange.maxAge}`}
+        {filteredSurveys.length === 0 ? (
+          <div className="text-center text-gray-500 py-8">
+            No surveys found matching your search.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredSurveys.map((survey) => (
+              <Card key={survey._id} className="bg-pink-50">
+                <CardHeader>
+                  <CardTitle className="text-base font-medium">
+                    {survey.surveyName}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-600">
+                      {survey.description}
                     </p>
-                    <p>
-                      Duration: {formatDate(survey.duration.startDate)} -{" "}
-                      {formatDate(survey.duration.endDate)}
-                    </p>
-                    <p>Total Responses: {survey.totalResponses}</p>
+                    <div className="text-xs text-gray-500 space-y-1">
+                      <p>Created by: {survey.creatorName}</p>
+                      <p>Category: {survey.category.name}</p>
+                      <p>Sample Size: {survey.sampleSize}</p>
+                      <p>
+                        Age Range:{" "}
+                        {survey.targetAgeRange.isAllAges
+                          ? "All Ages"
+                          : `${survey.targetAgeRange.minAge} - ${survey.targetAgeRange.maxAge}`}
+                      </p>
+                      <p>
+                        Duration: {formatDate(survey.duration.startDate)} -{" "}
+                        {formatDate(survey.duration.endDate)}
+                      </p>
+                      <p>Total Responses: {survey.totalResponses}</p>
+                    </div>
+                    <div className="flex justify-end">
+                      <button
+                        className="px-4 py-1 bg-red-200 text-red-600 rounded-full text-sm hover:bg-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={!survey.isPublished || survey.userHasAttended}
+                        onClick={() =>
+                          survey.isPublished &&
+                          !survey.userHasAttended &&
+                          navigate(`/user/attendsurvey?surveyId=${survey._id}`)
+                        }
+                      >
+                        {survey.userHasAttended
+                          ? "Attended"
+                          : survey.isPublished
+                            ? "Attend"
+                            : "Coming Soon"}
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex justify-end">
-                    <button
-                      className="px-4 py-1 bg-red-200 text-red-600 rounded-full text-sm hover:bg-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={!survey.isPublished || survey.userHasAttended}
-                      onClick={() =>
-                        survey.isPublished &&
-                        !survey.userHasAttended &&
-                        navigate(`/user/attendsurvey?surveyId=${survey._id}`)
-                      }
-                    >
-                      {survey.userHasAttended
-                        ? "Attended"
-                        : survey.isPublished
-                          ? "Attend"
-                          : "Coming Soon"}
-                    </button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
         <div className="flex justify-center mt-8">
           <Pagination>

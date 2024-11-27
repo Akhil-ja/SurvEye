@@ -292,6 +292,7 @@ export class UserService {
     updates: {
       firstName?: string;
       lastName?: string;
+      dateOfBirth?: string;
     }
   ): Promise<IUser> {
     const user = await User.findById(userId);
@@ -308,12 +309,32 @@ export class UserService {
       throw new AppError('User is blocked', 403);
     }
 
+    // Validate firstName
     if (updates.firstName && updates.firstName.trim().length === 0) {
       throw new AppError('First name cannot be empty', 400);
     }
 
     if (updates.lastName && updates.lastName.trim().length === 0) {
       throw new AppError('Last name cannot be empty', 400);
+    }
+
+    if (updates.dateOfBirth) {
+      const dobDate = moment(updates.dateOfBirth);
+
+      if (!dobDate.isValid()) {
+        throw new AppError('Invalid date format', 400);
+      }
+
+      if (dobDate.isAfter(moment())) {
+        throw new AppError('Date of birth cannot be in the future', 400);
+      }
+
+      const age = moment().diff(dobDate, 'years');
+      if (age > 120) {
+        throw new AppError('Invalid date of birth', 400);
+      }
+
+      user.date_of_birth = dobDate.toDate();
     }
 
     if (updates.firstName) {
@@ -402,14 +423,17 @@ export class UserService {
     const sortCriteria = sortOptions[sortBy] || { created_at: -1 };
     const currentDate = new Date();
 
-    let surveys: ISurvey[] = [];
-    let totalSurveys: number = 0;
-
-    // Fetch user's age if `userId` is provided
     let userAge: number | undefined;
+
     if (userId) {
       const user = await User.findById(userId).lean();
-      if (user && user.date_of_birth) {
+      if (!user) {
+        throw new AppError('User not found', 404);
+      }
+
+      if (!user.date_of_birth) {
+        console.warn(`User ${userId} has no date of birth set`);
+      } else {
         const birthDate = new Date(user.date_of_birth);
         const ageDiff = currentDate.getTime() - birthDate.getTime();
         userAge = Math.floor(ageDiff / (1000 * 60 * 60 * 24 * 365.25));
@@ -420,70 +444,86 @@ export class UserService {
       userAge !== undefined
         ? {
             $or: [
-              { 'targetAgeRange.isAllAges': true }, // Include surveys for all ages
+              { 'targetAgeRange.isAllAges': true },
+              { 'targetAgeRange.isAllAges': { $exists: false } },
               {
                 $and: [
-                  { 'targetAgeRange.minAge': { $lte: userAge } },
-                  { 'targetAgeRange.maxAge': { $gte: userAge } },
+                  {
+                    $or: [
+                      { 'targetAgeRange.minAge': { $lte: userAge } },
+                      { 'targetAgeRange.minAge': { $exists: false } },
+                    ],
+                  },
+                  {
+                    $or: [
+                      { 'targetAgeRange.maxAge': { $gte: userAge } },
+                      { 'targetAgeRange.maxAge': { $exists: false } },
+                    ],
+                  },
                 ],
               },
             ],
           }
         : {};
 
-    if (attended && userId) {
-      const attendedSurveyResponses = await SurveyResponse.find(
-        { user: userId },
-        'survey'
-      ).lean();
+    try {
+      let query: any = {};
 
-      const attendedSurveyIds = attendedSurveyResponses.map(
-        (response) => response.survey
-      );
+      if (attended && userId) {
+        const attendedSurveyResponses = await SurveyResponse.find(
+          { user: userId },
+          'survey'
+        ).lean();
 
-      [surveys, totalSurveys] = await Promise.all([
-        Survey.find({
+        const attendedSurveyIds = attendedSurveyResponses.map(
+          (response) => response.survey
+        );
+
+        query = {
           _id: { $in: attendedSurveyIds },
           ...ageCondition,
-        })
-          .sort(sortCriteria)
-          .skip(skip)
-          .limit(limit),
-        Survey.countDocuments({
-          _id: { $in: attendedSurveyIds },
-          ...ageCondition,
-        }),
-      ]);
-    } else {
-      [surveys, totalSurveys] = await Promise.all([
-        Survey.find({
+        };
+      } else {
+        query = {
           status: 'active',
           'duration.startDate': { $lte: currentDate },
           'duration.endDate': { $gte: currentDate },
           ...ageCondition,
-        })
+        };
+      }
+
+      // console.log('Query:', JSON.stringify(query, null, 2));
+      // console.log('Sort criteria:', JSON.stringify(sortCriteria, null, 2));
+
+      const [surveys, totalSurveys] = await Promise.all([
+        Survey.find(query)
+          .populate('category', 'name')
           .sort(sortCriteria)
           .skip(skip)
-          .limit(limit),
-        Survey.countDocuments({
-          status: 'active',
-          'duration.startDate': { $lte: currentDate },
-          'duration.endDate': { $gte: currentDate },
-          ...ageCondition,
-        }),
+          .limit(limit)
+          .lean(),
+        Survey.countDocuments(query),
       ]);
-    }
 
-    if (surveys.length === 0) {
-      throw new AppError('No active surveys found', 404);
-    }
+      if (totalSurveys === 0) {
+        return {
+          surveys: [],
+          currentPage: page,
+          totalPages: 0,
+          totalSurveys: 0,
+        };
+      }
 
-    return {
-      surveys,
-      currentPage: page,
-      totalPages: Math.ceil(totalSurveys / limit),
-      totalSurveys,
-    };
+      return {
+        surveys,
+        currentPage: page,
+        totalPages: Math.ceil(totalSurveys / limit),
+        totalSurveys,
+      };
+    } catch (error) {
+      console.error('Error in getActiveSurveys:', error);
+      throw new AppError('Failed to fetch surveys', 500);
+    }
   }
 
   async getSurveyinfo(surveyId: string): Promise<{

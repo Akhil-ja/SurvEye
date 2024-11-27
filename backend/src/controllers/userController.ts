@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { userService } from '../services/userServices';
-import { AppError } from '../utils/AppError'; // Import AppError
+import { AppError } from '../utils/AppError';
+import moment from 'moment';
 
 export const initiateSignUp = async (
   req: Request,
@@ -204,24 +205,27 @@ export const editUserProfile = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    console.log('in edit profile');
-
     const userId = req.user?.id;
 
     if (!userId) {
       throw new AppError('Authentication required', 401);
     }
 
-    const { firstName, lastName } = req.body;
+    const { firstName, lastName, dateOfBirth } = req.body;
 
-    if (!firstName && !lastName) {
+    if (!firstName && !lastName && !dateOfBirth) {
       throw new AppError('No updates provided', 400);
     }
 
     const updatedUser = await userService.editProfile(userId, {
       firstName,
       lastName,
+      dateOfBirth,
     });
+
+    const age = updatedUser.date_of_birth
+      ? moment().diff(moment(updatedUser.date_of_birth), 'years')
+      : null;
 
     res.status(200).json({
       message: 'Profile updated successfully',
@@ -232,6 +236,7 @@ export const editUserProfile = async (
         role: updatedUser.role,
         first_name: updatedUser.first_name,
         last_name: updatedUser.last_name,
+        age: age,
       },
     });
   } catch (error) {

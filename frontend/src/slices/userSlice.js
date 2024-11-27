@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../api/axiosConfig";
 
-// Async thunk for fetching User profile
 export const fetchUserProfile = createAsyncThunk(
   "User/fetchProfile",
   async (_, { rejectWithValue }) => {
@@ -26,6 +25,9 @@ export const updateUserProfile = createAsyncThunk(
         email: profileData.email,
         number: profileData.number,
         role: profileData.role,
+        ...(profileData.date_of_birth && {
+          dateOfBirth: profileData.date_of_birth,
+        }),
       };
 
       const response = await api.put("/user/profile", payload);
@@ -253,7 +255,6 @@ const userSlice = createSlice({
   },
 });
 
-// Export actions
 export const {
   clearMessage,
   resetPasswordChangeStatus,
@@ -263,7 +264,6 @@ export const {
   resetSubmissionStatus,
 } = userSlice.actions;
 
-// Export selectors
 export const selectSurveys = (state) => state.user.surveys.data.surveys;
 export const selectSurveyPagination = (state) =>
   state.user.surveys.data.pagination;
@@ -272,7 +272,6 @@ export const selectSurveyError = (state) => state.user.surveys.error;
 export const selectSortBy = (state) => state.user.surveys.sortBy;
 export const selectSortOrder = (state) => state.user.surveys.sortOrder;
 
-// Add these new selectors for the current survey
 export const selectCurrentSurvey = (state) => state.user.currentSurvey.data;
 export const selectCurrentSurveyLoading = (state) =>
   state.user.currentSurvey.loading;

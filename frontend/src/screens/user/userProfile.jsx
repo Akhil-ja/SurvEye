@@ -1,4 +1,4 @@
-/* eslint-disable react/react-in-jsx-scope */
+import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
@@ -22,8 +22,6 @@ import {
 
 const ProfileView = () => {
   const dispatch = useDispatch();
-
-  // Add debugging log to check Redux state
   const userState = useSelector((state) => {
     return (
       state?.user || {
@@ -46,12 +44,13 @@ const ProfileView = () => {
 
   const [isNameDialogOpen, setNameDialogOpen] = useState(false);
   const [isPasswordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [isDobDialogOpen, setDobDialogOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
 
-  // Calculate fullName only if profile exists
   const fullName = profile
     ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim()
     : "";
@@ -78,6 +77,7 @@ const ProfileView = () => {
     if (message) {
       toast.success(message);
       setNameDialogOpen(false);
+      setDobDialogOpen(false);
       dispatch(clearMessage());
     }
   }, [error, message]);
@@ -127,6 +127,26 @@ const ProfileView = () => {
     }
   };
 
+  const handleSaveDob = async () => {
+    if (!dateOfBirth) {
+      toast.error("Please select a date of birth");
+      return;
+    }
+
+    try {
+      await dispatch(
+        updateUserProfile({
+          ...profile,
+          date_of_birth: dateOfBirth,
+        })
+      ).unwrap();
+      setDobDialogOpen(false);
+      dispatch(fetchUserProfile());
+    } catch (err) {
+      console.error("Error updating date of birth:", err);
+    }
+  };
+
   const ProfileRow = ({ label, value, showArrow = false, onClick }) => (
     <div
       className={`flex justify-between items-center p-4 border-b border-gray-100 ${
@@ -140,6 +160,27 @@ const ProfileView = () => {
         {showArrow && <ChevronRight className="h-4 w-4 text-gray-400" />}
       </div>
     </div>
+  );
+
+  const AgeRow = () => (
+    <ProfileRow
+      label="Age"
+      value={
+        profile?.age ? (
+          profile.age
+        ) : (
+          <Button
+            variant="ghost"
+            className="text-blue-600 hover:text-blue-700 p-0"
+            onClick={() => setDobDialogOpen(true)}
+          >
+            Add Date of Birth
+          </Button>
+        )
+      }
+      showArrow={!profile?.age}
+      onClick={() => profile?.age && setDobDialogOpen(true)}
+    />
   );
 
   if (isLoading) {
@@ -177,15 +218,15 @@ const ProfileView = () => {
             showArrow
             onClick={() => setNameDialogOpen(true)}
           />
-          <Separator />
+          {/* <Separator />
           <ProfileRow
             label="Contact Number"
             value={profile?.number || "Loading..."}
-          />
+          /> */}
           <Separator />
           <ProfileRow label="Email" value={profile?.email || "Loading..."} />
           <Separator />
-          <ProfileRow label="Age" value={profile?.age || "Loading..."} />
+          <AgeRow />
         </CardContent>
       </Card>
 
@@ -284,6 +325,45 @@ const ProfileView = () => {
             disabled={passwordChangeStatus === "loading"}
           >
             {passwordChangeStatus === "loading" ? "Saving..." : "Save Password"}
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Date of Birth Dialog */}
+      <Dialog
+        open={isDobDialogOpen}
+        onOpenChange={(open) => {
+          setDobDialogOpen(open);
+          if (!open) {
+            dispatch(clearMessage());
+            setDateOfBirth("");
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {profile?.age ? "Update Date of Birth" : "Add Date of Birth"}
+            </DialogTitle>
+            <DialogDescription>
+              Please select your date of birth.
+            </DialogDescription>
+          </DialogHeader>
+
+          <input
+            type="date"
+            value={dateOfBirth}
+            onChange={(e) => setDateOfBirth(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded mt-4"
+            max={new Date().toISOString().split("T")[0]} // Prevents future dates
+          />
+
+          <Button
+            className="mt-4 w-full"
+            onClick={handleSaveDob}
+            disabled={isLoading}
+          >
+            {isLoading ? "Saving..." : "Save Date of Birth"}
           </Button>
         </DialogContent>
       </Dialog>

@@ -122,6 +122,21 @@ export const verifyForgotPasswordOTP = createAsyncThunk(
   }
 );
 
+export const googleAuth = createAsyncThunk(
+  "auth/googleAuth",
+  async ({ credentials }, { rejectWithValue }) => {
+    try {
+      const response = await api.post(`/googleAuth`, credentials);
+      sessionStorage.setItem("authInfo", JSON.stringify(response.data));
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: "Authentication failed" }
+      );
+    }
+  }
+);
+
 const getInitialAuthState = () => {
   const authInfo = sessionStorage.getItem("authInfo");
   return authInfo ? JSON.parse(authInfo) : null;
@@ -261,6 +276,21 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload?.message || "OTP verification failed";
         state.forgotPasswordStatus = "failed";
+      })
+      .addCase(googleAuth.pending, (state) => {
+        state.isLoading = true; // Set isLoading to true when the request is pending
+        state.error = null; // Clear any previous errors
+      })
+      // Handle googleAuth.fulfilled
+      .addCase(googleAuth.fulfilled, (state, action) => {
+        state.isLoading = false; // Set isLoading to false once the request is fulfilled
+        state.error = null; // Clear any previous error
+        state.authInfo = action.payload; // Save the authInfo (user data and token) into the state
+      })
+      // Handle googleAuth.rejected
+      .addCase(googleAuth.rejected, (state, action) => {
+        state.isLoading = false; // Set isLoading to false on rejection
+        state.error = action.payload?.message || "Google authentication failed"; // Set the error message
       });
   },
 });

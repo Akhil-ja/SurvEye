@@ -111,17 +111,17 @@ export const googleAuth = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const { email, displayName, role } = req.body;
+  const { email, displayName } = req.body;
+
+  console.log(email, displayName);
 
   try {
     const { user, tokens } = await sharedService.googleAuth({
       email,
       displayName,
-      role,
       res,
     });
 
-    // Send response back to client
     res.status(200).json({
       status: 'success',
       message: 'Authentication successful',

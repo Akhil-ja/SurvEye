@@ -126,3 +126,17 @@ export interface ICategory extends Document {
   description: string;
   status: boolean;
 }
+
+export interface IPendingUser extends Document {
+  email: string;
+  phoneNumber: string;
+  password: string;
+  role: 'user' | 'creator';
+  firstName?: string;
+  lastName?: string;
+  creatorName?: string;
+  industry?: string;
+  dateOfBirth?: Date;
+  otp: string;
+  otpExpires: Date;
+}

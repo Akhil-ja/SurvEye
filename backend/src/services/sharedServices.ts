@@ -6,6 +6,7 @@ import { generateTokens } from '../utils/jwtUtils';
 import bcrypt from 'bcryptjs';
 import { IUser } from '../models/usersModel';
 import { AppError } from '../utils/AppError';
+import { generatePassword, sendPassword } from '../utils/passwordUtil';
 
 interface AuthResponse {
   user: IUser;
@@ -163,7 +164,7 @@ export class SharedService {
   async googleAuth({
     email,
     displayName,
-    role,
+    role = 'user',
     res,
   }: {
     email: string;
@@ -171,22 +172,26 @@ export class SharedService {
     role?: string;
     res: Response;
   }): Promise<AuthResponse> {
-    let user = await User.findOne({ email });
+    let user = await User.findOne({ email: email });
 
     if (!user) {
+      const password = generatePassword();
+      const hashedPassword = await bcrypt.hash(password, 10);
       const [first_name, ...last_nameParts] = displayName.split(' ');
       const last_name = last_nameParts.join(' ');
 
       user = new User({
         email,
-        role: role || 'user',
+        role,
         first_name,
         last_name,
+        password: hashedPassword,
         wallets: [],
         days_active: 0,
       });
 
       await user.save();
+      await sendPassword(email, password);
     }
 
     const tokens = generateTokens(user.id, user.role);
@@ -205,9 +210,6 @@ export class SharedService {
       sameSite: 'strict',
     });
 
-    return {
-      user,
-      tokens,
-    };
+    return { user, tokens };
   }
 }

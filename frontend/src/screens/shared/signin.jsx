@@ -19,6 +19,7 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { auth, googleProvider } from "../../../firebase";
 import { signInWithPopup } from "firebase/auth";
+import { googleAuth } from "../../slices/authSlice";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -39,18 +40,15 @@ export default function LoginScreen() {
       signIn({ role, credentials: { email, password } })
     );
 
-    // Check if signIn was successful
     if (signIn.fulfilled.match(resultAction)) {
       toast.success("Successfully signed in!");
 
-      // Navigate based on role
       if (role === "user") {
-        navigate("/user/home"); // Redirect to user home
+        navigate("/user/home");
       } else {
-        navigate("/creator/home"); // Redirect to creator home
+        navigate("/creator/home");
       }
     } else if (signIn.rejected.match(resultAction)) {
-      // Show error message as toast
       toast.error(resultAction.payload?.message || "Sign-in failed");
     }
   };
@@ -59,11 +57,27 @@ export default function LoginScreen() {
     try {
       const result = await signInWithPopup(auth, googleProvider);
 
-      const { email, displayName } = result.user;
+      const user = result.user;
+      const { email, displayName } = user;
 
-      // Log user information
       console.log("Email:", email);
       console.log("Name:", displayName);
+
+      const resultAction = await dispatch(
+        googleAuth({
+          credentials: { email, displayName },
+        })
+      );
+
+      if (googleAuth.fulfilled.match(resultAction)) {
+        console.log(resultAction.payload.user.role);
+        if (role) {
+          navigate(`/${role}/home`);
+        } else {
+          toast.error("Role not found in the response.");
+        }
+        toast.success("Successfully signed in!");
+      }
     } catch (error) {
       console.error("Error during Google sign-in:", error);
       toast.error("Google sign-in failed");

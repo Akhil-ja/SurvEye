@@ -15,6 +15,7 @@ export interface IUser extends Document {
   date_of_birth?: Date;
   days_active: number;
   status: 'active' | 'blocked';
+  occupation: Types.ObjectId;
 }
 
 export interface IOption extends Document {
@@ -139,4 +140,10 @@ export interface IPendingUser extends Document {
   dateOfBirth?: Date;
   otp: string;
   otpExpires: Date;
+}
+
+export interface IOccupation extends Document {
+  name: string;
+  description: string;
+  status: boolean;
 }

@@ -31,6 +31,7 @@ interface ISurvey extends Document {
   surveyName: string;
   description: string;
   category: Types.ObjectId;
+  occupation: Types.ObjectId;
   creatorName: string;
   sampleSize: number;
   price: number;
@@ -65,11 +66,17 @@ const surveySchema = new Schema<ISurvey>({
   creator: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   surveyName: { type: String, required: true },
   description: { type: String, required: true },
+
   price: { type: Number },
   category: {
     type: Schema.Types.ObjectId,
     ref: 'Category',
     required: true,
+  },
+
+  occupation: {
+    type: Schema.Types.ObjectId,
+    ref: 'Occupation',
   },
 
   creatorName: { type: String, required: true },

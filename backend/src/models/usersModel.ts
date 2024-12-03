@@ -1,4 +1,4 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document, Types } from 'mongoose';
 
 export interface IUser extends Document {
   email: string;
@@ -15,6 +15,7 @@ export interface IUser extends Document {
   date_of_birth?: Date;
   days_active: number;
   status: 'active' | 'blocked';
+  occupation: Types.ObjectId;
 }
 
 const userSchema = new Schema<IUser>({
@@ -45,6 +46,10 @@ const userSchema = new Schema<IUser>({
     type: String,
     enum: ['active', 'blocked'],
     default: 'active',
+  },
+  occupation: {
+    type: Schema.Types.ObjectId,
+    ref: 'Occupation',
   },
 });
 

@@ -414,6 +414,7 @@ export class CreatorService {
         required: boolean;
         pageNumber: number;
       }>;
+      occupation: string;
     }
   ): Promise<ISurvey> {
     const creator = await User.findById(creatorId);
@@ -440,6 +441,7 @@ export class CreatorService {
       targetAgeRange: surveyData.targetAgeRange,
       duration: surveyData.duration,
       questions: surveyData.questions,
+      occupation: surveyData.occupation,
       created_at: new Date(),
       updated_at: new Date(),
     });

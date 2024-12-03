@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getOccupations, getCategories } from "@/slices/adminSlice";
 import { CalendarIcon } from "lucide-react";
 import {
   Popover,
@@ -24,21 +25,29 @@ import { format } from "date-fns";
 import { useDispatch } from "react-redux";
 import { createSurvey } from "../../slices/creatorSlice";
 import { useNavigate } from "react-router-dom";
-import { getCategories } from "@/slices/adminSlice";
 
 const CreateSurvey = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const [categories, setCategories] = React.useState([]);
+  const [occupations, setOccupations] = React.useState([]);
 
   const [formData, setFormData] = React.useState({
     surveyName: "",
     description: "",
     category: "",
+    occupation: "",
     creatorName: "",
     sampleSize: "",
   });
+
+  const [startDate, setStartDate] = React.useState(null);
+  const [endDate, setEndDate] = React.useState(null);
+  const [isAllAges, setIsAllAges] = React.useState(false);
+  const [isAllOccupations, setIsAllOccupations] = React.useState(false);
+  const [minAge, setMinAge] = React.useState("");
+  const [maxAge, setMaxAge] = React.useState("");
 
   React.useEffect(() => {
     const fetchCategories = async () => {
@@ -49,14 +58,19 @@ const CreateSurvey = () => {
         toast.error("Failed to fetch categories");
       }
     };
-    fetchCategories();
-  }, [dispatch]);
 
-  const [startDate, setStartDate] = React.useState(null);
-  const [endDate, setEndDate] = React.useState(null);
-  const [isAllAges, setIsAllAges] = React.useState(false);
-  const [minAge, setMinAge] = React.useState("");
-  const [maxAge, setMaxAge] = React.useState("");
+    const fetchOccupations = async () => {
+      try {
+        const result = await dispatch(getOccupations(true)).unwrap();
+        setOccupations(result.occupations);
+      } catch (error) {
+        toast.error("Failed to fetch occupations");
+      }
+    };
+
+    fetchCategories();
+    fetchOccupations();
+  }, [dispatch]);
 
   const handleChange = (e) => {
     const { id, value } = e.target;
@@ -69,7 +83,6 @@ const CreateSurvey = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Check required fields after trimming
     if (!formData.surveyName.trim() || !formData.creatorName.trim()) {
       toast.error("Survey Name and Creator's Name are required.");
       return;
@@ -116,6 +129,11 @@ const CreateSurvey = () => {
 
     if (!formData.category.trim()) {
       toast.error("Please select a category.");
+      return;
+    }
+
+    if (!formData.occupation.trim()) {
+      toast.error("Please select an occupation.");
       return;
     }
 
@@ -207,6 +225,42 @@ const CreateSurvey = () => {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              {/* Occupation */}
+              <div>
+                <div className="flex items-center space-x-2 mb-2">
+                  <Checkbox
+                    id="allOccupations"
+                    checked={isAllOccupations}
+                    onCheckedChange={(checked) => {
+                      setIsAllOccupations(checked);
+                      if (checked) {
+                        setFormData((prev) => ({ ...prev, occupation: "" }));
+                      }
+                    }}
+                  />
+                  <Label htmlFor="allOccupations">All Occupations</Label>
+                </div>
+
+                {!isAllOccupations && (
+                  <Select
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, occupation: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select occupation" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {occupations.map((occupation) => (
+                        <SelectItem key={occupation._id} value={occupation._id}>
+                          {occupation.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
 
               {/* Creator's Name */}

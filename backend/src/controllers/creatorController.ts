@@ -324,6 +324,7 @@ export const createSurvey = async (
       targetAgeRange,
       duration,
       questions,
+      occupation,
     } = req.body;
 
     const survey = await creatorService.createSurvey(creatorId, {
@@ -335,6 +336,7 @@ export const createSurvey = async (
       targetAgeRange,
       duration,
       questions,
+      occupation,
     });
 
     res.status(200).json({

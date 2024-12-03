@@ -3,6 +3,7 @@ import { FaBars, FaHome, FaUserAlt } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { BiSolidCategory } from "react-icons/bi";
+import { CgWorkAlt } from "react-icons/cg";
 
 const AdminSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -35,7 +36,7 @@ const AdminSidebar = () => {
             <li>
               <Link
                 to="/admin/home"
-                onClick={handleLinkClick} // Close the sidebar on click
+                onClick={handleLinkClick}
                 className="flex items-center space-x-2 py-2 px-4 hover:bg-gray-700 rounded"
               >
                 <FaHome className="text-xl text-white" />
@@ -61,6 +62,16 @@ const AdminSidebar = () => {
                 <BiSolidCategory className="text-xl text-white" />
                 <span className="text-white">Category</span>
               </Link>
+              <li>
+                <Link
+                  to="/admin/occupation"
+                  onClick={handleLinkClick}
+                  className="flex items-center space-x-2 py-2 px-4 hover:bg-gray-700 rounded"
+                >
+                  <CgWorkAlt className="text-xl text-white" />
+                  <span className="text-white">Occupation</span>
+                </Link>
+              </li>
             </li>
           </ul>
         </nav>

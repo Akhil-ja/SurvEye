@@ -1,4 +1,9 @@
-import { IAdmin, IUser, ICategory } from '../interfaces/common.interface';
+import {
+  IAdmin,
+  IUser,
+  ICategory,
+  IOccupation,
+} from '../interfaces/common.interface';
 import { Types } from 'mongoose';
 
 export interface IAdminRepository {
@@ -16,4 +21,14 @@ export interface IAdminRepository {
     categoryId: string,
     categoryData: Partial<ICategory>
   ): Promise<ICategory>;
+
+  //Occupation
+  getAllOccupation(acive: boolean): Promise<IOccupation[]>;
+  createOccupation(OccupationData: Partial<IOccupation>): Promise<IOccupation>;
+  findOccupationById(occupationId: string): Promise<IOccupation | null>;
+  saveOccupation(occupation: IOccupation): Promise<IOccupation>;
+  updateOccupation(
+    occupationId: string,
+    OccupationData: Partial<IOccupation>
+  ): Promise<IOccupation>;
 }

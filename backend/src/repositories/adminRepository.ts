@@ -1,9 +1,15 @@
 import Admin from '../models/adminModel';
 import User from '../models/usersModel';
-import { IAdmin, ICategory, IUser } from '../interfaces/common.interface';
+import {
+  IAdmin,
+  ICategory,
+  IUser,
+  IOccupation,
+} from '../interfaces/common.interface';
 import { Types } from 'mongoose';
 import { AppError } from '../utils/AppError';
 import Category from '../models/categoryModel';
+import Occupation from '../models/occupationModel';
 
 export class AdminRepository {
   async findByEmail(email: string): Promise<IAdmin | null> {
@@ -94,6 +100,76 @@ export class AdminRepository {
         throw error;
       }
       throw new AppError('Failed to update category', 500);
+    }
+  }
+
+  async getAllOccupations(active: boolean): Promise<IOccupation[]> {
+    let occupations: IOccupation[];
+
+    if (active) {
+      occupations = await Occupation.find({ status: active });
+    } else {
+      occupations = await Occupation.find({});
+    }
+
+    if (!occupations || occupations.length === 0) {
+      throw new AppError('No occupations found', 404);
+    }
+
+    return occupations;
+  }
+
+  async findOccupationById(occupationId: string): Promise<IOccupation | null> {
+    return Occupation.findById(occupationId);
+  }
+
+  async saveOccupation(occupation: IOccupation): Promise<IOccupation> {
+    return occupation.save();
+  }
+
+  async createOccupation(
+    occupationData: Partial<IOccupation>
+  ): Promise<IOccupation> {
+    try {
+      const newOccupation = new Occupation(occupationData);
+      const savedOccupation = await newOccupation.save();
+      if (!savedOccupation) {
+        throw new AppError('Failed to create occupation', 400);
+      }
+      return savedOccupation;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new AppError(error.message, 400);
+      }
+      throw new AppError('Failed to create occupation', 400);
+    }
+  }
+
+  async updateOccupation(
+    occupationId: string,
+    occupationData: Partial<IOccupation>
+  ): Promise<IOccupation> {
+    try {
+      const occupation = await Occupation.findById(occupationId);
+
+      if (!occupation) {
+        throw new AppError('Occupation not found', 404);
+      }
+
+      Object.assign(occupation, occupationData);
+
+      const updatedOccupation = await occupation.save();
+
+      if (!updatedOccupation) {
+        throw new AppError('Failed to update occupation', 400);
+      }
+
+      return updatedOccupation;
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError('Failed to update occupation', 500);
     }
   }
 }

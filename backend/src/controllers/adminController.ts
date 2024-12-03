@@ -185,4 +185,112 @@ export class AdminController {
       }
     }
   }
+
+  async getAllOccupations(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const { isActive } = req.params;
+      const active = isActive === 'true';
+      console.log(isActive, active);
+
+      const occupations = await this.adminService.getAllOccupations(active);
+      res.status(200).json({
+        message: 'Occupations fetched successfully',
+        occupations,
+      });
+    } catch (error) {
+      console.error('Error fetching occupations:', error);
+      next(new AppError('Failed to fetch occupations', 500));
+    }
+  }
+
+  async toggleOccupationStatus(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    const occupationId = req.query.occupationId as string | undefined;
+
+    if (!occupationId) {
+      return next(new AppError('Invalid occupation ID', 400));
+    }
+
+    try {
+      const updatedOccupation =
+        await this.adminService.toggleOccupationStatus(occupationId);
+      res.status(200).json({
+        message: `Occupation status changed to ${updatedOccupation.status}`,
+        occupation: updatedOccupation,
+      });
+    } catch (error) {
+      console.error(error);
+      next(new AppError('Toggle status failed', 500));
+    }
+  }
+
+  async createOccupation(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const occupationData = req.body;
+      console.log(occupationData);
+
+      const newOccupation =
+        await this.adminService.createOccupation(occupationData);
+
+      res.status(201).json({
+        status: 'success',
+        message: 'Occupation created successfully',
+        occupation: newOccupation,
+      });
+    } catch (error) {
+      console.error('Error creating occupation:', error);
+      if (error instanceof AppError) {
+        next(error);
+      } else {
+        next(new AppError('Failed to create occupation', 500));
+      }
+    }
+  }
+
+  async updateOccupation(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const occupationId = req.query.occupationId as string;
+      const updateData = req.body;
+
+      console.log('updated data', updateData);
+      console.log('occupation id', occupationId);
+
+      if (!occupationId) {
+        throw new AppError('Occupation ID is required', 400);
+      }
+
+      const updatedOccupation = await this.adminService.updateOccupation(
+        occupationId,
+        updateData
+      );
+
+      res.status(200).json({
+        status: 'success',
+        message: 'Occupation updated successfully',
+        occupation: updatedOccupation,
+      });
+    } catch (error) {
+      console.error('Error updating occupation:', error);
+      if (error instanceof AppError) {
+        next(error);
+      } else {
+        next(new AppError('Failed to update occupation', 500));
+      }
+    }
+  }
 }

@@ -1,5 +1,10 @@
 import { Response } from 'express';
-import { IUser, IAdmin, ICategory } from '../interfaces/common.interface';
+import {
+  IUser,
+  IAdmin,
+  ICategory,
+  IOccupation,
+} from '../interfaces/common.interface';
 
 export interface IAdminService {
   signIn(
@@ -20,5 +25,13 @@ export interface IAdminService {
     categoryId: string,
     categoryData: Partial<ICategory>
   ): Promise<ICategory>;
-  toggleCategoryStatus(categoryId: string): Promise<ICategory>;
+  toggleCategoryStatus(categoryId: string): Promise<IOccupation>;
+  //occupation
+  getAllOccupation(active: boolean): Promise<IOccupation[]>;
+  createOccupation(OccupationData: Partial<IOccupation>): Promise<IOccupation>;
+  updateOccupation(
+    occupationId: string,
+    OccupationData: Partial<IOccupation>
+  ): Promise<IOccupation>;
+  toggleOccupationStatus(OccupationId: string): Promise<IOccupation>;
 }

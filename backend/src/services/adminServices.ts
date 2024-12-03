@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { AppError } from '../utils/AppError';
-import { ICategory, IUser } from '../interfaces/common.interface';
+import { ICategory, IUser, IOccupation } from '../interfaces/common.interface';
 import { AdminRepository } from '../repositories/adminRepository';
 
 export class AdminService {
@@ -130,6 +130,82 @@ export class AdminService {
         throw error;
       }
       throw new AppError('Failed to update category', 500);
+    }
+  }
+
+  async getAllOccupations(active: boolean): Promise<IOccupation[]> {
+    return this.adminRepository.getAllOccupations(active);
+  }
+
+  async toggleOccupationStatus(occupationId: string): Promise<IOccupation> {
+    const occupation =
+      await this.adminRepository.findOccupationById(occupationId);
+
+    if (!occupation) {
+      throw new AppError('Occupation not found', 404);
+    }
+
+    occupation.status = occupation.status === true ? false : true;
+    return this.adminRepository.saveOccupation(occupation);
+  }
+
+  async createOccupation(
+    occupationData: Partial<IOccupation>
+  ): Promise<IOccupation> {
+    try {
+      if (!occupationData.name || !occupationData.description) {
+        throw new AppError('Name and description are required', 400);
+      }
+
+      const newOccupationData = {
+        ...occupationData,
+        status: occupationData.status ?? true,
+      };
+
+      const occupation =
+        await this.adminRepository.createOccupation(newOccupationData);
+      return occupation;
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError('Failed to create occupation', 500);
+    }
+  }
+
+  async updateOccupation(
+    occupationId: string,
+    occupationData: Partial<IOccupation>
+  ): Promise<IOccupation> {
+    try {
+      const existingOccupation =
+        await this.adminRepository.findOccupationById(occupationId);
+      if (!existingOccupation) {
+        throw new AppError('Occupation not found', 404);
+      }
+
+      if (occupationData.name !== undefined && !occupationData.name.trim()) {
+        throw new AppError('Occupation name cannot be empty', 400);
+      }
+
+      if (
+        occupationData.description !== undefined &&
+        !occupationData.description.trim()
+      ) {
+        throw new AppError('Occupation description cannot be empty', 400);
+      }
+
+      const updatedOccupation = await this.adminRepository.updateOccupation(
+        occupationId,
+        occupationData
+      );
+
+      return updatedOccupation;
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError('Failed to update occupation', 500);
     }
   }
 }

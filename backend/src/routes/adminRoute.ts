@@ -38,4 +38,18 @@ router.put('/category', (req, res, next) => {
   adminController.updateCategory(req, res, next);
 });
 
+// Occupation Routes
+router.get('/getoccupation/:isActive', (req, res, next) => {
+  adminController.getAllOccupations(req, res, next);
+});
+router.put('/occupation/toggleStatus', (req, res, next) => {
+  adminController.toggleOccupationStatus(req, res, next);
+});
+router.post('/occupation', (req, res, next) => {
+  adminController.createOccupation(req, res, next);
+});
+router.put('/occupation', (req, res, next) => {
+  adminController.updateOccupation(req, res, next);
+});
+
 export default router;

@@ -83,7 +83,80 @@ export const toggleUserStatus = createAsyncThunk(
   }
 );
 
-// Get Categories
+// Get occupations
+export const getOccupations = createAsyncThunk(
+  "admin/occupations",
+  async (isActive, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/admin/getoccupation/${isActive}`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response && error.response.data
+          ? error.response.data.message
+          : error.message
+      );
+    }
+  }
+);
+
+// Toggle Category Status
+export const toggleOccupationStatus = createAsyncThunk(
+  "admin/toggleOccupationStatus",
+  async (occupationId, { rejectWithValue }) => {
+    try {
+      const response = await api.put(
+        `/admin/occupation/toggleStatus?occupationId=${occupationId}`
+      );
+      return response.data.occupation;
+    } catch (error) {
+      return rejectWithValue(
+        error.response && error.response.data
+          ? error.response.data.message
+          : error.message
+      );
+    }
+  }
+);
+
+// Create Category
+export const createOccupation = createAsyncThunk(
+  "admin/createOccupations",
+  async (newOccupation, { rejectWithValue }) => {
+    try {
+      const response = await api.post("/admin/occupation", newOccupation);
+
+      return response.data.occupation;
+    } catch (error) {
+      return rejectWithValue(
+        error.response && error.response.data
+          ? error.response.data.message
+          : error.message
+      );
+    }
+  }
+);
+
+// Update Category
+export const updateOccupation = createAsyncThunk(
+  "admin/updateOccupation",
+  async ({ occupationId, data }, { rejectWithValue }) => {
+    try {
+      const response = await api.put(
+        `/admin/occupation?occupationId=${occupationId}`,
+        data
+      );
+      return response.data.occupation;
+    } catch (error) {
+      return rejectWithValue(
+        error.response && error.response.data
+          ? error.response.data.message
+          : error.message
+      );
+    }
+  }
+);
+
 export const getCategories = createAsyncThunk(
   "admin/categories",
   async (isActive, { rejectWithValue }) => {
@@ -347,6 +420,18 @@ const adminSlice = createSlice({
         }
       })
       .addCase(updateCategory.rejected, (state, { payload }) => {
+        state.isLoading = false;
+        state.error = payload;
+      })
+      .addCase(getOccupations.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getOccupations.fulfilled, (state, { payload }) => {
+        state.isLoading = false;
+        state.occupations = payload.occupations;
+      })
+      .addCase(getOccupations.rejected, (state, { payload }) => {
         state.isLoading = false;
         state.error = payload;
       });

@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { userService } from '../services/userServices';
 import { AppError } from '../utils/AppError';
 import moment from 'moment';
+import mongoose from 'mongoose';
 
 export const initiateSignUp = async (
   req: Request,
@@ -211,9 +212,11 @@ export const editUserProfile = async (
       throw new AppError('Authentication required', 401);
     }
 
-    const { firstName, lastName, dateOfBirth } = req.body;
+    const { firstName, lastName, dateOfBirth, occupation } = req.body;
 
-    if (!firstName && !lastName && !dateOfBirth) {
+    console.log(occupation);
+
+    if (!firstName && !lastName && !dateOfBirth && !occupation) {
       throw new AppError('No updates provided', 400);
     }
 
@@ -221,6 +224,7 @@ export const editUserProfile = async (
       firstName,
       lastName,
       dateOfBirth,
+      occupation,
     });
 
     const age = updatedUser.date_of_birth
@@ -237,6 +241,7 @@ export const editUserProfile = async (
         first_name: updatedUser.first_name,
         last_name: updatedUser.last_name,
         age: age,
+        occupation: updatedUser.occupation,
       },
     });
   } catch (error) {
@@ -409,5 +414,26 @@ export const submitSurveyResponse = async (
         ? error
         : new AppError('Failed to submit survey response', 500)
     );
+  }
+};
+
+export const getAllCategories = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { isActive } = req.params;
+    const active = isActive === 'true';
+    console.log(isActive, active);
+
+    const categories = await userService.getAllCategories(active);
+    res.status(200).json({
+      message: 'Categories fetched successfully',
+      categories,
+    });
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    next(new AppError('Failed to fetch users', 500));
   }
 };

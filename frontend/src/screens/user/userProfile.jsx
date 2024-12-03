@@ -10,9 +10,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "react-toastify";
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { getOccupations } from "@/slices/adminSlice";
 import {
   fetchUserProfile,
   updateUserProfile,
@@ -34,6 +42,8 @@ const ProfileView = () => {
     );
   });
 
+  const adminState = useSelector((state) => state?.admin || {});
+
   const {
     profile = null,
     isLoading = false,
@@ -42,14 +52,18 @@ const ProfileView = () => {
     passwordChangeStatus = "idle",
   } = userState;
 
+  const { occupations = [] } = adminState;
+
   const [isNameDialogOpen, setNameDialogOpen] = useState(false);
   const [isPasswordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [isDobDialogOpen, setDobDialogOpen] = useState(false);
+  const [isOccupationDialogOpen, setOccupationDialogOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
+  const [selectedOccupation, setSelectedOccupation] = useState("");
 
   const fullName = profile
     ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim()
@@ -58,14 +72,18 @@ const ProfileView = () => {
   useEffect(() => {
     try {
       dispatch(fetchUserProfile());
+      dispatch(getOccupations());
     } catch (error) {
-      console.error("Error fetching profile:", error);
+      console.error("Error fetching data:", error);
     }
   }, [dispatch]);
 
   useEffect(() => {
     if (profile?.first_name && profile?.last_name) {
       setNewName(`${profile.first_name} ${profile.last_name}`);
+    }
+    if (profile?.occupation) {
+      setSelectedOccupation(profile.occupation);
     }
   }, [profile]);
 
@@ -78,9 +96,10 @@ const ProfileView = () => {
       toast.success(message);
       setNameDialogOpen(false);
       setDobDialogOpen(false);
+      setOccupationDialogOpen(false);
       dispatch(clearMessage());
     }
-  }, [error, message]);
+  }, [error, message, dispatch]);
 
   const handleSaveName = async () => {
     if (!newName.trim()) {
@@ -144,6 +163,29 @@ const ProfileView = () => {
       dispatch(fetchUserProfile());
     } catch (err) {
       console.error("Error updating date of birth:", err);
+    }
+  };
+
+  const handleSaveOccupation = async () => {
+    if (!selectedOccupation) {
+      toast.error("Please select an occupation");
+      return;
+    }
+
+    try {
+      await dispatch(
+        updateUserProfile({
+          ...profile,
+          occupation: selectedOccupation,
+        })
+      ).unwrap();
+
+      await dispatch(fetchUserProfile());
+
+      setOccupationDialogOpen(false);
+    } catch (err) {
+      console.error("Error updating occupation:", err);
+      toast.error("Failed to update occupation. Please try again.");
     }
   };
 
@@ -218,15 +260,19 @@ const ProfileView = () => {
             showArrow
             onClick={() => setNameDialogOpen(true)}
           />
-          {/* <Separator />
-          <ProfileRow
-            label="Contact Number"
-            value={profile?.number || "Loading..."}
-          /> */}
           <Separator />
           <ProfileRow label="Email" value={profile?.email || "Loading..."} />
           <Separator />
           <AgeRow />
+          <Separator />
+          {profile?.occupation && (
+            <ProfileRow
+              label="Occupation"
+              value={profile.occupation.name}
+              showArrow
+              onClick={() => setOccupationDialogOpen(true)}
+            />
+          )}
         </CardContent>
       </Card>
 
@@ -355,7 +401,7 @@ const ProfileView = () => {
             value={dateOfBirth}
             onChange={(e) => setDateOfBirth(e.target.value)}
             className="w-full p-2 border border-gray-300 rounded mt-4"
-            max={new Date().toISOString().split("T")[0]} // Prevents future dates
+            max={new Date().toISOString().split("T")[0]}
           />
 
           <Button
@@ -364,6 +410,52 @@ const ProfileView = () => {
             disabled={isLoading}
           >
             {isLoading ? "Saving..." : "Save Date of Birth"}
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Occupation Dialog */}
+      <Dialog
+        open={isOccupationDialogOpen}
+        onOpenChange={(open) => {
+          setOccupationDialogOpen(open);
+          if (!open) {
+            dispatch(clearMessage());
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {profile?.occupation ? "Update Occupation" : "Add Occupation"}
+            </DialogTitle>
+            <DialogDescription>
+              Please select your current occupation.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Select
+            value={selectedOccupation}
+            onValueChange={setSelectedOccupation}
+          >
+            <SelectTrigger className="w-full mt-4">
+              <SelectValue placeholder="Select Occupation" />
+            </SelectTrigger>
+            <SelectContent>
+              {occupations.map((occupation) => (
+                <SelectItem key={occupation._id} value={occupation._id}>
+                  {occupation.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Button
+            className="mt-4 w-full"
+            onClick={handleSaveOccupation}
+            disabled={isLoading}
+          >
+            {isLoading ? "Saving..." : "Save Occupation"}
           </Button>
         </DialogContent>
       </Dialog>

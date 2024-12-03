@@ -11,6 +11,7 @@ import {
   getActiveSurveys,
   getSurveyinfo,
   submitSurveyResponse,
+  getAllCategories,
 } from '../controllers/userController';
 import { checkBlockedUser } from '../middlewares/statusMiddleware';
 import { protect } from '../middlewares/authMiddleware';
@@ -43,6 +44,12 @@ router.post(
   protect,
   checkBlockedUser,
   submitSurveyResponse
+);
+router.get(
+  '/getcategories/:isActive',
+  protect,
+  checkBlockedUser,
+  getAllCategories
 );
 
 export default router;

@@ -12,6 +12,10 @@ import { SurveyResponse } from '../models/surveyresponse';
 import { Types } from 'mongoose';
 import { ResponseData } from '../types/responseSurveyTypes';
 import moment from 'moment';
+import { ICategory } from '../interfaces/common.interface';
+import Category from '../models/categoryModel';
+import Occupation from '../models/occupationModel';
+import mongoose from 'mongoose';
 
 interface AuthResponse {
   user: IUser;
@@ -260,7 +264,9 @@ export class UserService {
   }
 
   async getProfile(userId: string): Promise<any> {
-    const user = await User.findById(userId).select('-password');
+    const user = await User.findById(userId)
+      .select('-password')
+      .populate('occupation', 'name');
 
     if (!user) {
       throw new AppError('User not found', 404);
@@ -284,6 +290,7 @@ export class UserService {
       first_name: user.first_name,
       last_name: user.last_name,
       age: age,
+      occupation: user.occupation ? user.occupation : null,
     };
   }
 
@@ -293,6 +300,7 @@ export class UserService {
       firstName?: string;
       lastName?: string;
       dateOfBirth?: string;
+      occupation?: string;
     }
   ): Promise<IUser> {
     const user = await User.findById(userId);
@@ -314,10 +322,12 @@ export class UserService {
       throw new AppError('First name cannot be empty', 400);
     }
 
+    // Validate lastName
     if (updates.lastName && updates.lastName.trim().length === 0) {
       throw new AppError('Last name cannot be empty', 400);
     }
 
+    // Validate and update date of birth
     if (updates.dateOfBirth) {
       const dobDate = moment(updates.dateOfBirth);
 
@@ -337,6 +347,20 @@ export class UserService {
       user.date_of_birth = dobDate.toDate();
     }
 
+    if (updates.occupation) {
+      // Convert string to ObjectId
+      const occupationId = new mongoose.Types.ObjectId(updates.occupation);
+
+      const occupationExists = await Occupation.findById(occupationId);
+
+      if (!occupationExists) {
+        throw new AppError('Invalid occupation', 400);
+      }
+
+      user.occupation = occupationId;
+    }
+
+    // Update name fields
     if (updates.firstName) {
       user.first_name = updates.firstName.trim();
     }
@@ -701,6 +725,22 @@ export class UserService {
     });
 
     return surveyResponse;
+  }
+
+  async getAllCategories(active: boolean): Promise<ICategory[]> {
+    let categories: ICategory[];
+
+    if (active) {
+      categories = await Category.find({ status: active });
+    } else {
+      categories = await Category.find({});
+    }
+
+    if (!categories || categories.length === 0) {
+      throw new AppError('No categories found', 404);
+    }
+
+    return categories;
   }
 }
 

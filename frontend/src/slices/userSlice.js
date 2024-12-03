@@ -28,6 +28,9 @@ export const updateUserProfile = createAsyncThunk(
         ...(profileData.date_of_birth && {
           dateOfBirth: profileData.date_of_birth,
         }),
+        ...(profileData.occupation && {
+          occupation: profileData.occupation,
+        }),
       };
 
       const response = await api.put("/user/profile", payload);
@@ -111,6 +114,22 @@ export const submitSurveyResponses = createAsyncThunk(
   }
 );
 
+export const getCategories = createAsyncThunk(
+  "user/categories",
+  async (isActive, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/user/getcategories/${isActive}`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response && error.response.data
+          ? error.response.data.message
+          : error.message
+      );
+    }
+  }
+);
+
 const initialState = {
   profile: null,
   isLoading: false,
@@ -130,6 +149,11 @@ const initialState = {
     },
     sortBy: "date",
     sortOrder: "desc",
+    occupations: {
+      loading: false,
+      error: null,
+      data: [],
+    },
   },
   currentSurvey: {
     loading: false,
@@ -251,6 +275,18 @@ const userSlice = createSlice({
         state.currentSurvey.submissionStatus = "failed";
         state.currentSurvey.error =
           action.payload?.message || "Failed to submit survey";
+      })
+      .addCase(getCategories.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getCategories.fulfilled, (state, { payload }) => {
+        state.isLoading = false;
+        state.categories = payload.categories;
+      })
+      .addCase(getCategories.rejected, (state, { payload }) => {
+        state.isLoading = false;
+        state.error = payload;
       });
   },
 });

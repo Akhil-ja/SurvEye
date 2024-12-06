@@ -4,10 +4,13 @@ import User from '../models/usersModel';
 import { Response, Request } from 'express';
 import { generateTokens } from '../utils/jwtUtils';
 import bcrypt from 'bcryptjs';
-import { IUser } from '../models/usersModel';
+import { IUser } from '../interfaces/common.interface';
 import { AppError } from '../utils/AppError';
 import { generatePassword, sendPassword } from '../utils/passwordUtil';
-
+import * as web3 from '@solana/web3.js';
+import Wallet from '../models/walletModel';
+import bs58 from 'bs58';
+import { IWallet } from '../interfaces/common.interface';
 interface AuthResponse {
   user: IUser;
   tokens: {
@@ -211,5 +214,98 @@ export class SharedService {
     });
 
     return { user, tokens };
+  }
+  async createWallet(userId: string): Promise<IWallet> {
+    const connection = new web3.Connection(
+      web3.clusterApiUrl('devnet'),
+      'confirmed'
+    );
+
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const wallet = web3.Keypair.generate();
+
+    const encryptedPrivateKey = await bcrypt.hash(
+      wallet.secretKey.toString(),
+      10
+    );
+
+    const newWallet = new Wallet({
+      userId,
+      publicAddress: wallet.publicKey.toBase58(),
+      encryptedPrivateKey,
+      network: 'devnet',
+    });
+
+    const savedWallet = await newWallet.save();
+
+    user.wallet = savedWallet._id;
+    await user.save();
+
+    return savedWallet;
+  }
+
+  async addExistingWallet(
+    userId: string,
+    publicAddress: string,
+    privateKey: string
+  ): Promise<IWallet> {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const existingWallet = await Wallet.findOne({
+      publicAddress,
+      userId,
+    });
+    if (existingWallet) {
+      throw new Error('Wallet with this address already exists for the user');
+    }
+
+    const privateKeyBytes = bs58.decode(privateKey);
+
+    const keypair = web3.Keypair.fromSecretKey(privateKeyBytes);
+
+    const derivedPublicKey = keypair.publicKey.toBase58();
+    if (derivedPublicKey !== publicAddress) {
+      throw new Error('Invalid private key for the given public address');
+    }
+
+    const encryptedPrivateKey = await bcrypt.hash(privateKey, 10);
+
+    const newWallet = new Wallet({
+      userId,
+      publicAddress,
+      encryptedPrivateKey,
+      network: 'devnet',
+    });
+
+    const savedWallet = await newWallet.save();
+
+    user.wallet = savedWallet._id;
+    await user.save();
+
+    return savedWallet;
+  }
+
+  async getWallet(userId: string): Promise<IWallet | null> {
+    const user = await User.findById(userId)
+      .populate<{ wallet: IWallet }>('wallet')
+      .lean()
+      .exec();
+
+    if (!user) {
+      throw new AppError('User not found', 404);
+    }
+
+    if (!user.wallet) {
+      return null;
+    }
+
+    return user.wallet;
   }
 }

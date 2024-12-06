@@ -138,3 +138,84 @@ export const googleAuth = async (
     );
   }
 };
+
+export const createAndStoreWallet = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      throw new AppError('Authentication required', 401);
+    }
+
+    const wallet = await sharedService.createWallet(userId);
+
+    res.status(201).json({
+      message: 'Wallet created successfully',
+      publicAddress: wallet.publicAddress,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const AddExistingWallet = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { publicAddress, privateKey } = req.body;
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new AppError('Authentication required', 401);
+    }
+    const wallet = await sharedService.addExistingWallet(
+      userId,
+      publicAddress,
+      privateKey
+    );
+    res.status(201).json({
+      message: 'Wallet added successfully',
+      publicAddress: wallet.publicAddress,
+    });
+  } catch (error) {
+    console.error('Error creating wallet:', error);
+    next(new AppError('Failed to create wallet', 500));
+  }
+};
+
+export const getWallet = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return next(new AppError('User ID not provided', 400));
+    }
+
+    const wallet = await sharedService.getWallet(userId);
+
+    if (!wallet) {
+      res.status(200).json({
+        message: 'No wallet found for the user',
+        wallet: null,
+      });
+      return;
+    }
+
+    res.status(200).json({
+      message: 'Fetched wallet successfully',
+      wallet,
+    });
+  } catch (error) {
+    console.error('Error fetching wallet:', error);
+    next(new AppError('Failed to fetch wallet', 500));
+  }
+};

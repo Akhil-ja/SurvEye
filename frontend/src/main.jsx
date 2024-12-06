@@ -39,6 +39,7 @@ import AttendSurvey from "./screens/user/attendSurvey";
 import AttendedSurveyList from "./screens/user/attendedSurveyList";
 import CategoryPage from "./screens/admin/categoryPage";
 import OccupationPage from "./screens/admin/occupationPage";
+import WalletView from "./screens/user/wallet";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -64,6 +65,7 @@ const router = createBrowserRouter(
         <Route path="/user/survey" element={<ActiveSurveys />} />
         <Route path="/user/attendsurvey" element={<AttendSurvey />} />
         <Route path="/user/attendedsurveys" element={<AttendedSurveyList />} />
+        <Route path="/user/wallet" element={<WalletView />} />
 
         {/** Creator routes */}
         <Route path="/creator/home" element={<CreatorHome />} />

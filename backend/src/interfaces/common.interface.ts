@@ -11,7 +11,7 @@ export interface IUser extends Document {
   last_name?: string;
   creator_name?: string;
   industry?: string;
-  wallets: number[];
+  wallet: Types.ObjectId;
   date_of_birth?: Date;
   days_active: number;
   status: 'active' | 'blocked';
@@ -146,4 +146,24 @@ export interface IOccupation extends Document {
   name: string;
   description: string;
   status: boolean;
+}
+
+export interface IWallet {
+  userId: Types.ObjectId;
+  publicAddress: string;
+  encryptedPrivateKey: string;
+  isActive?: boolean;
+  network?: 'devnet' | 'testnet' | 'mainnet';
+  payout: number;
+  isPayoutLocked: boolean;
+}
+
+export interface ITransaction {
+  user: Types.ObjectId;
+  type: string;
+  sender: string;
+  recipient: string;
+  amount: number;
+  signature: string;
+  status: string;
 }

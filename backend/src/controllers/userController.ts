@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import { userService } from '../services/userServices';
 import { AppError } from '../utils/AppError';
 import moment from 'moment';
-import mongoose from 'mongoose';
 
 export const initiateSignUp = async (
   req: Request,
@@ -425,7 +424,6 @@ export const getAllCategories = async (
   try {
     const { isActive } = req.params;
     const active = isActive === 'true';
-    console.log(isActive, active);
 
     const categories = await userService.getAllCategories(active);
     res.status(200).json({
@@ -435,5 +433,69 @@ export const getAllCategories = async (
   } catch (error) {
     console.error('Error fetching users:', error);
     next(new AppError('Failed to fetch users', 500));
+  }
+};
+
+export const sendSOLToken = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    const { senderPrivateKey, recipientPublicAddress, amountInSol } = req.body;
+
+    const transactionSignature = await userService.sendSOL(
+      senderPrivateKey,
+      recipientPublicAddress,
+      amountInSol,
+      userId
+    );
+
+    res.status(200).json({
+      message: 'SOL transfer successful',
+      transactionSignature,
+    });
+  } catch (error) {
+    console.error('Error sending SOL:', error);
+
+    if (
+      error instanceof Error &&
+      error.message.includes('Insufficient balance')
+    ) {
+      next(new AppError(error.message, 400));
+    } else {
+      next(new AppError('Failed to Send SOL', 500));
+    }
+  }
+};
+
+export const payoutToWallet = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    console.log('payoutToWallet');
+
+    const userId = req.user?.id;
+
+    const transactionSignature = await userService.payout(userId);
+
+    res.status(200).json({
+      message: 'SOL transfer successful',
+      transactionSignature,
+    });
+  } catch (error) {
+    console.error('Error sending SOL:', error);
+
+    if (
+      error instanceof Error &&
+      error.message.includes('Insufficient balance')
+    ) {
+      next(new AppError(error.message, 400));
+    } else {
+      next(new AppError('Failed to Send SOL', 500));
+    }
   }
 };

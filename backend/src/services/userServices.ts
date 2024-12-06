@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import User from '../models/usersModel';
-import { IUser } from '../models/usersModel';
+import { IUser, IWallet } from '../interfaces/common.interface';
 import { generateTokens } from '../utils/jwtUtils';
 import PendingUser from '../models/pendingUserModel';
 import { generateOTP, sendOTP } from '../utils/otpUtils';
@@ -16,6 +16,10 @@ import { ICategory } from '../interfaces/common.interface';
 import Category from '../models/categoryModel';
 import Occupation from '../models/occupationModel';
 import mongoose from 'mongoose';
+import * as web3 from '@solana/web3.js';
+import Wallet from '../models/walletModel';
+import bs58 from 'bs58';
+import Transaction from '../models/transactionModel';
 
 interface AuthResponse {
   user: IUser;
@@ -317,12 +321,10 @@ export class UserService {
       throw new AppError('User is blocked', 403);
     }
 
-    // Validate firstName
     if (updates.firstName && updates.firstName.trim().length === 0) {
       throw new AppError('First name cannot be empty', 400);
     }
 
-    // Validate lastName
     if (updates.lastName && updates.lastName.trim().length === 0) {
       throw new AppError('Last name cannot be empty', 400);
     }
@@ -348,7 +350,6 @@ export class UserService {
     }
 
     if (updates.occupation) {
-      // Convert string to ObjectId
       const occupationId = new mongoose.Types.ObjectId(updates.occupation);
 
       const occupationExists = await Occupation.findById(occupationId);
@@ -360,7 +361,6 @@ export class UserService {
       user.occupation = occupationId;
     }
 
-    // Update name fields
     if (updates.firstName) {
       user.first_name = updates.firstName.trim();
     }
@@ -568,6 +568,16 @@ export class UserService {
     userId: string,
     responses: ResponseData[]
   ) {
+    const user = await User.findById(userId).populate('wallet').exec();
+
+    if (!user) {
+      throw new AppError('user not found', 400);
+    }
+
+    if (!user.wallet) {
+      throw new AppError('user Hasno wallet', 400);
+    }
+
     const survey = (await Survey.findById(surveyId)) as ISurvey | null;
     if (!survey) {
       throw new AppError('Survey not found', 404);
@@ -711,13 +721,16 @@ export class UserService {
       })
     );
 
+    await Wallet.findByIdAndUpdate(user.wallet._id, {
+      payout: +(survey.price / survey.sampleSize),
+    });
+
     const surveyResponse = new SurveyResponse({
       survey: surveyId,
       user: userId,
       answers: formattedAnswers,
       completedAt: new Date(),
     });
-
     await surveyResponse.save();
 
     await Survey.findByIdAndUpdate(surveyId, {
@@ -741,6 +754,171 @@ export class UserService {
     }
 
     return categories;
+  }
+
+  async sendSOL(
+    senderPrivateKey: string,
+    recipientPublicAddress: string,
+    amountInSol: number,
+    userId: string
+  ): Promise<string> {
+    const connection = new web3.Connection(
+      web3.clusterApiUrl('devnet'),
+      'confirmed'
+    );
+
+    const privateKeyBytes = bs58.decode(senderPrivateKey);
+
+    const senderKeypair = web3.Keypair.fromSecretKey(privateKeyBytes);
+
+    const senderPublicKey = senderKeypair.publicKey;
+    const balance = await connection.getBalance(senderPublicKey);
+    const balanceInSol = balance / web3.LAMPORTS_PER_SOL;
+
+    const amountInLamports = amountInSol * web3.LAMPORTS_PER_SOL;
+
+    const feeInLamports = 5000; // 0.005 SOL for transaction
+
+    if (balanceInSol < amountInSol + feeInLamports / web3.LAMPORTS_PER_SOL) {
+      throw new Error(
+        `Insufficient balance. Current balance: ${balanceInSol.toFixed(4)} SOL, Required: ${(amountInSol + feeInLamports / web3.LAMPORTS_PER_SOL).toFixed(4)} SOL`
+      );
+    }
+
+    const recipientPublicKey = new web3.PublicKey(recipientPublicAddress);
+
+    const transaction = new web3.Transaction().add(
+      web3.SystemProgram.transfer({
+        fromPubkey: senderPublicKey,
+        toPubkey: recipientPublicKey,
+        lamports: amountInLamports,
+      })
+    );
+
+    // Get recent blockhash
+    const { blockhash } = await connection.getLatestBlockhash();
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = senderPublicKey;
+
+    transaction.sign(senderKeypair);
+
+    const signedTransactionBuffer = transaction.serialize();
+
+    const signature = await connection.sendRawTransaction(
+      signedTransactionBuffer
+    );
+
+    const confirmation = await connection.confirmTransaction(signature);
+
+    if (confirmation.value.err) {
+      throw new Error('Transaction failed');
+    }
+
+    await Transaction.create({
+      user: userId,
+      type: 'credit',
+      sender: senderPublicKey.toBase58(),
+      recipient: recipientPublicKey.toBase58(),
+      amount: amountInSol,
+      signature,
+      status: 'completed',
+    });
+
+    return signature;
+  }
+
+  async payout(userId: string): Promise<string> {
+    const connection = new web3.Connection(
+      web3.clusterApiUrl('devnet'),
+      'confirmed'
+    );
+
+    const user = await User.findById(userId).populate('wallet').exec();
+    if (!user || !user.wallet) {
+      throw new AppError('User or wallet not found', 404);
+    }
+
+    const wallet = await Wallet.findOneAndUpdate(
+      { _id: user.wallet._id, isPayoutLocked: false },
+      { isPayoutLocked: true },
+      { new: true }
+    );
+    if (!wallet) {
+      throw new AppError('Payout is already in progress for this user', 400);
+    }
+
+    // Validate sender's private key
+    const senderPrivateKey = process.env.ADMIN_PRIVATE_KEY;
+    if (!senderPrivateKey) {
+      await Wallet.findByIdAndUpdate(wallet._id, { isPayoutLocked: false });
+      throw new AppError('Admin private key is missing', 500);
+    }
+
+    const privateKeyBytes = bs58.decode(senderPrivateKey);
+    const senderKeypair = web3.Keypair.fromSecretKey(privateKeyBytes);
+    const senderPublicKey = senderKeypair.publicKey;
+
+    const balance = await connection.getBalance(senderPublicKey);
+    const balanceInSol = balance / web3.LAMPORTS_PER_SOL;
+    const amountInSol = wallet.payout;
+    const amountInLamports = amountInSol * web3.LAMPORTS_PER_SOL;
+    const feeInLamports = 5000;
+
+    if (balanceInSol < amountInSol + feeInLamports / web3.LAMPORTS_PER_SOL) {
+      await Wallet.findByIdAndUpdate(wallet._id, { isPayoutLocked: false });
+      throw new AppError(
+        `Insufficient balance. Current balance: ${balanceInSol.toFixed(4)} SOL, Required: ${(amountInSol + feeInLamports / web3.LAMPORTS_PER_SOL).toFixed(4)} SOL`,
+        400
+      );
+    }
+
+    const recipientPublicKey = new web3.PublicKey(wallet.publicAddress);
+
+    // Create transfer transaction
+    const transaction = new web3.Transaction().add(
+      web3.SystemProgram.transfer({
+        fromPubkey: senderPublicKey,
+        toPubkey: recipientPublicKey,
+        lamports: amountInLamports,
+      })
+    );
+
+    const { blockhash } = await connection.getLatestBlockhash();
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = senderPublicKey;
+    transaction.sign(senderKeypair);
+
+    try {
+      const signedTransactionBuffer = transaction.serialize();
+      const signature = await connection.sendRawTransaction(
+        signedTransactionBuffer
+      );
+      const confirmation = await connection.confirmTransaction(signature);
+
+      if (confirmation.value.err) {
+        throw new Error('Transaction failed');
+      }
+
+      wallet.payout = 0;
+      wallet.isPayoutLocked = false;
+      await wallet.save();
+
+      await Transaction.create({
+        user: userId,
+        type: 'payout',
+        sender: senderPublicKey,
+        recipient: recipientPublicKey,
+        amount: amountInSol,
+        signature,
+        status: 'completed',
+      });
+
+      return signature;
+    } catch (error) {
+      console.error('Error during transaction:', error);
+      await Wallet.findByIdAndUpdate(wallet._id, { isPayoutLocked: false });
+      throw new AppError('Transaction failed, please try again', 500);
+    }
   }
 }
 

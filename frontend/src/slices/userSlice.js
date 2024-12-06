@@ -105,6 +105,7 @@ export const submitSurveyResponses = createAsyncThunk(
       const response = await api.post(`/user/survey/${surveyId}/submit`, {
         responses,
       });
+
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -125,6 +126,24 @@ export const getCategories = createAsyncThunk(
         error.response && error.response.data
           ? error.response.data.message
           : error.message
+      );
+    }
+  }
+);
+
+export const processPayout = createAsyncThunk(
+  "user/payout",
+  async (walletDetails, { rejectWithValue }) => {
+    try {
+      console.log(walletDetails);
+      const response = await api.post(`/user/wallet/payout`);
+
+      return response.message;
+    } catch (error) {
+      return rejectWithValue(
+        error.response && error.response.data
+          ? error.response.data.message
+          : "Failed to add wallet"
       );
     }
   }
@@ -271,6 +290,7 @@ const userSlice = createSlice({
           action.payload.message || "Survey submitted successfully";
         state.currentSurvey.error = null;
       })
+
       .addCase(submitSurveyResponses.rejected, (state, action) => {
         state.currentSurvey.submissionStatus = "failed";
         state.currentSurvey.error =
@@ -315,5 +335,16 @@ export const selectCurrentSurveyError = (state) =>
   state.user.currentSurvey.error;
 export const selectSubmissionStatus = (state) =>
   state.user.currentSurvey.submissionStatus;
+
+export const selectWalletData = (state) => state.user.wallet.data;
+export const selectWalletLoading = (state) => state.user.wallet.loading;
+export const selectWalletError = (state) => state.user.wallet.error;
+
+export const selectWalletTransactions = (state) =>
+  state.user.wallet.transactions.data;
+export const selectWalletTransactionsLoading = (state) =>
+  state.user.wallet.transactions.loading;
+export const selectWalletTransactionsError = (state) =>
+  state.user.wallet.transactions.error;
 
 export default userSlice.reducer;

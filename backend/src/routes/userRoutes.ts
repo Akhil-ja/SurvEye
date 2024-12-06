@@ -12,6 +12,8 @@ import {
   getSurveyinfo,
   submitSurveyResponse,
   getAllCategories,
+  sendSOLToken,
+  payoutToWallet,
 } from '../controllers/userController';
 import { checkBlockedUser } from '../middlewares/statusMiddleware';
 import { protect } from '../middlewares/authMiddleware';
@@ -51,5 +53,9 @@ router.get(
   checkBlockedUser,
   getAllCategories
 );
+
+router.post('/wallet/send-sol', protect, checkBlockedUser, sendSOLToken);
+
+router.post('/wallet/payout', protect, checkBlockedUser, payoutToWallet);
 
 export default router;

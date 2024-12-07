@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import User from '../models/usersModel';
-import { IUser, IWallet } from '../interfaces/common.interface';
+import { IUser } from '../interfaces/common.interface';
 import { generateTokens } from '../utils/jwtUtils';
 import PendingUser from '../models/pendingUserModel';
 import { generateOTP, sendOTP } from '../utils/otpUtils';
@@ -448,6 +448,7 @@ export class UserService {
     const currentDate = new Date();
 
     let userAge: number | undefined;
+    let userOccupation;
 
     if (userId) {
       const user = await User.findById(userId).lean();
@@ -462,6 +463,8 @@ export class UserService {
         const ageDiff = currentDate.getTime() - birthDate.getTime();
         userAge = Math.floor(ageDiff / (1000 * 60 * 60 * 24 * 365.25));
       }
+
+      userOccupation = user.occupation;
     }
 
     const ageCondition =
@@ -513,6 +516,12 @@ export class UserService {
           'duration.startDate': { $lte: currentDate },
           'duration.endDate': { $gte: currentDate },
           ...ageCondition,
+          $or: [
+            { occupation: null },
+            {
+              occupation: userOccupation,
+            },
+          ],
         };
       }
 
@@ -722,7 +731,7 @@ export class UserService {
     );
 
     await Wallet.findByIdAndUpdate(user.wallet._id, {
-      payout: +(survey.price / survey.sampleSize),
+      payout: parseFloat((survey.price / survey.sampleSize).toFixed(3)),
     });
 
     const surveyResponse = new SurveyResponse({

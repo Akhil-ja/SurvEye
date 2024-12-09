@@ -37,10 +37,8 @@ const SurveyBuilder = () => {
     if (surveyId) {
       dispatch(getSurvey({ surveyId }))
         .unwrap()
-        .then((result) => console.log("Survey data:", result))
         .catch((error) => console.error("Error fetching survey:", error));
     }
-    console.log(data);
 
     const savedPages = sessionStorage.getItem(`surveyProgress-${surveyId}`);
     if (savedPages) {
@@ -139,6 +137,16 @@ const SurveyBuilder = () => {
   };
 
   const addPage = () => {
+    if (
+      pages[currentPage].questions.length === 0 ||
+      pages[currentPage].questions[0].question.trim() === ""
+    ) {
+      toast.error(
+        "Please add a question to the current page before adding a new page!"
+      );
+      return;
+    }
+
     setPages([...pages, { questions: [] }]);
     setCurrentPage(pages.length);
   };

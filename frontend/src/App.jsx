@@ -1,5 +1,6 @@
 /* eslint-disable react/react-in-jsx-scope */
 import { Outlet, useLocation } from "react-router-dom";
+import { Wallet } from "./components/wallet";
 import AdminNavbar from "./components/adminNavbar";
 import UserNavbar from "./components/userNavbar";
 import { ToastContainer } from "react-toastify";
@@ -30,7 +31,7 @@ const App = () => {
   };
 
   return (
-    <>
+    <Wallet>
       {renderNavbar()}
 
       <div className="layout">
@@ -42,8 +43,7 @@ const App = () => {
       </div>
 
       <ToastContainer position="top-right" autoClose={3000} />
-    </>
+    </Wallet>
   );
 };
-
 export default App;

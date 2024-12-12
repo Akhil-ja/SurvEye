@@ -1,9 +1,9 @@
 export const calculateSurveyPrice = (pages, sampleSize, durationDays) => {
-  const basePagePrice = 5;
+  const basePagePrice = 0.05;
 
-  const sampleSizeMultiplier = Math.ceil(sampleSize / 20) * 0.5;
+  const sampleSizeMultiplier = (sampleSize / 20) * 0.05;
 
-  const durationFactor = Math.max(0.5, 1 - durationDays / 90);
+  const durationFactor = Math.max(0.05, 1 - durationDays / 90);
 
   const pagesCost = pages.length * basePagePrice;
   const sampleSizeCost = pagesCost * sampleSizeMultiplier;
@@ -12,11 +12,11 @@ export const calculateSurveyPrice = (pages, sampleSize, durationDays) => {
   const totalPrice = pagesCost + sampleSizeCost + durationCost;
 
   return {
-    totalPrice: Math.ceil(totalPrice),
+    totalPrice: totalPrice.toFixed(3),
     breakdown: {
-      basePagesCost: pagesCost,
-      sampleSizeCost: sampleSizeCost,
-      durationCost: durationCost,
+      basePagesCost: pagesCost.toFixed(3),
+      sampleSizeCost: sampleSizeCost.toFixed(3),
+      durationCost: durationCost.toFixed(3),
     },
   };
 };

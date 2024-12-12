@@ -1,14 +1,14 @@
+/* eslint-disable react/prop-types */
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { calculateSurveyPrice } from "@/utils/calculatePrice";
 
 const SurveyPriceCalculator = ({ pages, surveyData }) => {
-  const [price, setPrice] = useState({ totalPrice: 0, breakdown: {} });
+  const [price, setPrice] = useState({ totalPrice: "0.000000", breakdown: {} });
 
   useEffect(() => {
     if (!surveyData || !pages) return;
 
-    // Calculate duration in days
     const startDate = new Date(surveyData.duration.startDate);
     const endDate = new Date(surveyData.duration.endDate);
     const durationDays = Math.ceil(
@@ -36,7 +36,7 @@ const SurveyPriceCalculator = ({ pages, surveyData }) => {
           <div className="flex justify-between">
             <span>Base Cost ({pages.length} pages):</span>
             <span className="font-semibold">
-              ${price.breakdown.basePagesCost?.toFixed(2)}
+              {price.breakdown.basePagesCost} SOL
             </span>
           </div>
           <div className="flex justify-between">
@@ -44,19 +44,19 @@ const SurveyPriceCalculator = ({ pages, surveyData }) => {
               Sample Size Adjustment ({surveyData.sampleSize} participants):
             </span>
             <span className="font-semibold">
-              ${price.breakdown.sampleSizeCost?.toFixed(2)}
+              {price.breakdown.sampleSizeCost} SOL
             </span>
           </div>
           <div className="flex justify-between">
             <span>Duration Adjustment:</span>
             <span className="font-semibold">
-              ${price.breakdown.durationCost?.toFixed(2)}
+              {price.breakdown.durationCost} SOL
             </span>
           </div>
           <div className="border-t pt-2 mt-2">
             <div className="flex justify-between text-lg font-bold">
               <span>Total Price:</span>
-              <span className="text-primary">${price.totalPrice}</span>
+              <span className="text-primary">{price.totalPrice} SOL</span>
             </div>
           </div>
         </div>

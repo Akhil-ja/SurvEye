@@ -65,6 +65,25 @@ export const getWalletTransactions = createAsyncThunk(
   }
 );
 
+export const postWalletTransactions = createAsyncThunk(
+  "shared/postWalletTransactions",
+  async (transactionDetails, { rejectWithValue }) => {
+    try {
+      const response = await api.post(
+        `/wallet/transactions`,
+        transactionDetails
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response && error.response.data
+          ? error.response.data.message
+          : "Failed to post wallet transactions"
+      );
+    }
+  }
+);
+
 const initialState = {
   wallet: {
     loading: false,

@@ -18,12 +18,16 @@ import { getSurvey, submitSurvey } from "@/slices/creatorSlice";
 import { useNavigate } from "react-router-dom";
 import SurveyPriceCalculator from "@/components/surveyPriceCalculator";
 import { calculateSurveyPrice } from "@/utils/calculatePrice";
+import { Wallet } from "@/components/wallet";
+import PaymentModal from "@/components/paymentModal";
+import { postWalletTransactions } from "@/slices/sharedSlice";
 
 const SurveyBuilder = () => {
   const [pages, setPages] = useState([{ questions: [] }]);
   const [currentPage, setCurrentPage] = useState(0);
   const [showQuestionTypes, setShowQuestionTypes] = useState(false);
   const [showReview, setShowReview] = useState(false);
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
 
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -32,6 +36,24 @@ const SurveyBuilder = () => {
   const dispatch = useDispatch();
 
   const { data, loading, error } = useSelector((state) => state.creator);
+
+  let price = null;
+
+  if (data && !loading && !error) {
+    price = calculateSurveyPrice(
+      pages,
+      data.data.sampleSize,
+      Math.ceil(
+        (new Date(data.data.duration.endDate) -
+          new Date(data.data.duration.startDate)) /
+          (1000 * 60 * 60 * 24)
+      )
+    ).totalPrice;
+  }
+
+  if (loading) {
+    <p>Loading...</p>;
+  }
 
   useEffect(() => {
     if (surveyId) {
@@ -174,16 +196,6 @@ const SurveyBuilder = () => {
       return;
     }
 
-    const price = calculateSurveyPrice(
-      pages,
-      data.data.sampleSize,
-      Math.ceil(
-        (new Date(data.data.duration.endDate) -
-          new Date(data.data.duration.startDate)) /
-          (1000 * 60 * 60 * 24)
-      )
-    ).totalPrice;
-
     sessionStorage.removeItem(`surveyProgress-${surveyId}`);
     dispatch(
       submitSurvey({
@@ -211,16 +223,10 @@ const SurveyBuilder = () => {
       return;
     }
 
-    const price = calculateSurveyPrice(
-      pages,
-      data.data.sampleSize,
-      Math.ceil(
-        (new Date(data.data.duration.endDate) -
-          new Date(data.data.duration.startDate)) /
-          (1000 * 60 * 60 * 24)
-      )
-    ).totalPrice;
+    setPaymentModalVisible(true);
+  };
 
+  const completeSurveySubmission = () => {
     sessionStorage.removeItem(`surveyProgress-${surveyId}`);
     dispatch(
       submitSurvey({
@@ -233,6 +239,7 @@ const SurveyBuilder = () => {
       .then(() => {
         toast.success("Survey submitted");
         sessionStorage.removeItem(`surveyProgress-${surveyId}`);
+
         navigate(`/creator/surveyinfo?surveyId=${surveyId}`);
       })
       .catch((error) => {
@@ -516,6 +523,13 @@ const SurveyBuilder = () => {
           </div>
         )}
       </div>
+      {paymentModalVisible && (
+        <PaymentModal
+          price={price}
+          onPaymentSuccess={completeSurveySubmission}
+          onCancel={() => setPaymentModalVisible(false)}
+        />
+      )}
     </div>
   );
 };

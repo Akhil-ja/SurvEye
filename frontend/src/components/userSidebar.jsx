@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import { RiSurveyFill } from "react-icons/ri";
 import { SiLimesurvey } from "react-icons/si";
+import { IoWallet } from "react-icons/io5";
 
 const UserSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -71,6 +72,17 @@ const UserSidebar = () => {
               >
                 <RiSurveyFill className="text-xl text-white" />
                 <span className="text-white">Survey</span>
+              </Link>
+            </li>
+
+            <li>
+              <Link
+                to="/user/wallet"
+                onClick={handleLinkClick}
+                className="flex items-center space-x-2 py-2 px-4 hover:bg-gray-700 rounded"
+              >
+                <IoWallet className="text-xl text-white" />
+                <span className="text-white">Wallet</span>
               </Link>
             </li>
           </ul>

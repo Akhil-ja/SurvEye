@@ -219,3 +219,80 @@ export const getWallet = async (
     next(new AppError('Failed to fetch wallet', 500));
   }
 };
+
+export const getTransactions = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return next(new AppError('User ID not provided', 400));
+    }
+
+    const transactions = await sharedService.getTransactions(userId);
+
+    if (!transactions) {
+      res.status(200).json({
+        message: 'No transactions found for the user',
+        wallet: null,
+      });
+      return;
+    }
+
+    res.status(200).json({
+      message: 'Fetched transactions successfully',
+      transactions,
+    });
+  } catch (error) {
+    console.error('Error fetching wallet:', error);
+    next(new AppError('Failed to fetch wallet', 500));
+  }
+};
+
+export const makeTransaction = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+
+    const { amount, type, status, sender, recipient, signature } = req.body;
+
+    if (!userId) {
+      return next(new AppError('User ID not provided', 400));
+    }
+
+    if (!amount || !type || !status) {
+      return next(new AppError('Missing required fields', 400));
+    }
+
+    const transaction = await sharedService.makeTransaction(
+      userId,
+      amount,
+      type,
+      status,
+      sender,
+      recipient,
+      signature
+    );
+
+    if (!transaction) {
+      res.status(400).json({
+        message: 'Failed to create transaction',
+      });
+      return;
+    }
+
+    res.status(201).json({
+      message: 'Transaction created successfully',
+      transaction,
+    });
+  } catch (error) {
+    console.error('Error creating transaction:', error);
+    next(new AppError('Failed to create transaction', 500));
+  }
+};

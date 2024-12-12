@@ -1,49 +1,5 @@
-// Survey.ts
-import { Schema, model, Document, Types } from 'mongoose';
-
-interface IOption extends Document {
-  text: string;
-  value: number;
-}
-
-interface IQuestion {
-  _id: Types.ObjectId;
-  questionText: string;
-  questionType: 'multiple_choice' | 'single_choice' | 'text' | 'rating';
-  options: IOption[];
-  required: boolean;
-  pageNumber: number;
-}
-
-interface ITargetAgeRange {
-  isAllAges: boolean;
-  minAge?: number;
-  maxAge?: number;
-}
-
-interface IDuration {
-  startDate: Date;
-  endDate: Date;
-}
-
-interface ISurvey extends Document {
-  creator: Types.ObjectId;
-  surveyName: string;
-  description: string;
-  category: Types.ObjectId;
-  occupation: Types.ObjectId;
-  creatorName: string;
-  sampleSize: number;
-  price: number;
-  targetAgeRange: ITargetAgeRange;
-  duration: IDuration;
-  status: 'draft' | 'active' | 'completed' | 'cancelled';
-  questions: IQuestion[];
-  created_at: Date;
-  updated_at: Date;
-  totalResponses: number;
-  isPublished: boolean;
-}
+import { Schema, model } from 'mongoose';
+import { IOption, IQuestion, ISurvey } from '../interfaces/common.interface';
 
 const optionSchema = new Schema<IOption>({
   text: { type: String, required: true },
@@ -77,6 +33,7 @@ const surveySchema = new Schema<ISurvey>({
   occupation: {
     type: Schema.Types.ObjectId,
     ref: 'Occupation',
+    default: null,
   },
 
   creatorName: { type: String, required: true },

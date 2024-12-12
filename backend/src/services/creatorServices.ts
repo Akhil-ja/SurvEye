@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import User from '../models/usersModel';
-import { IUser } from '../models/usersModel';
+import { IUser } from '../interfaces/common.interface';
 import { generateTokens } from '../utils/jwtUtils';
 import { generateOTP, sendOTP } from '../utils/otpUtils';
 import PendingUser from '../models/pendingUserModel';
@@ -191,7 +191,6 @@ export class CreatorService {
     return { user, tokens };
   }
 
-  // Send OTP for Forgot Password
   async sendOTPForForgotPassword(email: string, res: Response): Promise<void> {
     const user = await User.findOne({ email });
     if (!user) {

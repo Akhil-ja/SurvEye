@@ -59,7 +59,7 @@ export interface ISurvey extends Document {
   creator: Types.ObjectId;
   surveyName: string;
   description: string;
-  category: 'market' | 'product' | 'customer';
+  category: Types.ObjectId;
   creatorName: string;
   sampleSize: number;
   targetAgeRange: ITargetAgeRange;
@@ -70,6 +70,8 @@ export interface ISurvey extends Document {
   updated_at: Date;
   totalResponses: number;
   isPublished: boolean;
+  price: number;
+  occupation: Types.ObjectId | null;
 }
 
 export interface IOption extends Document {
@@ -101,7 +103,7 @@ export interface ISurvey extends Document {
   creator: Types.ObjectId;
   surveyName: string;
   description: string;
-  category: 'market' | 'product' | 'customer';
+  category: Types.ObjectId;
   creatorName: string;
   sampleSize: number;
   targetAgeRange: ITargetAgeRange;

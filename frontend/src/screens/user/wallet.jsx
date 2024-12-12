@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { ChevronRight, CopyIcon } from "lucide-react";
 import { IoWallet } from "react-icons/io5";
-
+import { Link } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -100,6 +99,7 @@ const WalletView = () => {
       setCreateWalletDialogOpen(false);
       dispatch(getWallet());
     } catch (err) {
+      console.log("the error:", err);
       toast.error("Failed to create wallet");
     }
   };
@@ -209,7 +209,6 @@ const WalletView = () => {
 
   return (
     <div className="max-w-5xl mx-auto p-4 space-y-4">
-      {/* Wallet Balance and Address Card */}
       <Card className="border border-green-200">
         <CardContent className="p-0">
           <div className="flex justify-between items-center p-4 bg-green-50">
@@ -270,20 +269,40 @@ const WalletView = () => {
       <Card>
         <CardContent className="p-0">
           <div className="p-4">
-            <h3 className="text-lg font-semibold mb-4">Transaction History</h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Transaction History</h3>
+              {transactions.length > 4 && (
+                <Link
+                  to="/user/wallet/history"
+                  className="text-blue-600 hover:underline text-sm flex items-center"
+                >
+                  See More
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              )}
+            </div>
             {transactions && transactions.length > 0 ? (
               <div className="space-y-2">
-                {transactions.map((transaction, index) => (
+                {transactions.slice(0, 4).map((transaction, index) => (
                   <div
                     key={index}
                     className="flex justify-between border-b pb-2 last:border-b-0"
                   >
                     <div>
                       <div className="font-medium">
-                        {transaction.type === "send" ? "Sent" : "Received"}
+                        {transaction.type === "payout" ? "Payout" : "Sent"}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {new Date(transaction.date).toLocaleString()}
+                        {new Date(transaction.createdAt).toLocaleString(
+                          "en-US",
+                          {
+                            year: "numeric",
+                            month: "2-digit",
+                            day: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )}
                       </div>
                     </div>
                     <div
@@ -293,7 +312,7 @@ const WalletView = () => {
                           : "text-green-600"
                       }`}
                     >
-                      {transaction.type === "send" ? "-" : "+"}
+                      {transaction.type === "credit" ? "-" : "+"}
                       {transaction.amount} USD
                     </div>
                   </div>

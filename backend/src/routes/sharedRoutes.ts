@@ -9,6 +9,8 @@ import {
   createAndStoreWallet,
   AddExistingWallet,
   getWallet,
+  makeTransaction,
+  getTransactions,
 } from '../controllers/sharedController';
 import { checkBlockedUser } from '../middlewares/statusMiddleware';
 import { protect } from '../middlewares/authMiddleware';
@@ -33,5 +35,9 @@ router.post('/wallet', protect, checkBlockedUser, createAndStoreWallet);
 router.post('/addWallet', protect, checkBlockedUser, AddExistingWallet);
 
 router.get('/wallet', protect, checkBlockedUser, getWallet);
+
+router.get('/wallet/transactions', protect, checkBlockedUser, getTransactions);
+
+router.post('/wallet/transactions', protect, checkBlockedUser, makeTransaction);
 
 export default router;

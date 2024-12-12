@@ -40,6 +40,7 @@ import AttendedSurveyList from "./screens/user/attendedSurveyList";
 import CategoryPage from "./screens/admin/categoryPage";
 import OccupationPage from "./screens/admin/occupationPage";
 import WalletView from "./screens/user/wallet";
+import TransactionsPage from "./screens/shared/transactionHistory";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -66,6 +67,7 @@ const router = createBrowserRouter(
         <Route path="/user/attendsurvey" element={<AttendSurvey />} />
         <Route path="/user/attendedsurveys" element={<AttendedSurveyList />} />
         <Route path="/user/wallet" element={<WalletView />} />
+        <Route path="/user/wallet/history" element={<TransactionsPage />} />
 
         {/** Creator routes */}
         <Route path="/creator/home" element={<CreatorHome />} />
@@ -74,6 +76,7 @@ const router = createBrowserRouter(
         <Route path="/creator/survey" element={<CreateSurvey />} />
         <Route path="/creator/surveycreate" element={<MakeSurvey />} />
         <Route path="/creator/surveyinfo" element={<SurveyInfo />} />
+        <Route path="/creator/wallet" element={<TransactionsPage />} />
       </Route>
 
       <Route path="/admin/signin" element={<AdminSignIn />} />

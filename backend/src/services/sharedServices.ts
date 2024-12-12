@@ -4,13 +4,14 @@ import User from '../models/usersModel';
 import { Response, Request } from 'express';
 import { generateTokens } from '../utils/jwtUtils';
 import bcrypt from 'bcryptjs';
-import { IUser } from '../interfaces/common.interface';
+import { ITransaction, IUser } from '../interfaces/common.interface';
 import { AppError } from '../utils/AppError';
 import { generatePassword, sendPassword } from '../utils/passwordUtil';
 import * as web3 from '@solana/web3.js';
 import Wallet from '../models/walletModel';
 import bs58 from 'bs58';
 import { IWallet } from '../interfaces/common.interface';
+import Transaction from '../models/transactionModel';
 interface AuthResponse {
   user: IUser;
   tokens: {
@@ -118,7 +119,6 @@ export class SharedService {
     };
   }
 
-  // Verify OTP for password reset
   async verifyForgotPasswordOTP(
     email: string,
     otp: string,
@@ -307,5 +307,41 @@ export class SharedService {
     }
 
     return user.wallet;
+  }
+
+  async getTransactions(userId: string): Promise<ITransaction[] | null> {
+    const transactions = await Transaction.find({ user: userId });
+    if (!transactions) {
+      throw new AppError('transactions not found', 404);
+    }
+
+    return transactions;
+  }
+
+  async makeTransaction(
+    userId: string,
+    amount: number,
+    type: string,
+    status: string,
+    sender: string,
+    recipient: string,
+    signature: string
+  ): Promise<ITransaction> {
+    if (!userId || !amount || !type || !status) {
+      throw new AppError('Invalid transaction details', 404);
+    }
+    const newTransaction = new Transaction({
+      user: userId,
+      amount,
+      type,
+      status,
+      sender: sender,
+      recipient: recipient,
+      signature: signature,
+    });
+
+    const savedTransaction = await newTransaction.save();
+
+    return savedTransaction;
   }
 }

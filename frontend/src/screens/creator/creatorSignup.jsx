@@ -62,6 +62,14 @@ export default function CreatorRegisterScreen() {
       return;
     }
 
+    const passwordPattern = /^(?=.*\d)[A-Za-z\d]{8,}$/;
+    if (!passwordPattern.test(trimmedPassword)) {
+      toast.error(
+        "Password must be at least 8 characters long and include at least one number."
+      );
+      return;
+    }
+
     if (trimmedPassword !== trimmedConfirmPassword) {
       toast.error("Passwords do not match");
       return;

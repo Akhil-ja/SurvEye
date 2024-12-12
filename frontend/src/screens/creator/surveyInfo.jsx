@@ -110,7 +110,7 @@ function SurveyDetails() {
               <span className="font-semibold" style={{ color: theme.primary }}>
                 Price:
               </span>{" "}
-              {data.data.price} $
+              {data.data.price} SOL
             </Typography>
           </CardContent>
         </Card>

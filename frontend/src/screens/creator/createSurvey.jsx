@@ -132,8 +132,8 @@ const CreateSurvey = () => {
       return;
     }
 
-    if (!formData.occupation.trim()) {
-      toast.error("Please select an occupation.");
+    if (!isAllOccupations && !formData.occupation) {
+      toast.error("Please select an occupation or check 'All Occupations'.");
       return;
     }
 
@@ -149,6 +149,7 @@ const CreateSurvey = () => {
 
     const surveyData = {
       ...formData,
+      occupation: isAllOccupations ? null : formData.occupation,
       duration: {
         startDate,
         endDate,
@@ -166,6 +167,7 @@ const CreateSurvey = () => {
       navigate(`/creator/surveycreate?surveyId=${result.survey._id}`);
     } catch (error) {
       console.error("Failed to create survey:", error);
+      toast.error("An error occurred while creating the survey.");
     }
   };
 
@@ -245,6 +247,7 @@ const CreateSurvey = () => {
 
                 {!isAllOccupations && (
                   <Select
+                    value={formData.occupation}
                     onValueChange={(value) =>
                       setFormData({ ...formData, occupation: value })
                     }

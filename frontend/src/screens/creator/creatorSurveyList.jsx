@@ -35,6 +35,8 @@ const CreatorHome = () => {
   const [formattedSurveys, setFormattedSurveys] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [surveysPerPage] = useState(10);
+  const [sortBy, setSortBy] = useState("cost");
+  const [sortOrder, setSortOrder] = useState("highest");
 
   useEffect(() => {
     dispatch(getAllSurveys());
@@ -58,6 +60,22 @@ const CreatorHome = () => {
     }
   }, [surveys]);
 
+  useEffect(() => {
+    const sortedSurveys = [...formattedSurveys].sort((a, b) => {
+      if (sortBy === "cost") {
+        return sortOrder === "highest"
+          ? b.amount - a.amount
+          : a.amount - b.amount;
+      } else if (sortBy === "date") {
+        const dateA = new Date(a.startDate);
+        const dateB = new Date(b.startDate);
+        return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
+      }
+      return 0;
+    });
+    setFormattedSurveys(sortedSurveys);
+  }, [sortBy, sortOrder]);
+
   const indexOfLastSurvey = currentPage * surveysPerPage;
   const indexOfFirstSurvey = indexOfLastSurvey - surveysPerPage;
   const currentSurveys = formattedSurveys.slice(
@@ -77,7 +95,7 @@ const CreatorHome = () => {
           <CardTitle>Survey List</CardTitle>
           <div className="flex items-center space-x-2">
             <span className="text-gray-500">Sort by:</span>
-            <Select>
+            <Select value={sortBy} onValueChange={(value) => setSortBy(value)}>
               <SelectTrigger className="w-[120px]">
                 <SelectValue placeholder="Cost" />
               </SelectTrigger>
@@ -86,13 +104,27 @@ const CreatorHome = () => {
                 <SelectItem value="date">Date</SelectItem>
               </SelectContent>
             </Select>
-            <Select>
+            <Select
+              value={sortOrder}
+              onValueChange={(value) => setSortOrder(value)}
+            >
               <SelectTrigger className="w-[120px]">
-                <SelectValue placeholder="Posted Time" />
+                <SelectValue
+                  placeholder={sortBy === "cost" ? "Highest" : "Newest"}
+                />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="newest">Newest</SelectItem>
-                <SelectItem value="oldest">Oldest</SelectItem>
+                {sortBy === "cost" ? (
+                  <>
+                    <SelectItem value="highest">Highest</SelectItem>
+                    <SelectItem value="lowest">Lowest</SelectItem>
+                  </>
+                ) : (
+                  <>
+                    <SelectItem value="newest">Newest</SelectItem>
+                    <SelectItem value="oldest">Oldest</SelectItem>
+                  </>
+                )}
               </SelectContent>
             </Select>
             <Link to={"/creator/survey"}>
@@ -223,7 +255,7 @@ const CreatorHome = () => {
         </CardContent>
         <CardFooter>
           <div className="flex justify-center items-center">
-            <div className="flex space-x-1 text-sm">
+            <div className="space-x-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -232,9 +264,9 @@ const CreatorHome = () => {
               >
                 Previous
               </Button>
-              {[...Array(totalPages)].map((_, index) => (
+              {Array.from({ length: totalPages }, (_, index) => (
                 <Button
-                  key={index + 1}
+                  key={index}
                   variant={index + 1 === currentPage ? "default" : "outline"}
                   size="sm"
                   onClick={() => handlePageChange(index + 1)}

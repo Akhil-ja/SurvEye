@@ -22,7 +22,6 @@ import {
 } from "@/components/ui/pagination";
 import {
   getSurvey,
-  selectSurveys,
   selectSurveyPagination,
   selectSurveyLoading,
   selectSurveyError,
@@ -30,12 +29,12 @@ import {
   setSortOrder,
   selectSortBy,
   selectSortOrder,
+  clearMessage,
 } from "../../slices/userSlice";
 
 const ActiveSurveys = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const surveys = useSelector(selectSurveys);
   const pagination = useSelector(selectSurveyPagination);
   const loading = useSelector(selectSurveyLoading);
   const error = useSelector(selectSurveyError);
@@ -80,6 +79,7 @@ const ActiveSurveys = () => {
     };
 
     fetchSurveys();
+    dispatch(clearMessage());
   }, [dispatch, pagination.currentPage, sortBy, sortOrder]);
 
   useEffect(() => {
@@ -107,10 +107,6 @@ const ActiveSurveys = () => {
               : "desc"
       )
     );
-  };
-
-  const handleOrderChange = (value) => {
-    dispatch(setSortOrder(value));
   };
 
   const formatDate = (dateString) => {

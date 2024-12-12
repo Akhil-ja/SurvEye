@@ -20,6 +20,7 @@ import {
   selectCurrentSurveyError,
   selectSubmissionStatus,
   resetSubmissionStatus,
+  clearMessage,
 } from "../../slices/userSlice";
 
 const LOCAL_STORAGE_KEY_PREFIX = "survey_progress_";
@@ -72,6 +73,12 @@ const AttendSurvey = () => {
   }, [survey, navigate]);
 
   useEffect(() => {
+    return () => {
+      dispatch(resetSubmissionStatus());
+    };
+  }, [dispatch]);
+
+  useEffect(() => {
     if (surveyId) {
       dispatch(fetchSurveyDetails(surveyId));
     }
@@ -86,6 +93,7 @@ const AttendSurvey = () => {
       toast.success("Survey submitted successfully!");
       navigate("/user/survey");
       dispatch(resetSubmissionStatus());
+      dispatch(clearMessage());
     }
   }, [submissionStatus, navigate, dispatch]);
 
@@ -119,6 +127,13 @@ const AttendSurvey = () => {
       })
     );
   };
+
+  useEffect(() => {
+    if (error) {
+      toast.error(`${error}`);
+      dispatch(clearMessage());
+    }
+  }, [error, dispatch]);
 
   const ResumeBanner = () => {
     if (Object.keys(answers).length > 0) {
@@ -241,14 +256,6 @@ const AttendSurvey = () => {
     return (
       <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
         <p className="text-lg">Loading survey...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
-        <p className="text-lg text-red-600">{error}</p>
       </div>
     );
   }

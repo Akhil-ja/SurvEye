@@ -20,6 +20,7 @@ import * as web3 from '@solana/web3.js';
 import Wallet from '../models/walletModel';
 import bs58 from 'bs58';
 import Transaction from '../models/transactionModel';
+import AdminCut from '../models/adminCutModal';
 
 interface AuthResponse {
   user: IUser;
@@ -730,8 +731,25 @@ export class UserService {
       })
     );
 
+    const percentCut = await AdminCut.findOne();
+
+    if (!percentCut || percentCut.percentage === undefined) {
+      throw new AppError('Admin percentage not found', 400);
+    }
+
+    const totalSurveyPrice = survey.price;
+    const sampleSize = survey.sampleSize;
+
+    const adminCut = totalSurveyPrice * (percentCut.percentage / 100);
+
+    const remainingAmount = totalSurveyPrice - adminCut;
+
+    const payoutAmount = parseFloat((remainingAmount / sampleSize).toFixed(3));
+
     await Wallet.findByIdAndUpdate(user.wallet._id, {
-      payout: parseFloat((survey.price / survey.sampleSize).toFixed(3)),
+      $inc: {
+        payout: payoutAmount,
+      },
     });
 
     const surveyResponse = new SurveyResponse({

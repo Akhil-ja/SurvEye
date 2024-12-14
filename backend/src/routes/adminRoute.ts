@@ -51,5 +51,17 @@ router.post('/occupation', (req, res, next) => {
 router.put('/occupation', (req, res, next) => {
   adminController.updateOccupation(req, res, next);
 });
+router.get('/transactions', (req, res, next) => {
+  adminController.getTransactions(req, res, next);
+});
+router.get('/data', (req, res, next) => {
+  adminController.getData(req, res, next);
+});
+router.post('/admincut', (req, res, next) => {
+  adminController.createAdminCut(req, res, next);
+});
+router.put('/admincut', (req, res, next) => {
+  adminController.createAdminCut(req, res, next);
+});
 
 export default router;

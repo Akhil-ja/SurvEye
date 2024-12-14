@@ -3,6 +3,8 @@ import {
   IUser,
   ICategory,
   IOccupation,
+  ITransaction,
+  IAdminCut,
 } from '../interfaces/common.interface';
 import { Types } from 'mongoose';
 
@@ -31,4 +33,9 @@ export interface IAdminRepository {
     occupationId: string,
     OccupationData: Partial<IOccupation>
   ): Promise<IOccupation>;
+  //transaction
+  getAllTransactions(): Promise<ITransaction[]>;
+  getAllData(): Promise<any>;
+  createAdminCut(percentage: number): Promise<IAdminCut>;
+  editAdminCut(percentage: number): Promise<IAdminCut>;
 }

@@ -5,11 +5,17 @@ import {
   ICategory,
   IUser,
   IOccupation,
+  ITransaction,
+  IAdminCut,
 } from '../interfaces/common.interface';
-import { Types } from 'mongoose';
+import { Number, Types } from 'mongoose';
 import { AppError } from '../utils/AppError';
 import Category from '../models/categoryModel';
 import Occupation from '../models/occupationModel';
+import Transaction from '../models/transactionModel';
+import { Survey } from '../models/surveyModel';
+import { SurveyResponse } from '../models/surveyresponse';
+import AdminCut from '../models/adminCutModal';
 
 export class AdminRepository {
   async findByEmail(email: string): Promise<IAdmin | null> {
@@ -170,6 +176,85 @@ export class AdminRepository {
         throw error;
       }
       throw new AppError('Failed to update occupation', 500);
+    }
+  }
+  async getAllTransactions(): Promise<ITransaction[]> {
+    const transactions = await Transaction.find({});
+
+    if (!transactions || transactions.length === 0) {
+      throw new AppError('No transactions found', 404);
+    }
+
+    return transactions;
+  }
+
+  async getAllData(): Promise<any> {
+    const users = await User.find({});
+    const surveys = await Survey.find({}, { questions: 0 });
+    const surveyResponses = await SurveyResponse.find({});
+    const occupations = await Occupation.find({});
+    const categories = await Category.find({});
+
+    const data = {
+      users,
+      occupations,
+      surveys,
+      surveyResponses,
+      categories,
+    };
+
+    return data;
+  }
+
+  async createAdminCut(percentage: number): Promise<IAdminCut> {
+    try {
+      if (percentage < 0 || percentage > 100) {
+        throw new AppError('Percentage must be between 0 and 100', 400);
+      }
+
+      const newAdminCut = new AdminCut({ percentage });
+
+      const savedAdminCut = await newAdminCut.save();
+
+      if (!savedAdminCut) {
+        throw new AppError('Failed to create admin cut', 400);
+      }
+
+      return savedAdminCut.toObject();
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new AppError(error.message, 400);
+      }
+      throw new AppError('An unexpected error occurred', 500);
+    }
+  }
+
+  async editAdminCut(percentage: number): Promise<IAdminCut> {
+    try {
+      if (percentage < 0 || percentage > 100) {
+        throw new AppError('Percentage must be between 0 and 100', 400);
+      }
+
+      const adminCut = await AdminCut.findById('675c091bc3872b344c8e83e0');
+
+      if (!adminCut) {
+        throw new AppError('Admin cut not found', 404);
+      }
+
+      adminCut.percentage = percentage;
+
+      const updatedAdminCut = await adminCut.save();
+
+      if (!updatedAdminCut) {
+        throw new AppError('Failed to update admin cut', 400);
+      }
+
+      return updatedAdminCut.toObject();
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new AppError(error.message, 400);
+      }
+      throw new AppError('An unexpected error occurred', 500);
     }
   }
 }

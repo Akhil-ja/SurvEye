@@ -1,6 +1,7 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, request, response } from 'express';
 import { AdminService } from '../services/adminServices';
 import { AppError } from '../utils/AppError';
+import { IAdminCut } from '../interfaces/common.interface';
 
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
@@ -88,7 +89,6 @@ export class AdminController {
     try {
       const { isActive } = req.params;
       const active = isActive === 'true';
-      console.log(isActive, active);
 
       const categories = await this.adminService.getAllCategories(active);
       res.status(200).json({
@@ -267,9 +267,6 @@ export class AdminController {
       const occupationId = req.query.occupationId as string;
       const updateData = req.body;
 
-      console.log('updated data', updateData);
-      console.log('occupation id', occupationId);
-
       if (!occupationId) {
         throw new AppError('Occupation ID is required', 400);
       }
@@ -291,6 +288,78 @@ export class AdminController {
       } else {
         next(new AppError('Failed to update occupation', 500));
       }
+    }
+  }
+
+  async getTransactions(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const transactions = await this.adminService.getAllTransactions();
+
+      res.status(200).json({
+        message: 'transactions fetched successfully',
+        transactions,
+      });
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      next(new AppError('Failed to fetch transactions', 500));
+    }
+  }
+
+  async getData(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const data = await this.adminService.getAllData();
+
+      res.status(200).json({
+        message: 'data fetched successfully',
+        data,
+      });
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      next(new AppError('Failed to fetch data', 500));
+    }
+  }
+
+  async createAdminCut(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const { percentage } = req.body;
+      const adminCutData = await this.adminService.editAdminCut(percentage);
+      res.status(200).json({
+        message: 'admin Cut Data fetched successfully',
+        adminCutData,
+      });
+    } catch (error) {
+      console.error('Error fetching Admin cut:', error);
+      next(new AppError('Failed to fetch Admin cut', 500));
+    }
+  }
+
+  async editAdminCut(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const { percentage } = req.body;
+      const adminCutData = await this.adminService.editAdminCut(percentage);
+      res.status(200).json({
+        message: 'admin Cut Data edited successfully',
+        adminCutData,
+      });
+    } catch (error) {
+      console.error('Error editing Admin cut:', error);
+      next(new AppError('Failed to  Admin cut', 500));
     }
   }
 }

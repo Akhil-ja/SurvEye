@@ -1,7 +1,13 @@
 import { Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { AppError } from '../utils/AppError';
-import { ICategory, IUser, IOccupation } from '../interfaces/common.interface';
+import {
+  ICategory,
+  IUser,
+  IOccupation,
+  ITransaction,
+  IAdminCut,
+} from '../interfaces/common.interface';
 import { AdminRepository } from '../repositories/adminRepository';
 
 export class AdminService {
@@ -206,6 +212,34 @@ export class AdminService {
         throw error;
       }
       throw new AppError('Failed to update occupation', 500);
+    }
+  }
+  async getAllTransactions(): Promise<ITransaction[]> {
+    return this.adminRepository.getAllTransactions();
+  }
+  async getAllData(): Promise<any> {
+    return this.adminRepository.getAllData();
+  }
+
+  async createAdminCut(percentage: number): Promise<IAdminCut> {
+    try {
+      return this.adminRepository.createAdminCut(percentage);
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError('Failed to create category', 500);
+    }
+  }
+
+  async editAdminCut(percentage: number): Promise<IAdminCut> {
+    try {
+      return this.adminRepository.editAdminCut(percentage);
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError('Failed to create category', 500);
     }
   }
 }

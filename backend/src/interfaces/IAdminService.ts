@@ -4,6 +4,8 @@ import {
   IAdmin,
   ICategory,
   IOccupation,
+  ITransaction,
+  IAdminCut,
 } from '../interfaces/common.interface';
 
 export interface IAdminService {
@@ -34,4 +36,9 @@ export interface IAdminService {
     OccupationData: Partial<IOccupation>
   ): Promise<IOccupation>;
   toggleOccupationStatus(OccupationId: string): Promise<IOccupation>;
+  //transaction
+  getAllTransactions(): Promise<ITransaction[]>;
+  getAllData(): Promise<any>;
+  createAdminCut(): Promise<IAdminCut>;
+  editAdminCut(): Promise<IAdminCut>;
 }

@@ -169,3 +169,8 @@ export interface ITransaction {
   signature: string;
   status: string;
 }
+
+export interface IAdminCut {
+  percentage: number;
+  updatedAt: Date;
+}

@@ -41,6 +41,7 @@ import CategoryPage from "./screens/admin/categoryPage";
 import OccupationPage from "./screens/admin/occupationPage";
 import WalletView from "./screens/user/wallet";
 import TransactionsPage from "./screens/shared/transactionHistory";
+import WalletTransactionHistory from "./screens/admin/walletManagment";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -76,7 +77,7 @@ const router = createBrowserRouter(
         <Route path="/creator/survey" element={<CreateSurvey />} />
         <Route path="/creator/surveycreate" element={<MakeSurvey />} />
         <Route path="/creator/surveyinfo" element={<SurveyInfo />} />
-        <Route path="/creator/wallet" element={<TransactionsPage />} />
+        <Route path="/creator/transactions" element={<TransactionsPage />} />
       </Route>
 
       <Route path="/admin/signin" element={<AdminSignIn />} />
@@ -86,6 +87,7 @@ const router = createBrowserRouter(
         <Route path="/admin/users" element={<AdminUserList />} />
         <Route path="/admin/category" element={<CategoryPage />} />
         <Route path="/admin/Occupation" element={<OccupationPage />} />
+        <Route path="/admin/wallet" element={<WalletTransactionHistory />} />
       </Route>
     </Route>
   )

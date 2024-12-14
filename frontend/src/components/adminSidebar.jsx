@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import { BiSolidCategory } from "react-icons/bi";
 import { CgWorkAlt } from "react-icons/cg";
+import { BsTvFill } from "react-icons/bs";
 
 const AdminSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -70,6 +71,16 @@ const AdminSidebar = () => {
                 >
                   <CgWorkAlt className="text-xl text-white" />
                   <span className="text-white">Occupation</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/admin/wallet"
+                  onClick={handleLinkClick}
+                  className="flex items-center space-x-2 py-2 px-4 hover:bg-gray-700 rounded"
+                >
+                  <BsTvFill className="text-xl text-white" />
+                  <span className="text-white">control Panal</span>
                 </Link>
               </li>
             </li>

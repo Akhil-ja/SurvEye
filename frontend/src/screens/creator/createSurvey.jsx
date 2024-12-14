@@ -23,7 +23,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { useDispatch } from "react-redux";
-import { createSurvey } from "../../slices/creatorSlice";
+import { clearMessage, createSurvey } from "../../slices/creatorSlice";
 import { useNavigate } from "react-router-dom";
 
 const CreateSurvey = () => {
@@ -70,6 +70,7 @@ const CreateSurvey = () => {
 
     fetchCategories();
     fetchOccupations();
+    dispatch(clearMessage());
   }, [dispatch]);
 
   const handleChange = (e) => {

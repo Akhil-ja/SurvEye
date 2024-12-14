@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import React, { useCallback, useState } from "react";
 import { WalletNotConnectedError } from "@solana/wallet-adapter-base";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";

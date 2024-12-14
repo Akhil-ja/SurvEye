@@ -18,9 +18,8 @@ import { getSurvey, submitSurvey } from "@/slices/creatorSlice";
 import { useNavigate } from "react-router-dom";
 import SurveyPriceCalculator from "@/components/surveyPriceCalculator";
 import { calculateSurveyPrice } from "@/utils/calculatePrice";
-import { Wallet } from "@/components/wallet";
 import PaymentModal from "@/components/paymentModal";
-import { postWalletTransactions } from "@/slices/sharedSlice";
+import { clearMessage } from "@/slices/creatorSlice";
 
 const SurveyBuilder = () => {
   const [pages, setPages] = useState([{ questions: [] }]);
@@ -70,6 +69,7 @@ const SurveyBuilder = () => {
         console.error("Error loading saved survey:", e);
       }
     }
+    dispatch(clearMessage());
   }, [dispatch, surveyId]);
 
   useEffect(() => {
@@ -152,7 +152,7 @@ const SurveyBuilder = () => {
     setPages(updatedPages);
   };
 
-  const removeQuestion = (questionIndex) => {
+  const removeQuestion = () => {
     const updatedPages = [...pages];
     updatedPages[currentPage].questions = [];
     setPages(updatedPages);

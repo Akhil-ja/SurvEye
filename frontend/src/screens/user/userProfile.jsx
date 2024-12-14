@@ -73,6 +73,7 @@ const ProfileView = () => {
     try {
       dispatch(fetchUserProfile());
       dispatch(getOccupations());
+      dispatch(clearMessage());
     } catch (error) {
       console.error("Error fetching data:", error);
     }

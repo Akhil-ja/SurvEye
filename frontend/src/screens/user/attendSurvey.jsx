@@ -43,7 +43,7 @@ const AttendSurvey = () => {
     return saved ? JSON.parse(saved) : {};
   });
 
-  const [lastUpdated, setLastUpdated] = useState(() => {
+  const [lastUpdated] = useState(() => {
     const saved = sessionStorage.getItem(`${storageKey}_lastUpdated`);
     return saved ? new Date(saved) : new Date();
   });
@@ -75,15 +75,18 @@ const AttendSurvey = () => {
   useEffect(() => {
     return () => {
       dispatch(resetSubmissionStatus());
+      dispatch(clearMessage());
     };
   }, [dispatch]);
 
   useEffect(() => {
     if (surveyId) {
       dispatch(fetchSurveyDetails(surveyId));
+      dispatch(clearMessage());
     }
     return () => {
       dispatch(resetSubmissionStatus());
+      dispatch(clearMessage());
     };
   }, [dispatch, surveyId]);
 
@@ -325,7 +328,7 @@ const AttendSurvey = () => {
         {/* Questions Section */}
         <div className="bg-white rounded-lg shadow-sm min-h-[400px] relative">
           <div className="p-6 pb-24">
-            {currentQuestions.map((question, index) => (
+            {currentQuestions.map((question) => (
               <Card key={question._id} className="mb-4">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-4">

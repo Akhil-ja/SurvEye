@@ -10,7 +10,7 @@ import {
   Alert,
   Button,
 } from "@mui/material";
-import { getSurvey, publishSurvey } from "@/slices/creatorSlice";
+import { clearMessage, getSurvey, publishSurvey } from "@/slices/creatorSlice";
 
 const theme = {
   primary: "hsl(24.6, 95%, 43.1%)",
@@ -31,6 +31,7 @@ function SurveyDetails() {
         .unwrap()
         .catch((error) => console.error("Error fetching survey:", error));
     }
+    dispatch(clearMessage());
   }, [dispatch, surveyId]);
 
   if (loading) {

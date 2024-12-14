@@ -1,6 +1,7 @@
 /* eslint-disable react/react-in-jsx-scope */
 import { FaBars, FaHome } from "react-icons/fa";
 import { RiSurveyFill } from "react-icons/ri";
+import { GrTransaction } from "react-icons/gr";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 
@@ -57,6 +58,16 @@ const CreatorSidebar = () => {
               >
                 <RiSurveyFill className="text-xl text-white" />
                 <span className="text-white">Survey</span>
+              </Link>
+            </li>
+            <li>
+              <Link
+                onClick={toggleSidebar}
+                to="creator/transactions"
+                className="flex items-center space-x-2 py-2 px-4 hover:bg-gray-700 rounded"
+              >
+                <GrTransaction className="text-xl text-white" />
+                <span className="text-white">Transactions</span>
               </Link>
             </li>
           </ul>

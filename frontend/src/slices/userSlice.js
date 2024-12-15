@@ -204,7 +204,7 @@ const userSlice = createSlice({
       state.currentSurvey.error = null;
     },
     resetSubmissionStatus: (state) => {
-      state.submissionStatus = null;
+      state.currentSurvey.submissionStatus = "idle";
     },
   },
   extraReducers: (builder) => {

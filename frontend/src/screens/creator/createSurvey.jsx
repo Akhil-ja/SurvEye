@@ -55,6 +55,7 @@ const CreateSurvey = () => {
         const result = await dispatch(getCategories(true)).unwrap();
         setCategories(result.categories);
       } catch (error) {
+        console.log(error);
         toast.error("Failed to fetch categories");
       }
     };
@@ -64,6 +65,7 @@ const CreateSurvey = () => {
         const result = await dispatch(getOccupations(true)).unwrap();
         setOccupations(result.occupations);
       } catch (error) {
+        console.log(error);
         toast.error("Failed to fetch occupations");
       }
     };
@@ -98,7 +100,6 @@ const CreateSurvey = () => {
         toast.error("Age cannot be zero or negative.");
         return;
       }
-
       if (parseInt(minAge) < 18) {
         toast.error("Minimum age must be at least 18.");
         return;
@@ -107,24 +108,37 @@ const CreateSurvey = () => {
         toast.error("Maximum age must be at most 100.");
         return;
       }
-
       if (parseInt(minAge) > parseInt(maxAge)) {
         toast.error("Minimum age cannot be greater than maximum age.");
         return;
       }
     }
 
-    if (startDate && endDate) {
-      if (startDate > endDate) {
-        toast.error("Start date cannot be later than the end date.");
-        return;
-      }
-      if (format(startDate, "yyyy-MM-dd") === format(endDate, "yyyy-MM-dd")) {
-        toast.error("Start date and end date cannot be the same.");
-        return;
-      }
-    } else {
+    const today = new Date();
+    const formattedToday = format(today, "yyyy-MM-dd");
+
+    if (!startDate || !endDate) {
       toast.error("Both start date and end date must be selected.");
+      return;
+    }
+
+    if (format(startDate, "yyyy-MM-dd") < formattedToday) {
+      toast.error("Start date cannot be in the past.");
+      return;
+    }
+
+    if (format(endDate, "yyyy-MM-dd") < formattedToday) {
+      toast.error("End date cannot be in the past.");
+      return;
+    }
+
+    if (startDate > endDate) {
+      toast.error("Start date cannot be later than the end date.");
+      return;
+    }
+
+    if (format(startDate, "yyyy-MM-dd") === format(endDate, "yyyy-MM-dd")) {
+      toast.error("Start date and end date cannot be the same.");
       return;
     }
 
@@ -181,7 +195,6 @@ const CreateSurvey = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-4">
-              {/* Survey Name */}
               <div>
                 <Label htmlFor="surveyName">Survey Name</Label>
                 <Input
@@ -192,7 +205,6 @@ const CreateSurvey = () => {
                 />
               </div>
 
-              {/* Description */}
               <div>
                 <Label htmlFor="description">Description</Label>
                 <Textarea
@@ -209,7 +221,6 @@ const CreateSurvey = () => {
                 />
               </div>
 
-              {/* Category */}
               <div>
                 <Label htmlFor="category">Category</Label>
                 <Select
@@ -230,7 +241,6 @@ const CreateSurvey = () => {
                 </Select>
               </div>
 
-              {/* Occupation */}
               <div>
                 <div className="flex items-center space-x-2 mb-2">
                   <Checkbox
@@ -267,7 +277,6 @@ const CreateSurvey = () => {
                 )}
               </div>
 
-              {/* Creator's Name */}
               <div>
                 <Label htmlFor="creatorName">Creator&apos;s Name</Label>
                 <Input
@@ -278,7 +287,6 @@ const CreateSurvey = () => {
                 />
               </div>
 
-              {/* Sample Size */}
               <div>
                 <Label htmlFor="sampleSize">Sample Size</Label>
                 <Input
@@ -290,7 +298,6 @@ const CreateSurvey = () => {
                 />
               </div>
 
-              {/* Age Range */}
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="allAges"
@@ -326,11 +333,9 @@ const CreateSurvey = () => {
                 </div>
               )}
 
-              {/* Duration */}
               <div>
                 <Label>Duration</Label>
                 <div className="grid grid-cols-2 gap-4 mt-1">
-                  {/* Start Date */}
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -353,7 +358,6 @@ const CreateSurvey = () => {
                     </PopoverContent>
                   </Popover>
 
-                  {/* End Date */}
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button

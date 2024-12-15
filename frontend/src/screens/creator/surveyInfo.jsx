@@ -1,5 +1,5 @@
 /* eslint-disable react/react-in-jsx-scope */
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -11,6 +11,7 @@ import {
   Button,
 } from "@mui/material";
 import { clearMessage, getSurvey, publishSurvey } from "@/slices/creatorSlice";
+import PaymentModal from "@/components/paymentModal";
 
 const theme = {
   primary: "hsl(24.6, 95%, 43.1%)",
@@ -22,6 +23,8 @@ function SurveyDetails() {
   const [searchParams] = useSearchParams();
   const surveyId = searchParams.get("surveyId");
   const dispatch = useDispatch();
+
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
 
   const { data, loading, error } = useSelector((state) => state.creator);
 
@@ -56,6 +59,10 @@ function SurveyDetails() {
     return null;
   }
 
+  const handleSubmit = () => {
+    setPaymentModalVisible(true);
+  };
+
   const handlePublishSurvey = () => {
     if (surveyId) {
       dispatch(publishSurvey(surveyId))
@@ -71,6 +78,7 @@ function SurveyDetails() {
           console.error("Error publishing survey:", error.message)
         );
     }
+    setPaymentModalVisible(false);
   };
 
   return (
@@ -205,7 +213,7 @@ function SurveyDetails() {
                 variant="contained"
                 color="primary"
                 style={{ marginTop: "16px", backgroundColor: theme.primary }}
-                onClick={handlePublishSurvey}
+                onClick={handleSubmit}
               >
                 Publish Survey
               </Button>
@@ -213,6 +221,13 @@ function SurveyDetails() {
           </CardContent>
         </Card>
       </div>
+      {paymentModalVisible && (
+        <PaymentModal
+          price={data.data.price}
+          onPaymentSuccess={handlePublishSurvey}
+          onCancel={() => setPaymentModalVisible(false)}
+        />
+      )}
     </div>
   );
 }

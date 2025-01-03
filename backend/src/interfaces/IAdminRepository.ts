@@ -5,6 +5,8 @@ import {
   IOccupation,
   ITransaction,
   IAdminCut,
+  IAnnouncement,
+  ISurvey,
 } from '../interfaces/common.interface';
 import { Types } from 'mongoose';
 
@@ -38,4 +40,9 @@ export interface IAdminRepository {
   getAllData(): Promise<any>;
   createAdminCut(percentage: number): Promise<IAdminCut>;
   editAdminCut(percentage: number): Promise<IAdminCut>;
+  //annuncement
+  createAnnouncement(title: string, message: string): Promise<IAnnouncement>;
+  getAllAnnouncement(): Promise<IAnnouncement[]>;
+  //surveys
+  getAllSurveys(): Promise<ISurvey[]>;
 }

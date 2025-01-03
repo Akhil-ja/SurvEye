@@ -7,8 +7,10 @@ import {
   IOccupation,
   ITransaction,
   IAdminCut,
+  IAnnouncement,
+  ISurvey,
 } from '../interfaces/common.interface';
-import { Number, Types } from 'mongoose';
+import { Types } from 'mongoose';
 import { AppError } from '../utils/AppError';
 import Category from '../models/categoryModel';
 import Occupation from '../models/occupationModel';
@@ -16,7 +18,7 @@ import Transaction from '../models/transactionModel';
 import { Survey } from '../models/surveyModel';
 import { SurveyResponse } from '../models/surveyresponse';
 import AdminCut from '../models/adminCutModal';
-
+import Announcement from '../models/annnouncementModal';
 export class AdminRepository {
   async findByEmail(email: string): Promise<IAdmin | null> {
     return Admin.findOne({ email });
@@ -256,5 +258,70 @@ export class AdminRepository {
       }
       throw new AppError('An unexpected error occurred', 500);
     }
+  }
+
+  // async createAnnouncement(
+  //   message: string,
+  //   title: string,
+  //   target: string
+  // ): Promise<IAnnouncement> {
+  //   try {
+  //     const newAnnouncement = new Announcement({
+  //       message,
+  //       title,
+  //       target,
+  //       timestamp: new Date(),
+  //       type: 'admin',
+  //     });
+
+  //     const savedAnnouncement = await newAnnouncement.save();
+
+  //     if (!savedAnnouncement) {
+  //       console.error('Failed to save announcement');
+  //       throw new AppError('Failed to create announcement', 400);
+  //     }
+
+  //     return savedAnnouncement.toObject();
+  //   } catch (error) {
+  //     console.error('Repository Error:', error);
+  //     if (error instanceof Error) {
+  //       throw new AppError(error.message, 400);
+  //     }
+  //     throw new AppError('An unexpected error occurred', 500);
+  //   }
+  // }
+
+  async getAllAnnouncement(): Promise<IAnnouncement[]> {
+    const Announcements = await Announcement.find();
+
+    if (!Announcements || Announcements.length === 0) {
+      throw new AppError('No transactions found', 404);
+    }
+
+    return Announcements;
+  }
+
+  async getAllSurveys(): Promise<ISurvey[]> {
+    const Surveys = await Survey.find();
+
+    if (!Surveys || Surveys.length === 0) {
+      throw new AppError('No Surveys found', 404);
+    }
+
+    return Surveys;
+  }
+
+  async findSuryveyById(SurveyId: string): Promise<ISurvey> {
+    const survey = await Survey.findById(SurveyId);
+
+    if (!survey) {
+      throw new AppError('No Surveys found', 404);
+    }
+
+    return survey;
+  }
+
+  async saveSurvey(survey: ISurvey): Promise<ISurvey> {
+    return survey.save();
   }
 }

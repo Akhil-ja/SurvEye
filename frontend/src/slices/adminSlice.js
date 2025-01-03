@@ -161,8 +161,6 @@ export const getCategories = createAsyncThunk(
   "admin/categories",
   async (isActive, { rejectWithValue }) => {
     try {
-      console.log(isActive);
-
       const response = await api.get(`/admin/getcategories/${isActive}`);
       return response.data;
     } catch (error) {
@@ -232,6 +230,120 @@ export const updateCategory = createAsyncThunk(
   }
 );
 
+export const getTransactions = createAsyncThunk(
+  "admin/transactions",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/admin/transactions`);
+      return response.data.transactions;
+    } catch (error) {
+      return rejectWithValue(
+        error.response && error.response.data
+          ? error.response.data.message
+          : error.message
+      );
+    }
+  }
+);
+
+export const getData = createAsyncThunk(
+  "admin/data",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/admin/data`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response && error.response.data
+          ? error.response.data.message
+          : error.message
+      );
+    }
+  }
+);
+
+export const updateAdminPercentCut = createAsyncThunk(
+  "admin/updatePercent",
+  async (percentage, { rejectWithValue }) => {
+    try {
+      const response = await api.put(`/admin/admincut`, { percentage });
+      return response.data.adminCutData;
+    } catch (error) {
+      return rejectWithValue(
+        error.response && error.response.data
+          ? error.response.data.message
+          : error.message
+      );
+    }
+  }
+);
+
+export const createAnnouncement = createAsyncThunk(
+  "admin/createAnnouncement",
+  async ({ message, title, target = "all" }, { rejectWithValue }) => {
+    try {
+      const response = await api.post(`/admin/announcement`, {
+        title,
+        message,
+        target,
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+export const getAnnouncement = createAsyncThunk(
+  "admin/announcements",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/admin/announcements`);
+      return response.data.Announcements;
+    } catch (error) {
+      return rejectWithValue(
+        error.response && error.response.data
+          ? error.response.data.message
+          : error.message
+      );
+    }
+  }
+);
+
+export const getSurveys = createAsyncThunk(
+  "admin/getSurveys",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/admin/surveys`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response && error.response.data
+          ? error.response.data.message
+          : error.message
+      );
+    }
+  }
+);
+
+export const toggleSurveyStatus = createAsyncThunk(
+  "admin/toggleSurveyStatus",
+  async (surveyId, { rejectWithValue }) => {
+    try {
+      const response = await api.put(
+        `/admin/surveys/toggle-status?surveyId=${surveyId}`
+      );
+      return response.data.survey;
+    } catch (error) {
+      return rejectWithValue(
+        error.response && error.response.data
+          ? error.response.data.message
+          : error.message
+      );
+    }
+  }
+);
+
 const adminSlice = createSlice({
   name: "admin",
   initialState: {
@@ -258,6 +370,11 @@ const adminSlice = createSlice({
       itemsPerPage: 10,
       totalPages: 1,
     },
+    transactions: [],
+    data: null,
+    adminPercentCut: null,
+    announcements: [],
+    surveys: [],
   },
   reducers: {
     resetAdminState: (state) => {
@@ -276,7 +393,6 @@ const adminSlice = createSlice({
         ...state.filters,
         ...action.payload,
       };
-      // Reset pagination when filters change
       state.pagination.currentPage = 1;
     },
 
@@ -292,7 +408,6 @@ const adminSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // Admin Sign In
     builder
       .addCase(adminSignIn.pending, (state) => {
         state.isLoading = true;
@@ -309,10 +424,7 @@ const adminSlice = createSlice({
       .addCase(adminSignIn.rejected, (state, { payload }) => {
         state.isLoading = false;
         state.error = payload;
-      });
-
-    // Admin Logout
-    builder
+      })
       .addCase(adminLogout.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -329,10 +441,7 @@ const adminSlice = createSlice({
       .addCase(adminLogout.rejected, (state, { payload }) => {
         state.isLoading = false;
         state.error = payload;
-      });
-
-    // Get Users
-    builder
+      })
       .addCase(getUsers.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -432,6 +541,80 @@ const adminSlice = createSlice({
         state.occupations = payload.occupations;
       })
       .addCase(getOccupations.rejected, (state, { payload }) => {
+        state.isLoading = false;
+        state.error = payload;
+      })
+      .addCase(getTransactions.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getTransactions.fulfilled, (state, { payload }) => {
+        state.isLoading = false;
+        state.transactions = payload;
+      })
+      .addCase(getTransactions.rejected, (state, { payload }) => {
+        state.isLoading = false;
+        state.error = payload;
+      })
+      .addCase(getData.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getData.fulfilled, (state, { payload }) => {
+        state.isLoading = false;
+        state.data = payload.data;
+      })
+      .addCase(getData.rejected, (state, { payload }) => {
+        state.isLoading = false;
+        state.error = payload;
+      })
+      .addCase(updateAdminPercentCut.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateAdminPercentCut.fulfilled, (state, { payload }) => {
+        state.isLoading = false;
+        state.adminPercentCut = payload;
+      })
+      .addCase(updateAdminPercentCut.rejected, (state, { payload }) => {
+        state.isLoading = false;
+        state.error = payload;
+      })
+      .addCase(getAnnouncement.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getAnnouncement.fulfilled, (state, { payload }) => {
+        state.isLoading = false;
+        state.announcements = payload;
+      })
+      .addCase(getAnnouncement.rejected, (state, { payload }) => {
+        state.isLoading = false;
+        state.error = payload;
+      })
+      .addCase(getSurveys.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getSurveys.fulfilled, (state, { payload }) => {
+        state.isLoading = false;
+        state.surveys = payload.Surveys;
+      })
+      .addCase(getSurveys.rejected, (state, { payload }) => {
+        state.isLoading = false;
+        state.error = payload || "Something went wrong";
+      })
+      .addCase(toggleSurveyStatus.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(toggleSurveyStatus.fulfilled, (state, { payload }) => {
+        state.isLoading = false;
+        state.surveys = state.surveys.map((survey) =>
+          survey._id === payload._id ? payload : survey
+        );
+      })
+      .addCase(toggleSurveyStatus.rejected, (state, { payload }) => {
         state.isLoading = false;
         state.error = payload;
       });

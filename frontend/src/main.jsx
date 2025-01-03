@@ -42,6 +42,10 @@ import OccupationPage from "./screens/admin/occupationPage";
 import WalletView from "./screens/user/wallet";
 import TransactionsPage from "./screens/shared/transactionHistory";
 import WalletTransactionHistory from "./screens/admin/walletManagment";
+import AdminAnnouncement from "./screens/admin/adminAnnouncement";
+import UserAnnouncements from "./screens/user/userNotifications";
+import SurveyPage from "./screens/admin/surveyPage";
+import SurveyAnalytics from "./screens/creator/surveyAnalytics";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -69,6 +73,7 @@ const router = createBrowserRouter(
         <Route path="/user/attendedsurveys" element={<AttendedSurveyList />} />
         <Route path="/user/wallet" element={<WalletView />} />
         <Route path="/user/wallet/history" element={<TransactionsPage />} />
+        <Route path="/user/announcements" element={<UserAnnouncements />} />
 
         {/** Creator routes */}
         <Route path="/creator/home" element={<CreatorHome />} />
@@ -78,6 +83,10 @@ const router = createBrowserRouter(
         <Route path="/creator/surveycreate" element={<MakeSurvey />} />
         <Route path="/creator/surveyinfo" element={<SurveyInfo />} />
         <Route path="/creator/transactions" element={<TransactionsPage />} />
+        <Route
+          path="/creator/analytics/:surveyId"
+          element={<SurveyAnalytics />}
+        />
       </Route>
 
       <Route path="/admin/signin" element={<AdminSignIn />} />
@@ -88,6 +97,8 @@ const router = createBrowserRouter(
         <Route path="/admin/category" element={<CategoryPage />} />
         <Route path="/admin/Occupation" element={<OccupationPage />} />
         <Route path="/admin/wallet" element={<WalletTransactionHistory />} />
+        <Route path="/admin/Announcement" element={<AdminAnnouncement />} />
+        <Route path="/admin/surveys" element={<SurveyPage />} />
       </Route>
     </Route>
   )

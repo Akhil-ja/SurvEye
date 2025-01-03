@@ -6,6 +6,8 @@ import {
   IOccupation,
   ITransaction,
   IAdminCut,
+  IAnnouncement,
+  ISurvey,
 } from '../interfaces/common.interface';
 
 export interface IAdminService {
@@ -41,4 +43,9 @@ export interface IAdminService {
   getAllData(): Promise<any>;
   createAdminCut(): Promise<IAdminCut>;
   editAdminCut(): Promise<IAdminCut>;
+  //announcement
+  createAnnouncement(title: string, message: string): Promise<IAnnouncement>;
+  getAllAnnouncement(): Promise<IAnnouncement[]>;
+  //surveys
+  getAllSurveys(): Promise<ISurvey[]>;
 }

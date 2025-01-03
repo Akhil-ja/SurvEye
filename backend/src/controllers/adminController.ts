@@ -1,7 +1,6 @@
-import { Request, Response, NextFunction, request, response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { AdminService } from '../services/adminServices';
 import { AppError } from '../utils/AppError';
-import { IAdminCut } from '../interfaces/common.interface';
 
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
@@ -159,9 +158,6 @@ export class AdminController {
       const categoryId = req.query.categoryid as string;
       const updateData = req.body;
 
-      console.log('updated data', updateData);
-      console.log('category id', categoryId);
-
       if (!categoryId) {
         throw new AppError('Category ID is required', 400);
       }
@@ -194,7 +190,6 @@ export class AdminController {
     try {
       const { isActive } = req.params;
       const active = isActive === 'true';
-      console.log(isActive, active);
 
       const occupations = await this.adminService.getAllOccupations(active);
       res.status(200).json({
@@ -238,7 +233,6 @@ export class AdminController {
   ): Promise<void> {
     try {
       const occupationData = req.body;
-      console.log(occupationData);
 
       const newOccupation =
         await this.adminService.createOccupation(occupationData);
@@ -360,6 +354,95 @@ export class AdminController {
     } catch (error) {
       console.error('Error editing Admin cut:', error);
       next(new AppError('Failed to  Admin cut', 500));
+    }
+  }
+
+  // async createAnnouncement(
+  //   req: any,
+  //   res: Response,
+  //   next: NextFunction
+  // ): Promise<void> {
+  //   try {
+  //     const { message, title, target = 'all' } = req.body;
+
+  //     if (!message || !title) {
+  //       return next(new AppError('Message and title are required', 400));
+  //     }
+
+  //     console.log('wsManager instance:');
+
+  //     const announcement = await this.adminService.createAnnouncement(
+  //       message,
+  //       title,
+  //       target
+  //     );
+
+  //     res.status(200).json({
+  //       message: 'Announcement created successfully',
+  //       announcement,
+  //     });
+  //   } catch (error: any) {
+  //     console.error('Error creating Announcement:', error);
+  //     next(new AppError(error.message || 'Failed to create Announcement', 500));
+  //   }
+  // }
+
+  // async getAnnouncements(
+  //   req: Request,
+  //   res: Response,
+  //   next: NextFunction
+  // ): Promise<void> {
+  //   try {
+  //     const Announcements = await this.adminService.getAllAnnouncement();
+
+  //     res.status(200).json({
+  //       message: 'Announcements fetched successfully',
+  //       Announcements,
+  //     });
+  //   } catch (error) {
+  //     console.error('Error fetching data:', error);
+  //     next(new AppError('Failed to fetch data', 500));
+  //   }
+  // }
+
+  async getSurveys(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const Surveys = await this.adminService.getAllSurveys();
+
+      res.status(200).json({
+        message: 'Surveys fetched successfully',
+        Surveys,
+      });
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      next(new AppError('Failed to fetch data', 500));
+    }
+  }
+  async toggleSurveyStatus(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    const SurveyId = req.query.surveyId as string | undefined;
+
+    if (!SurveyId) {
+      return next(new AppError('Invalid Survey Id', 400));
+    }
+
+    try {
+      const updatedsurvey =
+        await this.adminService.toggleSurveyStatus(SurveyId);
+      res.status(200).json({
+        message: `survey status changed `,
+        category: updatedsurvey,
+      });
+    } catch (error) {
+      console.error(error);
+      next(new AppError('Toggle status failed', 500));
     }
   }
 }

@@ -63,5 +63,17 @@ router.post('/admincut', (req, res, next) => {
 router.put('/admincut', (req, res, next) => {
   adminController.createAdminCut(req, res, next);
 });
+// router.post('/announcement', (req, res, next) => {
+//   adminController.createAnnouncement(req, res, next);
+// });
+// router.get('/announcements', (req, res, next) => {
+//   adminController.getAnnouncements(req, res, next);
+// });
+router.get('/surveys', (req, res, next) => {
+  adminController.getSurveys(req, res, next);
+});
+router.put('/surveys/toggle-status', (req, res, next) => {
+  adminController.toggleSurveyStatus(req, res, next);
+});
 
 export default router;

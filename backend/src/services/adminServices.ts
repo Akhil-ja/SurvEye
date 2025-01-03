@@ -7,6 +7,8 @@ import {
   IOccupation,
   ITransaction,
   IAdminCut,
+  IAnnouncement,
+  ISurvey,
 } from '../interfaces/common.interface';
 import { AdminRepository } from '../repositories/adminRepository';
 
@@ -27,7 +29,7 @@ export class AdminService {
     }
 
     const token = jwt.sign(
-      { id: admin._id, email: admin.email, role: admin.role },
+      { id: admin._id, email: admin.email },
       process.env.JWT_SECRET as string,
       { expiresIn: '1h' }
     );
@@ -241,5 +243,56 @@ export class AdminService {
       }
       throw new AppError('Failed to create category', 500);
     }
+  }
+
+  // async createAnnouncement(
+  //   message: string,
+  //   title: string,
+  //   target: 'all' | 'users' | 'creators',
+  //   wsManager: WebSocketManager
+  // ): Promise<IAnnouncement> {
+  //   try {
+  //     const announcement = await this.adminRepository.createAnnouncement(
+  //       message,
+  //       title,
+  //       target
+  //     );
+
+  //     console.log('Broadcasting announcement...');
+  //     try {
+  //       console.log('Broadcasting message:', { title, message, target });
+  //       wsManager.sendAnnouncement({ title, message, target });
+  //       console.log('Broadcast successful');
+  //     } catch (wsError) {
+  //       console.warn('WebSocket error:', wsError);
+  //     }
+
+  //     return announcement;
+  //   } catch (error) {
+  //     console.error('Service Error:', error);
+  //     if (error instanceof AppError) {
+  //       throw error;
+  //     }
+  //     throw new AppError('Failed to create Announcement', 500);
+  //   }
+  // }
+
+  async getAllAnnouncement(): Promise<IAnnouncement[]> {
+    return this.adminRepository.getAllAnnouncement();
+  }
+
+  async getAllSurveys(): Promise<ISurvey[]> {
+    return this.adminRepository.getAllSurveys();
+  }
+
+  async toggleSurveyStatus(SurveyId: string): Promise<ISurvey> {
+    const Survey = await this.adminRepository.findSuryveyById(SurveyId);
+
+    if (!Survey) {
+      throw new AppError('Category not found', 404);
+    }
+
+    Survey.status = Survey.status === 'active' ? 'draft' : 'active';
+    return this.adminRepository.saveSurvey(Survey);
   }
 }

@@ -5,6 +5,8 @@ import { useState } from "react";
 import { BiSolidCategory } from "react-icons/bi";
 import { CgWorkAlt } from "react-icons/cg";
 import { BsTvFill } from "react-icons/bs";
+import { GrAnnounce } from "react-icons/gr";
+import { RiSurveyFill } from "react-icons/ri";
 
 const AdminSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -56,6 +58,16 @@ const AdminSidebar = () => {
             </li>
             <li>
               <Link
+                onClick={toggleSidebar}
+                to="admin/surveys"
+                className="flex items-center space-x-2 py-2 px-4 hover:bg-gray-700 rounded"
+              >
+                <RiSurveyFill className="text-xl text-white" />
+                <span className="text-white">Survey</span>
+              </Link>
+            </li>
+            <li>
+              <Link
                 to="/admin/category"
                 onClick={handleLinkClick}
                 className="flex items-center space-x-2 py-2 px-4 hover:bg-gray-700 rounded"
@@ -81,6 +93,16 @@ const AdminSidebar = () => {
                 >
                   <BsTvFill className="text-xl text-white" />
                   <span className="text-white">control Panal</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/admin/Announcement"
+                  onClick={handleLinkClick}
+                  className="flex items-center space-x-2 py-2 px-4 hover:bg-gray-700 rounded"
+                >
+                  <GrAnnounce className="text-xl text-white" />
+                  <span className="text-white">Announement</span>
                 </Link>
               </li>
             </li>

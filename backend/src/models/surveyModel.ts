@@ -24,17 +24,21 @@ const surveySchema = new Schema<ISurvey>({
   description: { type: String, required: true },
 
   price: { type: Number },
-  category: {
-    type: Schema.Types.ObjectId,
-    ref: 'Category',
-    required: true,
-  },
+  categories: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'Category',
+      required: true,
+    },
+  ],
 
-  occupation: {
-    type: Schema.Types.ObjectId,
-    ref: 'Occupation',
-    default: null,
-  },
+  occupations: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'Occupation',
+    },
+  ],
+  isAllOccupations: { type: Boolean, default: false },
 
   creatorName: { type: String, required: true },
   sampleSize: { type: Number, required: true },

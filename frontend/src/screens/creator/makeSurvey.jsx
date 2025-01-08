@@ -1,5 +1,5 @@
 /* eslint-disable react/react-in-jsx-scope */
-import { Plus, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, X, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "react-toastify";
@@ -8,7 +8,9 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { useEffect, useState } from "react";
@@ -27,6 +29,8 @@ const SurveyBuilder = () => {
   const [showQuestionTypes, setShowQuestionTypes] = useState(false);
   const [showReview, setShowReview] = useState(false);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [pageToDelete, setPageToDelete] = useState(null);
 
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -156,6 +160,28 @@ const SurveyBuilder = () => {
     const updatedPages = [...pages];
     updatedPages[currentPage].questions = [];
     setPages(updatedPages);
+  };
+
+  const deletePage = (pageIndex) => {
+    if (pages.length === 1) {
+      toast.warn("Cannot Delete the last page.");
+      return;
+    }
+
+    if (pages[pageIndex].questions.length > 0) {
+      setPageToDelete(pageIndex);
+      setShowDeleteDialog(true);
+    } else {
+      confirmDeletePage(pageIndex);
+    }
+  };
+
+  const confirmDeletePage = (pageIndex) => {
+    const updatedPages = pages.filter((_, index) => index !== pageIndex);
+    setPages(updatedPages);
+    setCurrentPage(Math.min(currentPage, updatedPages.length - 1));
+    setShowDeleteDialog(false);
+    toast.success("Page deleted successfully");
   };
 
   const addPage = () => {
@@ -290,9 +316,20 @@ const SurveyBuilder = () => {
             <h2 className="text-xl font-bold mb-4">Review Your Survey</h2>
             {pages.map((page, pageIndex) => (
               <div key={pageIndex} className="mb-6">
-                <h3 className="text-lg font-semibold mb-2">
-                  Page {pageIndex + 1}
-                </h3>
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="text-lg font-semibold">
+                    Page {pageIndex + 1}
+                  </h3>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-500"
+                    onClick={() => deletePage(pageIndex)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Page
+                  </Button>
+                </div>
                 {page.questions.map((question, qIndex) => (
                   <Card key={qIndex} className="mb-4">
                     <CardContent className="p-4">
@@ -528,6 +565,34 @@ const SurveyBuilder = () => {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Delete Page</DialogTitle>
+            <DialogDescription>
+              This page contains questions. Are you sure you want to delete this
+              page and all its contents?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => confirmDeletePage(pageToDelete)}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {paymentModalVisible && (
         <PaymentModal
           price={price}

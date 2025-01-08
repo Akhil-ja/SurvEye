@@ -651,11 +651,13 @@ export class UserService {
         }
 
         const formattedAnswer: {
+          questionId: Types.ObjectId;
           questionText: string;
           selectedOptions?: Types.ObjectId[];
           textAnswer?: string;
           ratingValue?: number;
         } = {
+          questionId: question._id,
           questionText: question.questionText,
         };
 

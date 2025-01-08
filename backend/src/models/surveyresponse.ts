@@ -7,6 +7,7 @@ const surveyResponseSchema = new Schema<ISurveyResponse>({
   user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   answers: [
     {
+      questionId: { type: Schema.Types.ObjectId, ref: 'Survey.questions' },
       questionText: { type: String, required: true },
       selectedOptions: [{ type: Schema.Types.ObjectId, ref: 'Option' }],
       textAnswer: String,

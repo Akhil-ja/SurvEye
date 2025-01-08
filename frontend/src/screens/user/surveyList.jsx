@@ -206,7 +206,13 @@ const ActiveSurveys = () => {
                     </p>
                     <div className="text-xs text-gray-500 space-y-1">
                       <p>Created by: {survey.creatorName}</p>
-                      <p>Category: {survey.category.name}</p>
+                      <p>
+                        Category:{" "}
+                        {survey.categories
+                          .map((category) => category.name)
+                          .join(", ")}
+                      </p>
+
                       <p>Sample Size: {survey.sampleSize}</p>
                       <p>
                         Age Range:{" "}

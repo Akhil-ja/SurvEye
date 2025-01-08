@@ -512,32 +512,39 @@ export class UserService {
           ...ageCondition,
         };
       } else {
+        const occupationCondition = {
+          $or: [
+            { isAllOccupations: true },
+            {
+              $and: [
+                { isAllOccupations: { $ne: true } },
+                {
+                  $or: [{ occupations: { $in: [userOccupation] } }],
+                },
+              ],
+            },
+          ],
+        };
+
         query = {
           status: 'active',
           'duration.startDate': { $lte: currentDate },
           'duration.endDate': { $gte: currentDate },
           ...ageCondition,
-          $or: [
-            { occupation: null },
-            {
-              occupation: userOccupation,
-            },
-          ],
+          ...occupationCondition,
+          questions: { $exists: true, $ne: [], $not: { $size: 0 } },
         };
       }
 
-      // console.log('Query:', JSON.stringify(query, null, 2));
-      // console.log('Sort criteria:', JSON.stringify(sortCriteria, null, 2));
+      const surveys = (await Survey.find(query)
+        .populate('categories', 'name')
+        .populate('occupations', 'name')
+        .sort(sortCriteria)
+        .skip(skip)
+        .limit(limit)
+        .lean()) as ISurvey[];
 
-      const [surveys, totalSurveys] = await Promise.all([
-        Survey.find(query)
-          .populate('category', 'name')
-          .sort(sortCriteria)
-          .skip(skip)
-          .limit(limit)
-          .lean(),
-        Survey.countDocuments(query),
-      ]);
+      const [totalSurveys] = await Promise.all([Survey.countDocuments(query)]);
 
       if (totalSurveys === 0) {
         return {
@@ -804,7 +811,7 @@ export class UserService {
 
     const amountInLamports = amountInSol * web3.LAMPORTS_PER_SOL;
 
-    const feeInLamports = 5000; // 0.005 SOL for transaction
+    const feeInLamports = 5000;
 
     if (balanceInSol < amountInSol + feeInLamports / web3.LAMPORTS_PER_SOL) {
       throw new Error(
@@ -874,7 +881,6 @@ export class UserService {
       throw new AppError('Payout is already in progress for this user', 400);
     }
 
-    // Validate sender's private key
     const senderPrivateKey = process.env.ADMIN_PRIVATE_KEY;
     if (!senderPrivateKey) {
       await Wallet.findByIdAndUpdate(wallet._id, { isPayoutLocked: false });

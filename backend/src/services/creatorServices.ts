@@ -1,6 +1,10 @@
 import bcrypt from 'bcrypt';
 import User from '../models/usersModel';
-import { IUser } from '../interfaces/common.interface';
+import {
+  IPopulatedOption,
+  IQuestion,
+  IUser,
+} from '../interfaces/common.interface';
 import { generateTokens } from '../utils/jwtUtils';
 import { generateOTP, sendOTP } from '../utils/otpUtils';
 import PendingUser from '../models/pendingUserModel';
@@ -8,6 +12,15 @@ import { Request, Response } from 'express';
 import { AppError } from '../utils/AppError';
 import { ISurvey } from '../models/surveyModel';
 import { Survey } from '../models/surveyModel';
+import { SurveyResponse } from '../models/surveyresponse';
+import {
+  IUserPopulated,
+  ISurveyResponsePopulated,
+  QuestionAnalytics,
+  QuestionResponse,
+} from '../types/surveyAnalytics';
+import Category from '../models/categoryModel';
+import Occupation from '../models/occupationModel';
 
 interface AuthResponse {
   user: IUser;
@@ -394,7 +407,7 @@ export class CreatorService {
     surveyData: {
       surveyName: string;
       description: string;
-      category: string;
+      categories: string[];
       creatorName: string;
       sampleSize: number;
       targetAgeRange: {
@@ -413,7 +426,8 @@ export class CreatorService {
         required: boolean;
         pageNumber: number;
       }>;
-      occupation: string;
+      occupations: string[];
+      isAllOccupations: boolean;
     }
   ): Promise<ISurvey> {
     const creator = await User.findById(creatorId);
@@ -430,17 +444,35 @@ export class CreatorService {
       throw new AppError('Creator is blocked', 403);
     }
 
+    const categoryCount = await Category.countDocuments({
+      _id: { $in: surveyData.categories },
+    });
+    if (categoryCount !== surveyData.categories.length) {
+      throw new AppError('One or more categories are invalid', 400);
+    }
+
+    if (!surveyData.isAllOccupations && surveyData.occupations.length > 0) {
+      const occupationCount = await Occupation.countDocuments({
+        _id: { $in: surveyData.occupations },
+      });
+      if (occupationCount !== surveyData.occupations.length) {
+        throw new AppError('One or more occupations are invalid', 400);
+      }
+    }
+
     const survey = new Survey({
       creator: creatorId,
       surveyName: surveyData.surveyName,
       description: surveyData.description,
-      category: surveyData.category,
+      categories: surveyData.categories,
       creatorName: surveyData.creatorName,
       sampleSize: surveyData.sampleSize,
       targetAgeRange: surveyData.targetAgeRange,
       duration: surveyData.duration,
       questions: surveyData.questions,
-      occupation: surveyData.occupation,
+      occupations: surveyData.occupations,
+      isAllOccupations: surveyData.isAllOccupations,
+
       created_at: new Date(),
       updated_at: new Date(),
     });
@@ -451,7 +483,9 @@ export class CreatorService {
   }
 
   async getSurvey(surveyId: string): Promise<ISurvey> {
-    const survey = await Survey.findById(surveyId).populate('category', 'name');
+    const survey = await Survey.findById(surveyId)
+      .populate('categories')
+      .populate('occupations');
 
     if (!survey) {
       throw new AppError('Survey not found', 404);
@@ -462,7 +496,7 @@ export class CreatorService {
 
   async getAllSurveys(creatorId: string): Promise<{ surveys: ISurvey[] }> {
     const surveys = await Survey.find({ creator: creatorId }).populate(
-      'category',
+      'categories',
       'name'
     );
 
@@ -550,7 +584,10 @@ export class CreatorService {
   }
 
   async publishSurvey(surveyId: string): Promise<ISurvey> {
-    const survey = await Survey.findById(surveyId).populate('category', 'name');
+    const survey = await Survey.findById(surveyId).populate(
+      'categories',
+      'name'
+    );
 
     if (!survey) {
       throw new AppError('Survey not found', 404);
@@ -563,6 +600,229 @@ export class CreatorService {
     await survey.save();
 
     return survey;
+  }
+
+  private async validateSurveyAccess(
+    surveyId: string,
+    creatorId: string
+  ): Promise<ISurvey> {
+    const survey = await Survey.findOne({
+      _id: surveyId,
+      creator: creatorId,
+    });
+
+    if (!survey) {
+      throw new AppError('Survey not found or unauthorized access', 404);
+    }
+
+    return survey;
+  }
+
+  // async getSurveyAnalytics(
+  //   surveyId: string,
+  //   creatorId: string
+  // ): Promise<{
+  //   surveyDetails: {
+  //     surveyName: string;
+  //     description: string;
+  //     sampleSize: number;
+  //     totalResponses: number;
+  //     completionRate: number;
+  //   };
+  //   responsesByAge: Array<{ ageRange: string; count: number }>;
+  //   responseTimeline: Array<{ date: string; count: number }>;
+  //   questionAnalytics: QuestionAnalytics[];
+  // }> {
+  //   const survey = await this.validateSurveyAccess(surveyId, creatorId);
+
+  //   const [responseTimeline, questionAnalytics] = await Promise.all([
+  //     this.getSurveyResponseTimeline(surveyId, creatorId),
+  //     this.getQuestionAnalytics(surveyId, creatorId),
+  //   ]);
+
+  //   const responses = await SurveyResponse.find({ survey: surveyId })
+  //     .populate<{ user: IUserPopulated }>('user', 'age')
+  //     .lean<ISurveyResponsePopulated[]>();
+
+  //   const responsesByAge = this.calculateAgeRanges(responses);
+
+  //   return {
+  //     surveyDetails: {
+  //       surveyName: survey.surveyName,
+  //       description: survey.description,
+  //       sampleSize: survey.sampleSize,
+  //       totalResponses: responses.length,
+  //       completionRate: (responses.length / survey.sampleSize) * 100,
+  //     },
+  //     responsesByAge,
+  //     responseTimeline,
+  //     questionAnalytics,
+  //   };
+  // }
+
+  async getSurveyResponseTimeline(
+    surveyId: string,
+    creatorId: string
+  ): Promise<Array<{ date: string; count: number }>> {
+    await this.validateSurveyAccess(surveyId, creatorId);
+
+    const responses = await SurveyResponse.find(
+      { survey: surveyId },
+      { completedAt: 1 }
+    ).lean<ISurveyResponsePopulated[]>();
+
+    const timelineMap = new Map<string, number>();
+
+    responses.forEach((response) => {
+      const date = response.completedAt.toISOString().split('T')[0];
+      timelineMap.set(date, (timelineMap.get(date) || 0) + 1);
+    });
+
+    return Array.from(timelineMap.entries())
+      .map(([date, count]) => ({
+        date,
+        count,
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  // async getQuestionAnalytics(
+  //   surveyId: string,
+  //   creatorId: string
+  // ): Promise<QuestionAnalytics[]> {
+  //   const survey = await this.validateSurveyAccess(surveyId, creatorId);
+
+  //   const responses = await SurveyResponse.find({ survey: surveyId })
+  //     .populate<{
+  //       answers: { selectedOptions: IPopulatedOption[] }[];
+  //     }>('answers.selectedOptions')
+  //     .lean();
+
+  //   const totalResponses = responses.length;
+
+  //   return Promise.all(
+  //     survey.questions.map(async (question: IQuestion) => {
+  //       const questionResponses = responses.filter((response) =>
+  //         response.answers.some(
+  //           (answer) => answer.questionText === question.questionText
+  //         )
+  //       );
+
+  //       const responseRate = (questionResponses.length / totalResponses) * 100;
+
+  //       let responseAnalytics: any = {};
+
+  //       switch (question.questionType) {
+  //         case 'multiple_choice':
+  //         case 'single_choice':
+  //           const optionCounts = new Map<string, number>();
+
+  //           questionResponses.forEach((response) => {
+  //             const answer = response.answers.find(
+  //               (a) => a.questionText === question.questionText
+  //             );
+  //             answer?.selectedOptions?.forEach((option) => {
+  //               const optionText = option.text;
+  //               optionCounts.set(
+  //                 optionText,
+  //                 (optionCounts.get(optionText) || 0) + 1
+  //               );
+  //             });
+  //           });
+
+  //           responseAnalytics.optionBreakdown = question.options.map(
+  //             (option) => ({
+  //               option: option.text,
+  //               count: optionCounts.get(option.text) || 0,
+  //               percentage:
+  //                 ((optionCounts.get(option.text) || 0) /
+  //                   questionResponses.length) *
+  //                 100,
+  //             })
+  //           );
+  //           break;
+
+  //         case 'rating':
+  //           const ratings = questionResponses
+  //             .map((response) => {
+  //               const answer = response.answers.find(
+  //                 (a) => a.questionText === question.questionText
+  //               );
+  //               return answer?.ratingValue;
+  //             })
+  //             .filter((r): r is number => r !== undefined);
+
+  //           const distribution = new Map<number, number>();
+  //           ratings.forEach((rating) => {
+  //             distribution.set(rating, (distribution.get(rating) || 0) + 1);
+  //           });
+
+  //           responseAnalytics.ratingResponses = {
+  //             averageRating:
+  //               ratings.length > 0
+  //                 ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length
+  //                 : 0,
+  //             distribution: Array.from(distribution.entries()).map(
+  //               ([value, count]) => ({
+  //                 value,
+  //                 count,
+  //               })
+  //             ),
+  //           };
+  //           break;
+
+  //         case 'text':
+  //           const textAnswers = questionResponses
+  //             .map((response) => {
+  //               const answer = response.answers.find(
+  //                 (a) => a.questionText === question.questionText
+  //               );
+  //               return answer?.textAnswer;
+  //             })
+  //             .filter((t): t is string => t !== undefined);
+
+  //           responseAnalytics.textResponses = {
+  //             responses: textAnswers,
+  //             averageLength:
+  //               textAnswers.length > 0
+  //                 ? textAnswers.reduce((sum, text) => sum + text.length, 0) /
+  //                   textAnswers.length
+  //                 : 0,
+  //           };
+  //           break;
+  //       }
+
+  //       return {
+  //         questionText: question.questionText,
+  //         questionType: question.questionType,
+  //         totalResponses: questionResponses.length,
+  //         responseRate,
+  //         responses: responseAnalytics,
+  //       };
+  //     })
+  //   );
+  // }
+
+  private calculateAgeRanges(
+    responses: ISurveyResponsePopulated[]
+  ): Array<{ ageRange: string; count: number }> {
+    const ageRanges = new Map<string, number>();
+
+    responses.forEach((response) => {
+      if (response.user?.age) {
+        const ageDecade = Math.floor(response.user.age / 10) * 10;
+        const rangeKey = `${ageDecade}-${ageDecade + 9}`;
+        ageRanges.set(rangeKey, (ageRanges.get(rangeKey) || 0) + 1);
+      }
+    });
+
+    return Array.from(ageRanges.entries())
+      .map(([ageRange, count]) => ({ ageRange, count }))
+      .sort((a, b) => {
+        const aStart = parseInt(a.ageRange.split('-')[0]);
+        const bStart = parseInt(b.ageRange.split('-')[0]);
+        return aStart - bStart;
+      });
   }
 }
 

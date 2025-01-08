@@ -6,15 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "react-toastify";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { getOccupations, getCategories } from "@/slices/adminSlice";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Loader2 } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -25,6 +18,7 @@ import { format } from "date-fns";
 import { useDispatch } from "react-redux";
 import { clearMessage, createSurvey } from "../../slices/creatorSlice";
 import { useNavigate } from "react-router-dom";
+import Select from "react-select";
 
 const CreateSurvey = () => {
   const dispatch = useDispatch();
@@ -32,12 +26,16 @@ const CreateSurvey = () => {
 
   const [categories, setCategories] = React.useState([]);
   const [occupations, setOccupations] = React.useState([]);
+  const [isLoading, setIsLoading] = React.useState({
+    categories: true,
+    occupations: true,
+  });
 
   const [formData, setFormData] = React.useState({
     surveyName: "",
     description: "",
-    category: "",
-    occupation: "",
+    categories: [],
+    occupations: [],
     creatorName: "",
     sampleSize: "",
   });
@@ -50,36 +48,63 @@ const CreateSurvey = () => {
   const [maxAge, setMaxAge] = React.useState("");
 
   React.useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchData = async () => {
       try {
-        const result = await dispatch(getCategories(true)).unwrap();
-        setCategories(result.categories);
+        const [categoriesResult, occupationsResult] = await Promise.all([
+          dispatch(getCategories(true)).unwrap(),
+          dispatch(getOccupations(true)).unwrap(),
+        ]);
+
+        setCategories(categoriesResult.categories);
+        setOccupations(occupationsResult.occupations);
       } catch (error) {
-        console.log(error);
-        toast.error("Failed to fetch categories");
+        console.error(error);
+        toast.error("Failed to fetch required data");
+      } finally {
+        setIsLoading({
+          categories: false,
+          occupations: false,
+        });
       }
     };
 
-    const fetchOccupations = async () => {
-      try {
-        const result = await dispatch(getOccupations(true)).unwrap();
-        setOccupations(result.occupations);
-      } catch (error) {
-        console.log(error);
-        toast.error("Failed to fetch occupations");
-      }
-    };
-
-    fetchCategories();
-    fetchOccupations();
+    fetchData();
     dispatch(clearMessage());
   }, [dispatch]);
+
+  const categoryOptions = categories.map((cat) => ({
+    value: cat._id,
+    label: cat.name,
+  }));
+
+  const occupationOptions = occupations.map((occ) => ({
+    value: occ._id,
+    label: occ.name,
+  }));
 
   const handleChange = (e) => {
     const { id, value } = e.target;
     setFormData({
       ...formData,
       [id]: value.trimStart(),
+    });
+  };
+
+  const handleCategoryChange = (selectedOptions) => {
+    setFormData({
+      ...formData,
+      categories: selectedOptions
+        ? selectedOptions.map((option) => option.value)
+        : [],
+    });
+  };
+
+  const handleOccupationChange = (selectedOptions) => {
+    setFormData({
+      ...formData,
+      occupations: selectedOptions
+        ? selectedOptions.map((option) => option.value)
+        : [],
     });
   };
 
@@ -142,13 +167,15 @@ const CreateSurvey = () => {
       return;
     }
 
-    if (!formData.category.trim()) {
-      toast.error("Please select a category.");
+    if (formData.categories.length === 0) {
+      toast.error("Please select at least one category.");
       return;
     }
 
-    if (!isAllOccupations && !formData.occupation) {
-      toast.error("Please select an occupation or check 'All Occupations'.");
+    if (!isAllOccupations && formData.occupations.length === 0) {
+      toast.error(
+        "Please select at least one occupation or check 'All Occupations'."
+      );
       return;
     }
 
@@ -164,7 +191,6 @@ const CreateSurvey = () => {
 
     const surveyData = {
       ...formData,
-      occupation: isAllOccupations ? null : formData.occupation,
       duration: {
         startDate,
         endDate,
@@ -174,17 +200,29 @@ const CreateSurvey = () => {
         minAge: isAllAges ? null : minAge,
         maxAge: isAllAges ? null : maxAge,
       },
+      occupations: formData.occupations,
+      isAllOccupations: isAllOccupations,
     };
 
     try {
       const result = await dispatch(createSurvey(surveyData)).unwrap();
-      console.log("Survey created successfully with ID:", result.survey._id);
       navigate(`/creator/surveycreate?surveyId=${result.survey._id}`);
     } catch (error) {
       console.error("Failed to create survey:", error);
       toast.error("An error occurred while creating the survey.");
     }
   };
+
+  if (isLoading.categories || isLoading.occupations) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="animate-spin" />
+          <span>Loading...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -222,23 +260,15 @@ const CreateSurvey = () => {
               </div>
 
               <div>
-                <Label htmlFor="category">Category</Label>
+                <Label htmlFor="categories">Categories</Label>
                 <Select
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, category: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category._id} value={category._id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  id="categories"
+                  isMulti
+                  options={categoryOptions}
+                  onChange={handleCategoryChange}
+                  className="mt-1"
+                  placeholder="Select categories..."
+                />
               </div>
 
               <div>
@@ -246,34 +276,18 @@ const CreateSurvey = () => {
                   <Checkbox
                     id="allOccupations"
                     checked={isAllOccupations}
-                    onCheckedChange={(checked) => {
-                      setIsAllOccupations(checked);
-                      if (checked) {
-                        setFormData((prev) => ({ ...prev, occupation: "" }));
-                      }
-                    }}
+                    onCheckedChange={(checked) => setIsAllOccupations(checked)}
                   />
                   <Label htmlFor="allOccupations">All Occupations</Label>
                 </div>
-
                 {!isAllOccupations && (
                   <Select
-                    value={formData.occupation}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, occupation: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select occupation" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {occupations.map((occupation) => (
-                        <SelectItem key={occupation._id} value={occupation._id}>
-                          {occupation.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    id="occupations"
+                    isMulti
+                    options={occupationOptions}
+                    onChange={handleOccupationChange}
+                    placeholder="Select occupations..."
+                  />
                 )}
               </div>
 

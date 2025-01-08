@@ -1,5 +1,6 @@
 /* eslint-disable react/react-in-jsx-scope */
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -10,6 +11,7 @@ import {
   Alert,
   Button,
 } from "@mui/material";
+import { BarChart } from "lucide-react";
 import { clearMessage, getSurvey, publishSurvey } from "@/slices/creatorSlice";
 import PaymentModal from "@/components/paymentModal";
 
@@ -23,6 +25,7 @@ function SurveyDetails() {
   const [searchParams] = useSearchParams();
   const surveyId = searchParams.get("surveyId");
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
 
@@ -81,18 +84,33 @@ function SurveyDetails() {
     setPaymentModalVisible(false);
   };
 
+  const handleViewAnalytics = () => {
+    navigate(`/creator/analytics/${surveyId}`);
+  };
+
   return (
     <div
       className="max-w-10xl mx-auto my-8 p-8 bg-[#fcf5f0] shadow-lg rounded-2xl border border-[#e0e0e0]"
       style={{ backgroundColor: theme.backgroundColor }}
     >
-      <Typography
-        variant="h4"
-        align="center"
-        className="text-[#333] mb-3 font-bold "
-      >
-        Survey Details
-      </Typography>
+      <div className="flex justify-between items-center mb-6">
+        <Typography variant="h4" className="text-[#333] font-bold">
+          Survey Details
+        </Typography>
+        {data.data.isPublished && (
+          <Button
+            variant="contained"
+            startIcon={<BarChart />}
+            onClick={handleViewAnalytics}
+            style={{
+              backgroundColor: theme.primary,
+              marginLeft: "1rem",
+            }}
+          >
+            View Analytics
+          </Button>
+        )}
+      </div>
 
       <div
         className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
@@ -111,9 +129,9 @@ function SurveyDetails() {
             </Typography>
             <Typography variant="h6" className="text-[#333]">
               <span className="font-semibold" style={{ color: theme.primary }}>
-                Category:
+                Categories:
               </span>{" "}
-              {data.data.category.name}
+              {data.data.categories.map((category) => category.name).join(", ")}
             </Typography>
             <Typography variant="h6" className="text-[#333]">
               <span className="font-semibold" style={{ color: theme.primary }}>

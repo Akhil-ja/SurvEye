@@ -309,7 +309,6 @@ export const createSurvey = async (
 ): Promise<void> => {
   try {
     const creatorId = req.user?.id;
-    console.log('User ID:', creatorId);
 
     if (!creatorId) {
       throw new AppError('Authentication required', 401);
@@ -318,25 +317,43 @@ export const createSurvey = async (
     const {
       surveyName,
       description,
-      category,
+      categories,
       creatorName,
       sampleSize,
       targetAgeRange,
       duration,
       questions,
-      occupation,
+      occupations,
+      isAllOccupations,
     } = req.body;
+
+    console.log('all occupations:', isAllOccupations);
+
+    if (!Array.isArray(categories) || categories.length === 0) {
+      throw new AppError('At least one category is required', 400);
+    }
+
+    if (
+      !isAllOccupations &&
+      (!Array.isArray(occupations) || occupations.length === 0)
+    ) {
+      throw new AppError(
+        'At least one occupation is required when not selecting all occupations',
+        400
+      );
+    }
 
     const survey = await creatorService.createSurvey(creatorId, {
       surveyName,
       description,
-      category,
+      categories,
       creatorName,
       sampleSize,
       targetAgeRange,
       duration,
       questions,
-      occupation,
+      occupations,
+      isAllOccupations,
     });
 
     res.status(200).json({
@@ -354,7 +371,7 @@ export const createSurvey = async (
 };
 
 export const getSurvey = async (
-  req: Request<{}, any, any, { surveyId?: string | string[] }>,
+  req: Request<{ surveyId?: string | string[] }>,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -480,3 +497,88 @@ export const publishSurvey = async (
     );
   }
 };
+
+// export const getSurveyAnalytics = async (
+//   req: any,
+//   res: Response,
+//   next: NextFunction
+// ): Promise<void> => {
+//   try {
+//     const { surveyId } = req.params;
+//     const creatorId = req.user.id;
+
+//     const analytics = await creatorService.getSurveyAnalytics(
+//       surveyId,
+//       creatorId
+//     );
+
+//     res.status(200).json({
+//       success: true,
+//       data: analytics,
+//     });
+//   } catch (error) {
+//     console.error(
+//       'Error fetching survey analytics:',
+//       error instanceof Error ? error.message : 'Unknown error'
+//     );
+//     next(
+//       error instanceof AppError
+//         ? error
+//         : new AppError('Failed to fetch survey analytics', 500)
+//     );
+//   }
+// };
+
+export const getSurveyResponseTimeline = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { surveyId } = req.params;
+    const creatorId = req.user.id;
+
+    const timeline = await creatorService.getSurveyResponseTimeline(
+      surveyId,
+      creatorId
+    );
+
+    res.status(200).json({
+      success: true,
+      data: timeline,
+    });
+  } catch (error) {
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError('Failed to fetch response timeline', 500)
+    );
+  }
+};
+
+// export const getQuestionAnalytics = async (
+//   req: any,
+//   res: Response,
+//   next: NextFunction
+// ): Promise<void> => {
+//   try {
+//     const { surveyId } = req.params;
+//     const creatorId = req.user.id;
+
+//     const questionAnalytics = await creatorService.getQuestionAnalytics(
+//       surveyId,
+//       creatorId
+//     );
+
+//     res.status(200).json({
+//       success: true,
+//       data: questionAnalytics,
+//     });
+//   } catch (error) {
+//     next(
+//       error instanceof AppError
+//         ? error
+//         : new AppError('Failed to fetch question analytics', 500)
+//     );
+//   }
+// };

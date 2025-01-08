@@ -274,7 +274,12 @@ const SurveyBuilder = () => {
           <>
             <div className="mb-4 p-4 bg-white rounded-lg shadow-sm">
               <h2 className="text-xl font-bold">{data.data.surveyName}</h2>
-              <p className="text-sm text-gray-600">{data.data.category.name}</p>
+              <p className="text-sm text-gray-600">
+                {" "}
+                {data.data.categories
+                  .map((category) => category.name)
+                  .join(", ")}
+              </p>
             </div>
             <SurveyPriceCalculator pages={pages} surveyData={data.data} />
           </>

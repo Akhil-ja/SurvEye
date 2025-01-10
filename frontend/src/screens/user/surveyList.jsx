@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import React from "react";
+import { useEffect, useState, React } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -20,6 +19,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   getSurvey,
   selectSurveyPagination,
@@ -30,6 +30,7 @@ import {
   selectSortBy,
   selectSortOrder,
   clearMessage,
+  fetchUserProfile,
 } from "../../slices/userSlice";
 
 const ActiveSurveys = () => {
@@ -44,9 +45,42 @@ const ActiveSurveys = () => {
   const [mergedSurveys, setMergedSurveys] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredSurveys, setFilteredSurveys] = useState([]);
+  const [profileComplete, setProfileComplete] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasOccupation, setHasOccupation] = useState(true);
+  const [hasAge, setHasAge] = useState(true);
+  const [hasWallet, setHasWallet] = useState(true);
 
   useEffect(() => {
-    const fetchSurveys = async () => {
+    const checkProfile = async () => {
+      try {
+        const result = await dispatch(fetchUserProfile()).unwrap();
+        console.log(result);
+
+        const hasOcc = !!result.user.occupation;
+        const age = !!result.user.age;
+        const wallet = !!result.user.wallet;
+
+        setHasOccupation(hasOcc);
+        setHasAge(age);
+        setHasWallet(wallet);
+        setProfileComplete(hasOcc && age && wallet);
+        setIsLoading(false);
+
+        if (hasOcc && age) {
+          fetchSurveys();
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+        setIsLoading(false);
+      }
+    };
+
+    checkProfile();
+  }, [dispatch]);
+
+  const fetchSurveys = async () => {
+    try {
       const activeSurveys = await dispatch(
         getSurvey({
           page: pagination.currentPage,
@@ -76,11 +110,17 @@ const ActiveSurveys = () => {
       }));
 
       setMergedSurveys(updatedSurveys);
-    };
+    } catch (error) {
+      console.error("Error fetching surveys:", error);
+    }
+  };
 
-    fetchSurveys();
-    dispatch(clearMessage());
-  }, [dispatch, pagination.currentPage, sortBy, sortOrder]);
+  useEffect(() => {
+    if (profileComplete) {
+      fetchSurveys();
+      dispatch(clearMessage());
+    }
+  }, [dispatch, pagination.currentPage, sortBy, sortOrder, profileComplete]);
 
   useEffect(() => {
     const filtered = mergedSurveys.filter((survey) =>
@@ -95,7 +135,6 @@ const ActiveSurveys = () => {
 
   const handleSortChange = (value) => {
     dispatch(setSortBy(value));
-
     dispatch(
       setSortOrder(
         value === "name"
@@ -113,12 +152,37 @@ const ActiveSurveys = () => {
     return format(new Date(dateString), "MMM dd, yyyy");
   };
 
-  if (loading) {
-    return <div className="text-center p-8">Loading surveys...</div>;
+  if (isLoading) {
+    return <div className="text-center p-8">Loading...</div>;
   }
 
-  if (error) {
-    return <div className="text-center text-red-500 p-8">{error}</div>;
+  if (!profileComplete) {
+    return (
+      <div className="min-h-screen bg-white p-8">
+        <div className="max-w-3xl mx-auto">
+          <Alert className="bg-yellow-50 border-yellow-200">
+            <AlertTitle className="text-yellow-800 font-semibold">
+              Profile Incomplete
+            </AlertTitle>
+            <AlertDescription className="text-yellow-700">
+              Please complete your profile before viewing surveys. Make sure to
+              add:
+              <ul className="list-disc ml-6 mt-2">
+                {!hasOccupation && <li>Your occupation</li>}
+                {!hasAge && <li>Your date of birth</li>}
+                {!hasWallet && <li>connect your solana wallet</li>}
+              </ul>
+              <button
+                onClick={() => navigate("/user/profile")}
+                className="mt-4 px-4 py-2 bg-yellow-100 text-yellow-800 rounded-md hover:bg-yellow-200 transition-colors"
+              >
+                Complete Profile
+              </button>
+            </AlertDescription>
+          </Alert>
+        </div>
+      </div>
+    );
   }
 
   const sortingConfig = {
@@ -141,6 +205,14 @@ const ActiveSurveys = () => {
       ],
     },
   };
+
+  if (loading) {
+    return <div className="text-center p-8">Loading surveys...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center text-red-500 p-8">{error}</div>;
+  }
 
   return (
     <div className="min-h-screen bg-white p-8">
@@ -212,13 +284,12 @@ const ActiveSurveys = () => {
                           .map((category) => category.name)
                           .join(", ")}
                       </p>
-
                       <p>Sample Size: {survey.sampleSize}</p>
                       <p>
                         Age Range:{" "}
-                        {survey.targetAgeRange.isAllAges
+                        {survey.targetAgeRange?.isAllAges
                           ? "All Ages"
-                          : `${survey.targetAgeRange.minAge} - ${survey.targetAgeRange.maxAge}`}
+                          : `${survey.targetAgeRange?.minAge || "N/A"} - ${survey.targetAgeRange?.maxAge || "N/A"}`}
                       </p>
                       <p>
                         Duration: {formatDate(survey.duration.startDate)} -{" "}

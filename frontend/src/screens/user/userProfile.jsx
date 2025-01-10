@@ -27,6 +27,7 @@ import {
   changePassword,
   clearMessage,
 } from "../../slices/userSlice";
+import moment from "moment";
 
 const ProfileView = () => {
   const dispatch = useDispatch();
@@ -114,14 +115,63 @@ const ProfileView = () => {
     try {
       await dispatch(
         updateUserProfile({
-          ...profile,
-          first_name: firstName,
-          last_name: lastName || "",
+          firstName,
+          lastName,
         })
       ).unwrap();
+
+      await dispatch(fetchUserProfile());
       setNameDialogOpen(false);
     } catch (err) {
       console.error("Error updating name:", err);
+      toast.error(err.message || "Failed to update name");
+    }
+  };
+
+  const handleSaveDob = async () => {
+    if (!dateOfBirth) {
+      toast.error("Please select a date of birth");
+      return;
+    }
+    const age = moment().diff(moment(dateOfBirth), "years");
+    if (age < 18) {
+      toast.error("User should be at least 18 years old");
+      return;
+    }
+
+    try {
+      await dispatch(
+        updateUserProfile({
+          dateOfBirth: dateOfBirth,
+        })
+      ).unwrap();
+
+      await dispatch(fetchUserProfile());
+      setDobDialogOpen(false);
+    } catch (err) {
+      console.error("Error updating date of birth:", err);
+      toast.error(err.message || "Failed to update date of birth");
+    }
+  };
+
+  const handleSaveOccupation = async () => {
+    if (!selectedOccupation) {
+      toast.error("Please select an occupation");
+      return;
+    }
+
+    try {
+      await dispatch(
+        updateUserProfile({
+          occupation: selectedOccupation,
+        })
+      ).unwrap();
+
+      await dispatch(fetchUserProfile());
+      setOccupationDialogOpen(false);
+    } catch (err) {
+      console.error("Error updating occupation:", err);
+      toast.error(err.message || "Failed to update occupation");
     }
   };
 
@@ -146,50 +196,6 @@ const ProfileView = () => {
       console.error("Error changing password:", err);
     }
   };
-
-  const handleSaveDob = async () => {
-    if (!dateOfBirth) {
-      toast.error("Please select a date of birth");
-      return;
-    }
-
-    try {
-      await dispatch(
-        updateUserProfile({
-          ...profile,
-          date_of_birth: dateOfBirth,
-        })
-      ).unwrap();
-      setDobDialogOpen(false);
-      dispatch(fetchUserProfile());
-    } catch (err) {
-      console.error("Error updating date of birth:", err);
-    }
-  };
-
-  const handleSaveOccupation = async () => {
-    if (!selectedOccupation) {
-      toast.error("Please select an occupation");
-      return;
-    }
-
-    try {
-      await dispatch(
-        updateUserProfile({
-          ...profile,
-          occupation: selectedOccupation,
-        })
-      ).unwrap();
-
-      await dispatch(fetchUserProfile());
-
-      setOccupationDialogOpen(false);
-    } catch (err) {
-      console.error("Error updating occupation:", err);
-      toast.error("Failed to update occupation. Please try again.");
-    }
-  };
-
   const ProfileRow = ({ label, value, showArrow = false, onClick }) => (
     <div
       className={`flex justify-between items-center p-4 border-b border-gray-100 ${
@@ -266,14 +272,24 @@ const ProfileView = () => {
           <Separator />
           <AgeRow />
           <Separator />
-          {profile?.occupation && (
-            <ProfileRow
-              label="Occupation"
-              value={profile.occupation.name}
-              showArrow
-              onClick={() => setOccupationDialogOpen(true)}
-            />
-          )}
+          <ProfileRow
+            label="Occupation"
+            value={
+              profile?.occupation ? (
+                profile.occupation.name
+              ) : (
+                <Button
+                  variant="ghost"
+                  className="text-blue-600 hover:text-blue-700 p-0"
+                  onClick={() => setOccupationDialogOpen(true)}
+                >
+                  Add Occupation
+                </Button>
+              )
+            }
+            showArrow={true}
+            onClick={() => setOccupationDialogOpen(true)}
+          />
         </CardContent>
       </Card>
 
@@ -444,7 +460,10 @@ const ProfileView = () => {
             </SelectTrigger>
             <SelectContent>
               {occupations.map((occupation) => (
-                <SelectItem key={occupation._id} value={occupation._id}>
+                <SelectItem
+                  key={occupation._id}
+                  value={occupation._id.toString()}
+                >
                   {occupation.name}
                 </SelectItem>
               ))}

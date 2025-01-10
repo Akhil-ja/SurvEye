@@ -284,6 +284,7 @@ export class UserService {
     if (user.status === 'blocked') {
       throw new AppError('User is blocked', 403);
     }
+    console.log(user.wallet);
 
     const age = moment().diff(moment(user.date_of_birth), 'years');
 
@@ -296,6 +297,7 @@ export class UserService {
       last_name: user.last_name,
       age: age,
       occupation: user.occupation ? user.occupation : null,
+      wallet: user.wallet || null,
     };
   }
 
@@ -326,11 +328,13 @@ export class UserService {
       throw new AppError('First name cannot be empty', 400);
     }
 
-    if (updates.lastName && updates.lastName.trim().length === 0) {
-      throw new AppError('Last name cannot be empty', 400);
+    if (
+      updates.lastName !== undefined &&
+      updates.lastName.trim().length === 0
+    ) {
+      throw new AppError('Last name cannot be empty if provided', 400);
     }
 
-    // Validate and update date of birth
     if (updates.dateOfBirth) {
       const dobDate = moment(updates.dateOfBirth);
 
@@ -592,7 +596,13 @@ export class UserService {
     }
 
     if (!user.wallet) {
-      throw new AppError('user Hasno wallet', 400);
+      const newWallet = new Wallet({
+        userId: user._id,
+        network: 'devnet',
+      });
+      await newWallet.save();
+      user.wallet = newWallet._id;
+      await user.save();
     }
 
     const survey = (await Survey.findById(surveyId)) as ISurvey | null;
@@ -773,6 +783,12 @@ export class UserService {
       $inc: { totalResponses: 1 },
     });
 
+    if (survey.totalResponses >= survey.sampleSize) {
+      await Survey.findByIdAndUpdate(surveyId, {
+        status: 'completed',
+      });
+    }
+
     return surveyResponse;
   }
 
@@ -909,7 +925,6 @@ export class UserService {
 
     const recipientPublicKey = new web3.PublicKey(wallet.publicAddress);
 
-    // Create transfer transaction
     const transaction = new web3.Transaction().add(
       web3.SystemProgram.transfer({
         fromPubkey: senderPublicKey,

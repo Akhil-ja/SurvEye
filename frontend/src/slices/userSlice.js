@@ -19,21 +19,7 @@ export const updateUserProfile = createAsyncThunk(
   "User/updateProfile",
   async (profileData, { rejectWithValue }) => {
     try {
-      const payload = {
-        firstName: profileData.first_name,
-        lastName: profileData.last_name,
-        email: profileData.email,
-        number: profileData.number,
-        role: profileData.role,
-        ...(profileData.date_of_birth && {
-          dateOfBirth: profileData.date_of_birth,
-        }),
-        ...(profileData.occupation && {
-          occupation: profileData.occupation,
-        }),
-      };
-
-      const response = await api.put("/user/profile", payload);
+      const response = await api.put("/user/profile", profileData);
       return response.data;
     } catch (error) {
       return rejectWithValue(

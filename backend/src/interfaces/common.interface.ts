@@ -19,13 +19,15 @@ export interface IUser extends Document {
 }
 
 export interface IOption extends Document {
+  _id: Types.ObjectId;
   text: string;
   value: number;
 }
 
 export interface IAnswer {
   questionText: string;
-  selectedOptions?: IOption[];
+  questionId: Types.ObjectId;
+  selectedOptions?: Types.ObjectId[] | IOption[];
   textAnswer?: string;
   ratingValue?: number;
 }
@@ -35,13 +37,6 @@ export interface ISurveyResponse extends Document {
   user: Types.ObjectId;
   answers: IAnswer[];
   completedAt: Date;
-}
-
-// Survey.ts
-
-export interface IOption extends Document {
-  text: string;
-  value: number;
 }
 
 export interface ITargetAgeRange {
@@ -56,10 +51,11 @@ export interface IDuration {
 }
 
 export interface ISurvey extends Document {
+  _id: Types.ObjectId;
   creator: Types.ObjectId;
   surveyName: string;
   description: string;
-  category: Types.ObjectId;
+  categories: Types.ObjectId[];
   creatorName: string;
   sampleSize: number;
   targetAgeRange: ITargetAgeRange;
@@ -71,12 +67,8 @@ export interface ISurvey extends Document {
   totalResponses: number;
   isPublished: boolean;
   price: number;
-  occupation: Types.ObjectId | null;
-}
-
-export interface IOption extends Document {
-  text: string;
-  value: number;
+  occupations: Types.ObjectId[] | null;
+  isAllOccupations: boolean;
 }
 
 export interface IQuestion {
@@ -97,23 +89,6 @@ export interface ITargetAgeRange {
 export interface IDuration {
   startDate: Date;
   endDate: Date;
-}
-
-export interface ISurvey extends Document {
-  creator: Types.ObjectId;
-  surveyName: string;
-  description: string;
-  category: Types.ObjectId;
-  creatorName: string;
-  sampleSize: number;
-  targetAgeRange: ITargetAgeRange;
-  duration: IDuration;
-  status: 'draft' | 'active' | 'completed' | 'cancelled';
-  questions: IQuestion[];
-  created_at: Date;
-  updated_at: Date;
-  totalResponses: number;
-  isPublished: boolean;
 }
 
 export interface IAdmin extends Document {
@@ -173,4 +148,12 @@ export interface ITransaction {
 export interface IAdminCut {
   percentage: number;
   updatedAt: Date;
+}
+
+export interface IAnnouncement {
+  title: string;
+  message: string;
+  timestamp: Date;
+  type: string;
+  target: string;
 }

@@ -9,7 +9,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import globalErrorHandler from './middlewares/errorMiddleware';
 
-dotenv.config();
+dotenv.config({ path: require('path').resolve(__dirname, '../.env') });
 
 connectDB();
 

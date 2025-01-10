@@ -101,7 +101,7 @@ const TransactionView = () => {
                         }`}
                       >
                         {transaction.type === "credit" ? "-" : "+"}
-                        {transaction.amount} USD
+                        {transaction.amount} SOL
                       </div>
                     </div>
                   ))}

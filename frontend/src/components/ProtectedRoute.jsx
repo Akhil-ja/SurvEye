@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import PropTypes from "prop-types";
 import { checkBlockStatus } from "../slices/authSlice";
 
-export const ProtectedRoute = ({ redirectPath }) => {
+export const ProtectedRoute = ({ redirectPath = "/signin" }) => {
   const dispatch = useDispatch();
   const authInfo = useSelector((state) => state.auth.authInfo);
 
@@ -30,8 +30,4 @@ export const ProtectedRoute = ({ redirectPath }) => {
 
 ProtectedRoute.propTypes = {
   redirectPath: PropTypes.string,
-};
-
-ProtectedRoute.defaultProps = {
-  redirectPath: "/signin",
 };

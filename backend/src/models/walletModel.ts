@@ -4,15 +4,15 @@ import { IWallet } from '../interfaces/common.interface';
 
 const WalletSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  publicAddress: { type: String, required: true, unique: true },
-  encryptedPrivateKey: { type: String, required: true },
+  publicAddress: { type: String, unique: true },
+  encryptedPrivateKey: { type: String },
   isActive: { type: Boolean, default: true },
   network: {
     type: String,
     enum: ['devnet', 'testnet', 'mainnet'],
     default: 'devnet',
   },
-  payout: { type: Number, default: 0.0001 },
+  payout: { type: Number, default: 0.0 },
   isPayoutLocked: { type: Boolean, default: false },
 });
 

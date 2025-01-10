@@ -213,8 +213,6 @@ export const editUserProfile = async (
 
     const { firstName, lastName, dateOfBirth, occupation } = req.body;
 
-    console.log(occupation);
-
     if (!firstName && !lastName && !dateOfBirth && !occupation) {
       throw new AppError('No updates provided', 400);
     }

@@ -24,6 +24,7 @@ import { toast } from "react-toastify";
 
 const CreatorProfile = () => {
   const dispatch = useDispatch();
+  dispatch(clearMessage());
   const { profile, isLoading, error, message, passwordChangeStatus } =
     useSelector((state) => state.creator);
 
@@ -93,6 +94,7 @@ const CreatorProfile = () => {
     }
   };
 
+  // eslint-disable-next-line react/prop-types
   const ProfileRow = ({ label, value, showArrow = false, onClick }) => (
     <div
       className={`flex justify-between items-center p-4 border-b border-gray-100 ${

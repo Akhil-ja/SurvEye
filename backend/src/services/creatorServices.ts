@@ -1,10 +1,6 @@
 import bcrypt from 'bcrypt';
 import User from '../models/usersModel';
-import {
-  IPopulatedOption,
-  IQuestion,
-  IUser,
-} from '../interfaces/common.interface';
+import { IUser } from '../interfaces/common.interface';
 import { generateTokens } from '../utils/jwtUtils';
 import { generateOTP, sendOTP } from '../utils/otpUtils';
 import PendingUser from '../models/pendingUserModel';

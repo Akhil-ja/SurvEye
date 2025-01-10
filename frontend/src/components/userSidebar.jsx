@@ -5,6 +5,7 @@ import { useState } from "react";
 import { RiSurveyFill } from "react-icons/ri";
 import { SiLimesurvey } from "react-icons/si";
 import { IoWallet } from "react-icons/io5";
+import { BiSolidMessageAltError } from "react-icons/bi";
 
 const UserSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -85,11 +86,20 @@ const UserSidebar = () => {
                 <span className="text-white">Wallet</span>
               </Link>
             </li>
+            <li>
+              <Link
+                to="/user/notification"
+                onClick={handleLinkClick}
+                className="flex items-center space-x-2 py-2 px-4 hover:bg-gray-700 rounded"
+              >
+                <BiSolidMessageAltError className="text-xl text-white" />
+                <span className="text-white">Notifications</span>
+              </Link>
+            </li>
           </ul>
         </nav>
       </div>
 
-      {/* Overlay for closing sidebar */}
       {isOpen && (
         <div
           className="fixed inset-0 z-30 bg-black bg-opacity-50"

@@ -2,6 +2,7 @@
 import { FaBars, FaHome } from "react-icons/fa";
 import { RiSurveyFill } from "react-icons/ri";
 import { GrTransaction } from "react-icons/gr";
+import { BiSolidMessageAltError } from "react-icons/bi";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 
@@ -68,6 +69,16 @@ const CreatorSidebar = () => {
               >
                 <GrTransaction className="text-xl text-white" />
                 <span className="text-white">Transactions</span>
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/creator/notifications"
+                onClick={toggleSidebar}
+                className="flex items-center space-x-2 py-2 px-4 hover:bg-gray-700 rounded"
+              >
+                <BiSolidMessageAltError className="text-xl text-white" />
+                <span className="text-white">Notifications</span>
               </Link>
             </li>
           </ul>

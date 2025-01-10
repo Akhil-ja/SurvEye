@@ -1,9 +1,38 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSelector } from "react-redux";
 import React from "react";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Button,
+} from "@mui/material";
 
 const UserHome = () => {
   const authInfo = useSelector((state) => state.auth.authInfo);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyLink = () => {
+    try {
+      navigator.clipboard.writeText("https://{}/share");
+      setCopied(true);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
+
+  const handleDialogClose = () => {
+    setOpenDialog(false);
+    setCopied(false);
+  };
+
+  const handleOpenDialog = () => {
+    setOpenDialog(true);
+  };
 
   if (!authInfo || !authInfo.user) {
     return (
@@ -17,13 +46,24 @@ const UserHome = () => {
     );
   }
 
-  const HoverCard = ({ className, children }) => (
-    <Card
-      className={`${className} transition-all duration-300 hover:shadow-lg hover:scale-105 cursor-pointer`}
-    >
-      {children}
-    </Card>
-  );
+  const HoverCard = ({ className, children, to, onClick }) => {
+    const cardContent = (
+      <Card
+        className={`${className} m-1.5 transition-all duration-300 hover:shadow-lg hover:scale-105 cursor-pointer`}
+        onClick={onClick}
+      >
+        {children}
+      </Card>
+    );
+
+    return to ? (
+      <Link to={to} className="no-underline text-inherit">
+        {cardContent}
+      </Link>
+    ) : (
+      cardContent
+    );
+  };
 
   return (
     <div className="p-6 bg-white">
@@ -37,7 +77,7 @@ const UserHome = () => {
               <h2 className="text-xl text-pink-500">Welcome Back!</h2>
             </CardContent>
           </HoverCard>
-          <HoverCard className="h-30">
+          <HoverCard className="h-30" onClick={handleOpenDialog}>
             <CardHeader>
               <CardTitle>SHARE TO FRIENDS</CardTitle>
             </CardHeader>
@@ -45,7 +85,7 @@ const UserHome = () => {
               <p className="text-sm">Invite friends and grow the community</p>
             </CardContent>
           </HoverCard>
-          <HoverCard className="h-39">
+          <HoverCard className="h-38" to="/user/attendedsurveys">
             <CardHeader>
               <CardTitle>DASHBOARD</CardTitle>
             </CardHeader>
@@ -58,7 +98,7 @@ const UserHome = () => {
         </div>
 
         <div className="col-span-2 space-y-4">
-          <HoverCard className="h-52">
+          <HoverCard className="h-52" to="/user/survey">
             <CardHeader>
               <CardTitle>TAKE A SURVEY</CardTitle>
             </CardHeader>
@@ -69,21 +109,21 @@ const UserHome = () => {
               </p>
             </CardContent>
           </HoverCard>
-          <HoverCard className="h-52">
+          <HoverCard className="h-52" to="/user/wallet">
             <CardHeader>
-              <CardTitle>REWARDS</CardTitle>
+              <CardTitle>WALLET</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm">
-                Track your progress and redeem bonuses as you complete surveys
-                on the platform
+                {" "}
+                View your balance, transaction history, and easily manage funds
               </p>
             </CardContent>
           </HoverCard>
         </div>
 
         <div className="col-span-1 space-y-4">
-          <HoverCard className="h-52">
+          <HoverCard className="h-52" to="/user/profile">
             <CardHeader>
               <CardTitle>PROFILE</CardTitle>
             </CardHeader>
@@ -91,7 +131,7 @@ const UserHome = () => {
               <p className="text-sm">Manage your account information.</p>
             </CardContent>
           </HoverCard>
-          <HoverCard className="h-52">
+          <HoverCard className="h-52" to="/user/announcements">
             <CardHeader>
               <CardTitle>ANNOUNCEMENTS</CardTitle>
             </CardHeader>
@@ -104,18 +144,38 @@ const UserHome = () => {
         </div>
 
         <div className="col-span-4">
-          <HoverCard className="h-40 mt-0">
+          <HoverCard className="h-40 mt-0" to="/user/wallet">
             <CardHeader>
-              <CardTitle>WALLET</CardTitle>
+              <CardTitle>LOGOUT</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm">
-                View your balance, transaction history, and easily manage funds
-              </p>
+              <p className="text-sm">Logout from the Application</p>
             </CardContent>
           </HoverCard>
         </div>
       </div>
+      <Dialog open={openDialog} onClose={handleDialogClose}>
+        <DialogTitle>Share with Friends</DialogTitle>
+        <DialogContent>
+          <p className="text-sm">
+            Copy this link and share it with your friends:
+          </p>
+          <div className="flex items-center space-x-2">
+            <input
+              type="text"
+              value="https://{}/share"
+              readOnly
+              className="p-2 border rounded w-full"
+            />
+            <Button onClick={handleCopyLink} variant="contained">
+              {copied ? "Copied!" : "Copy Link"}
+            </Button>
+          </div>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDialogClose}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

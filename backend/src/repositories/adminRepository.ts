@@ -192,8 +192,10 @@ export class AdminRepository {
 
   async getAllData(): Promise<any> {
     const users = await User.find({});
-    const surveys = await Survey.find({}, { questions: 0 });
-    const surveyResponses = await SurveyResponse.find({});
+    const surveys = await Survey.find({}, { questions: 0 }).populate(
+      'categories'
+    );
+    const surveyResponses = await SurveyResponse.find({}, { answers: 0 });
     const occupations = await Occupation.find({});
     const categories = await Category.find({});
 

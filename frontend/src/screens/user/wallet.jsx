@@ -217,7 +217,7 @@ const WalletView = () => {
                 Wallet Balance
               </span>
               <div className="text-2xl font-bold text-green-900 mt-1">
-                {wallet.payout} SOL
+                {wallet.payout.toFixed(6)} SOL
               </div>
             </div>
             <div className="flex items-center space-x-2">

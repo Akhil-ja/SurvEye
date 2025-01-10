@@ -827,7 +827,7 @@ export class UserService {
     const balance = await connection.getBalance(senderPublicKey);
     const balanceInSol = balance / web3.LAMPORTS_PER_SOL;
 
-    const amountInLamports = amountInSol * web3.LAMPORTS_PER_SOL;
+    const amountInLamports = Math.floor(amountInSol * web3.LAMPORTS_PER_SOL);
 
     const feeInLamports = 5000;
 
@@ -847,7 +847,6 @@ export class UserService {
       })
     );
 
-    // Get recent blockhash
     const { blockhash } = await connection.getLatestBlockhash();
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = senderPublicKey;
@@ -912,7 +911,7 @@ export class UserService {
     const balance = await connection.getBalance(senderPublicKey);
     const balanceInSol = balance / web3.LAMPORTS_PER_SOL;
     const amountInSol = wallet.payout;
-    const amountInLamports = amountInSol * web3.LAMPORTS_PER_SOL;
+    const amountInLamports = Math.floor(amountInSol * web3.LAMPORTS_PER_SOL);
     const feeInLamports = 5000;
 
     if (balanceInSol < amountInSol + feeInLamports / web3.LAMPORTS_PER_SOL) {

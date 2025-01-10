@@ -3,6 +3,7 @@ import { AppError } from '../utils/AppError';
 import { creatorService } from '../services/creatorServices';
 import { IIncomingSurveyData } from '../types/surveyTypes';
 import HTTP_statusCode from '../Enums/httpStatusCode';
+import mongoose from 'mongoose';
 
 // Initiate Sign Up
 export const initiateSignUp = async (
@@ -264,7 +265,6 @@ export const changePasswordController = async (
     console.log('In change password');
 
     const userId = req.user?.id;
-    console.log('User ID:', userId);
 
     if (!userId) {
       throw new AppError('Authentication required', 401);
@@ -498,87 +498,28 @@ export const publishSurvey = async (
   }
 };
 
-// export const getSurveyAnalytics = async (
-//   req: any,
-//   res: Response,
-//   next: NextFunction
-// ): Promise<void> => {
-//   try {
-//     const { surveyId } = req.params;
-//     const creatorId = req.user.id;
-
-//     const analytics = await creatorService.getSurveyAnalytics(
-//       surveyId,
-//       creatorId
-//     );
-
-//     res.status(200).json({
-//       success: true,
-//       data: analytics,
-//     });
-//   } catch (error) {
-//     console.error(
-//       'Error fetching survey analytics:',
-//       error instanceof Error ? error.message : 'Unknown error'
-//     );
-//     next(
-//       error instanceof AppError
-//         ? error
-//         : new AppError('Failed to fetch survey analytics', 500)
-//     );
-//   }
-// };
-
-export const getSurveyResponseTimeline = async (
+export const surveyAnalytics = async (
   req: any,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { surveyId } = req.params;
-    const creatorId = req.user.id;
-
-    const timeline = await creatorService.getSurveyResponseTimeline(
-      surveyId,
-      creatorId
-    );
+    const surveyId = req.params.surveyId;
+    const analytics = await creatorService.getSurveyAnalytics(surveyId);
 
     res.status(200).json({
       success: true,
-      data: timeline,
+      data: analytics,
     });
   } catch (error) {
+    console.error(
+      'Error publishing survey:',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
     next(
       error instanceof AppError
         ? error
-        : new AppError('Failed to fetch response timeline', 500)
+        : new AppError('Failed to get survey Analytics', 500)
     );
   }
 };
-
-// export const getQuestionAnalytics = async (
-//   req: any,
-//   res: Response,
-//   next: NextFunction
-// ): Promise<void> => {
-//   try {
-//     const { surveyId } = req.params;
-//     const creatorId = req.user.id;
-
-//     const questionAnalytics = await creatorService.getQuestionAnalytics(
-//       surveyId,
-//       creatorId
-//     );
-
-//     res.status(200).json({
-//       success: true,
-//       data: questionAnalytics,
-//     });
-//   } catch (error) {
-//     next(
-//       error instanceof AppError
-//         ? error
-//         : new AppError('Failed to fetch question analytics', 500)
-//     );
-//   }
-// };

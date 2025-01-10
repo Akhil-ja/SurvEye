@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../api/axiosConfig";
 
-// Async thunk for fetching creator profile
 export const fetchCreatorProfile = createAsyncThunk(
   "creator/fetchProfile",
   async (_, { rejectWithValue }) => {
@@ -51,6 +50,7 @@ export const createSurvey = createAsyncThunk(
   "creator/createSurvey",
   async (surveyData, { rejectWithValue }) => {
     try {
+      console.log(surveyData);
       const response = await api.post("creator/survey", surveyData);
       return response.data;
     } catch (error) {
@@ -111,6 +111,20 @@ export const publishSurvey = createAsyncThunk(
   }
 );
 
+export const getAnalytics = createAsyncThunk(
+  "creator/getAnalytics",
+  async ({ surveyId }, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`creator/survey/${surveyId}/analytics`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to fetch survey" }
+      );
+    }
+  }
+);
+
 const creatorSlice = createSlice({
   name: "creator",
   initialState: {
@@ -121,6 +135,7 @@ const creatorSlice = createSlice({
     passwordChangeStatus: "idle",
     surveyCreationStatus: "idle",
     surveys: [],
+    analyticsData: null,
   },
   reducers: {
     clearMessage: (state) => {
@@ -219,6 +234,19 @@ const creatorSlice = createSlice({
       .addCase(getAllSurveys.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload?.message || "Failed to fetch surveys";
+      })
+      .addCase(getAnalytics.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getAnalytics.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.analyticsData = action.payload.data;
+        state.error = null;
+      })
+      .addCase(getAnalytics.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload?.message || "Failed to fetch analytics";
       });
   },
 });

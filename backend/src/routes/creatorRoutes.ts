@@ -13,6 +13,7 @@ import {
   makeSurvey,
   getAllSurveys,
   publishSurvey,
+  surveyAnalytics,
 } from '../controllers/creatorController';
 import { checkBlockedUser } from '../middlewares/statusMiddleware';
 import { protect } from '../middlewares/authMiddleware';
@@ -43,5 +44,11 @@ router.get('/survey', protect, checkBlockedUser, getSurvey);
 router.get('/surveys', protect, checkBlockedUser, getAllSurveys);
 router.post('/createsurvey', protect, checkBlockedUser, makeSurvey);
 router.put('/publishsurvey', protect, checkBlockedUser, publishSurvey);
+router.get(
+  '/survey/:surveyId/analytics',
+  protect,
+  checkBlockedUser,
+  surveyAnalytics
+);
 
 export default router;

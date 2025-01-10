@@ -32,7 +32,6 @@ const AttendSurvey = () => {
   const surveyId = searchParams.get("surveyId");
   const storageKey = `${LOCAL_STORAGE_KEY_PREFIX}${surveyId}`;
 
-  // Initialize state from local storage if available
   const [currentPage, setCurrentPage] = useState(() => {
     const saved = sessionStorage.getItem(`${storageKey}_page`);
     return saved ? parseInt(saved) : 1;
@@ -64,13 +63,13 @@ const AttendSurvey = () => {
 
   useEffect(() => {
     if (survey?.data?.survey) {
-      const endDate = new Date(survey.data.survey.duration.endDate);
-      if (endDate < new Date()) {
-        clearsessionStorage();
-        navigate("/surveys/expired");
-      }
+      const defaultAnswers = {};
+      survey.data.survey.questions.forEach((q) => {
+        defaultAnswers[q._id] = "";
+      });
+      setAnswers((prev) => ({ ...defaultAnswers, ...prev }));
     }
-  }, [survey, navigate]);
+  }, [survey]);
 
   useEffect(() => {
     return () => {
@@ -138,33 +137,33 @@ const AttendSurvey = () => {
     }
   }, [error, dispatch]);
 
-  const ResumeBanner = () => {
-    if (Object.keys(answers).length > 0) {
-      return (
-        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="text-sm text-blue-700">
-                You have an ongoing survey session
-              </p>
-              <p className="text-xs text-blue-600">
-                Last updated: {new Date(lastUpdated).toLocaleString()}
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={clearsessionStorage}
-              className="text-blue-700 hover:text-blue-800"
-            >
-              Clear Progress
-            </Button>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
+  // const ResumeBanner = () => {
+  //   if (Object.keys(answers).length > 0) {
+  //     return (
+  //       <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+  //         <div className="flex justify-between items-center">
+  //           <div>
+  //             <p className="text-sm text-blue-700">
+  //               You have an ongoing survey session
+  //             </p>
+  //             <p className="text-xs text-blue-600">
+  //               Last updated: {new Date(lastUpdated).toLocaleString()}
+  //             </p>
+  //           </div>
+  //           <Button
+  //             variant="outline"
+  //             size="sm"
+  //             onClick={clearsessionStorage}
+  //             className="text-blue-700 hover:text-blue-800"
+  //           >
+  //             Clear Progress
+  //           </Button>
+  //         </div>
+  //       </div>
+  //     );
+  //   }
+  //   return null;
+  // };
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -276,7 +275,7 @@ const AttendSurvey = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-3xl mx-auto">
-        <ResumeBanner />
+        {/* <ResumeBanner /> */}
 
         {/* Survey Header */}
         <Card className="mb-6">

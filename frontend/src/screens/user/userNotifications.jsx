@@ -16,79 +16,79 @@ const UserAnnouncements = () => {
     isLoading: state.admin.isLoading,
   }));
 
-  const connectSocket = () => {
-    const authInfo = JSON.parse(sessionStorage.getItem("authInfo"));
-    const { id: userId, role } = authInfo.user;
-    console.log("userid:", userId);
+  // const connectSocket = () => {
+  //   const authInfo = JSON.parse(sessionStorage.getItem("authInfo"));
+  //   const { id: userId, role } = authInfo.user;
+  //   console.log("userid:", userId);
 
-    // const token = authInfo.tokens.accessToken;
+  //   // const token = authInfo.tokens.accessToken;
 
-    const socket = new WebSocket(
-      `ws://localhost:3000/?userId=${userId}&role=${role}`
-    );
+  //   const socket = new WebSocket(
+  //     `ws://localhost:3000/?userId=${userId}&role=${role}`
+  //   );
 
-    socket.onopen = () => {
-      console.log("Connected to WebSocket server");
-    };
+  //   socket.onopen = () => {
+  //     console.log("Connected to WebSocket server");
+  //   };
 
-    socket.onerror = (error) => {
-      console.error("WebSocket error:", error);
-    };
+  //   socket.onerror = (error) => {
+  //     console.error("WebSocket error:", error);
+  //   };
 
-    socket.onclose = () => {
-      console.log("WebSocket connection closed");
-    };
+  //   socket.onclose = () => {
+  //     console.log("WebSocket connection closed");
+  //   };
 
-    socket.onmessage = (event) => {
-      console.log(event.data);
-      const notification = JSON.parse(event.data);
-      alert("New announcement received:", notification);
+  //   socket.onmessage = (event) => {
+  //     console.log(event.data);
+  //     const notification = JSON.parse(event.data);
+  //     alert("New announcement received:", notification);
 
-      toast.info(
-        <div>
-          <strong>{notification.title}</strong>
-          <p>{notification.message}</p>
-        </div>,
-        {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-        }
-      );
+  //     toast.info(
+  //       <div>
+  //         <strong>{notification.title}</strong>
+  //         <p>{notification.message}</p>
+  //       </div>,
+  //       {
+  //         position: "top-right",
+  //         autoClose: 3000,
+  //         hideProgressBar: false,
+  //         closeOnClick: true,
+  //         pauseOnHover: true,
+  //         draggable: true,
+  //         progress: undefined,
+  //       }
+  //     );
 
-      setLocalAnnouncements((prev) => [
-        {
-          _id: Date.now(),
-          ...notification,
-          timestamp: new Date().toISOString(),
-        },
-        ...prev,
-      ]);
-    };
+  //     setLocalAnnouncements((prev) => [
+  //       {
+  //         _id: Date.now(),
+  //         ...notification,
+  //         timestamp: new Date().toISOString(),
+  //       },
+  //       ...prev,
+  //     ]);
+  //   };
 
-    return socket;
-  };
+  //   return socket;
+  // };
 
-  useEffect(() => {
-    let socket;
-    try {
-      socket = connectSocket();
-    } catch (error) {
-      console.error("WebSocket connection error:", error);
-    }
+  // useEffect(() => {
+  //   let socket;
+  //   try {
+  //     socket = connectSocket();
+  //   } catch (error) {
+  //     console.error("WebSocket connection error:", error);
+  //   }
 
-    dispatch(getAnnouncement());
+  //   dispatch(getAnnouncement());
 
-    return () => {
-      if (socket) {
-        socket.close();
-      }
-    };
-  }, [dispatch]);
+  //   return () => {
+  //     if (socket) {
+  //       socket.close();
+  //     }
+  //   };
+  // }, [dispatch]);
 
   const allAnnouncements = [...localAnnouncements, ...announcements].sort(
     (a, b) => new Date(b.timestamp) - new Date(a.timestamp)

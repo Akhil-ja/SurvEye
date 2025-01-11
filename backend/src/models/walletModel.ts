@@ -12,7 +12,7 @@ const WalletSchema = new mongoose.Schema({
     enum: ['devnet', 'testnet', 'mainnet'],
     default: 'devnet',
   },
-  payout: { type: Number, default: 0.0 },
+  payout: { type: Number, default: 0.000000000001 },
   isPayoutLocked: { type: Boolean, default: false },
 });
 

@@ -37,6 +37,7 @@ const CreatorHome = () => {
   const [surveysPerPage] = useState(10);
   const [sortBy, setSortBy] = useState("cost");
   const [sortOrder, setSortOrder] = useState("highest");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     dispatch(getAllSurveys());
@@ -76,13 +77,20 @@ const CreatorHome = () => {
     setFormattedSurveys(sortedSurveys);
   }, [sortBy, sortOrder]);
 
+  const handleSearch = (event) => {
+    setSearchQuery(event.target.value);
+  };
+
   const indexOfLastSurvey = currentPage * surveysPerPage;
   const indexOfFirstSurvey = indexOfLastSurvey - surveysPerPage;
-  const currentSurveys = formattedSurveys.slice(
+  const filteredSurveys = formattedSurveys.filter((survey) =>
+    survey.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  const currentSurveys = filteredSurveys.slice(
     indexOfFirstSurvey,
     indexOfLastSurvey
   );
-  const totalPages = Math.ceil(formattedSurveys.length / surveysPerPage);
+  const totalPages = Math.ceil(filteredSurveys.length / surveysPerPage);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -134,6 +142,15 @@ const CreatorHome = () => {
               </Button>
             </Link>
           </div>
+          <div className="mt-4">
+            <input
+              type="text"
+              placeholder="Search surveys..."
+              value={searchQuery}
+              onChange={handleSearch}
+              className="w-80 px-3 py-2 border border-gray-300 rounded-md"
+            />
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -142,7 +159,7 @@ const CreatorHome = () => {
             </div>
           ) : error ? (
             <div className="text-center py-8 text-red-500">{error}</div>
-          ) : formattedSurveys.length === 0 ? (
+          ) : filteredSurveys.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               No active surveys found for this creator.{" "}
               <Link

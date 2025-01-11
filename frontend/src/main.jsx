@@ -26,7 +26,7 @@ import AdminSignIn from "./screens/admin/adminSignin";
 import AdminHome from "./screens/admin/adminHome";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import AuthenticatedRoute from "./components/AuthenticatedRoute";
-import AdminRoute from "./components/AdminRoute";
+import AdminRoute from "./components/adminRoute";
 import AdminUserList from "./screens/admin/adminUserList";
 import UserProfile from "./screens/user/userProfile";
 import CreatorProfile from "./screens/creator/creatorProfile";

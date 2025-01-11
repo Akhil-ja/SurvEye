@@ -30,7 +30,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { getCategories } from "../../slices/userSlice";
 
 const ActiveSurveysTable = () => {
   const dispatch = useDispatch();
@@ -84,7 +84,9 @@ const ActiveSurveysTable = () => {
       <div className="max-w-7xl mx-auto">
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle className="text-2xl font-bold">Active Surveys</CardTitle>
+            <CardTitle className="text-2xl font-bold">
+              Attended Surveys
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex justify-between items-center mb-4">
@@ -127,7 +129,7 @@ const ActiveSurveysTable = () => {
                       Sample Size
                     </th>
                     <th className="p-4 border-b font-medium text-right">
-                      Total Responses
+                      SOLs recieved
                     </th>
                     <th className="p-4 border-b font-medium text-center">
                       Age Range
@@ -152,7 +154,7 @@ const ActiveSurveysTable = () => {
                         {survey.sampleSize.toLocaleString()}
                       </td>
                       <td className="p-4 border-b text-right">
-                        {survey.totalResponses.toLocaleString()}
+                        {(survey.price / survey.sampleSize).toLocaleString()}
                       </td>
                       <td className="p-4 border-b text-center">
                         {survey.targetAgeRange.isAllAges
@@ -174,7 +176,7 @@ const ActiveSurveysTable = () => {
                             )
                           }
                         >
-                          {survey.isPublished ? "Attend" : "Coming Soon"}
+                          {survey.isPublished ? "Attended" : "Coming Soon"}
                         </Button>
                       </td>
                     </tr>

@@ -1,4 +1,4 @@
-import { useEffect, useState, React } from "react";
+import { useEffect, useState, useCallback, React } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -45,83 +45,89 @@ const ActiveSurveys = () => {
   const [mergedSurveys, setMergedSurveys] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredSurveys, setFilteredSurveys] = useState([]);
-  const [profileComplete, setProfileComplete] = useState(true);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasOccupation, setHasOccupation] = useState(true);
-  const [hasAge, setHasAge] = useState(true);
-  const [hasWallet, setHasWallet] = useState(true);
+  const [profileState, setProfileState] = useState({
+    isComplete: false,
+    isLoading: true,
+    hasOccupation: false,
+    hasAge: false,
+    hasWallet: false,
+  });
 
-  useEffect(() => {
-    const checkProfile = async () => {
-      try {
-        const result = await dispatch(fetchUserProfile()).unwrap();
-        console.log(result);
-
-        const hasOcc = !!result.user.occupation;
-        const age = !!result.user.age;
-        const wallet = !!result.user.wallet;
-
-        setHasOccupation(hasOcc);
-        setHasAge(age);
-        setHasWallet(wallet);
-        setProfileComplete(hasOcc && age && wallet);
-        setIsLoading(false);
-
-        if (hasOcc && age) {
-          fetchSurveys();
-        }
-      } catch (error) {
-        console.error("Error fetching profile:", error);
-        setIsLoading(false);
-      }
-    };
-
-    checkProfile();
-  }, [dispatch]);
-
-  const fetchSurveys = async () => {
+  // Memoized fetch surveys function
+  const fetchSurveys = useCallback(async () => {
     try {
-      const activeSurveys = await dispatch(
-        getSurvey({
-          page: pagination.currentPage,
-          limit: 6,
-          sort: sortBy,
-          order: sortOrder,
-        })
-      ).unwrap();
-
-      const attendedSurveys = await dispatch(
-        getSurvey({
-          page: pagination.currentPage,
-          limit: 6,
-          sort: sortBy,
-          order: sortOrder,
-          attended: true,
-        })
-      ).unwrap();
+      // Use Promise.all to fetch both active and attended surveys simultaneously
+      const [activeSurveysResponse, attendedSurveysResponse] =
+        await Promise.all([
+          dispatch(
+            getSurvey({
+              page: pagination.currentPage,
+              limit: 6,
+              sort: sortBy,
+              order: sortOrder,
+            })
+          ).unwrap(),
+          dispatch(
+            getSurvey({
+              page: pagination.currentPage,
+              limit: 6,
+              sort: sortBy,
+              order: sortOrder,
+              attended: true,
+            })
+          ).unwrap(),
+        ]);
 
       const attendedIds = new Set(
-        attendedSurveys.data.surveys.map((survey) => survey._id)
+        attendedSurveysResponse.data.surveys.map((survey) => survey._id)
       );
 
-      const updatedSurveys = activeSurveys.data.surveys.map((survey) => ({
-        ...survey,
-        userHasAttended: attendedIds.has(survey._id),
-      }));
+      const updatedSurveys = activeSurveysResponse.data.surveys.map(
+        (survey) => ({
+          ...survey,
+          userHasAttended: attendedIds.has(survey._id),
+        })
+      );
 
       setMergedSurveys(updatedSurveys);
     } catch (error) {
       console.error("Error fetching surveys:", error);
     }
-  };
+  }, [dispatch, pagination.currentPage, sortBy, sortOrder]);
 
+  // Initial profile check and survey fetch
   useEffect(() => {
-    if (profileComplete) {
-      fetchSurveys();
-      dispatch(clearMessage());
-    }
-  }, [dispatch, pagination.currentPage, sortBy, sortOrder, profileComplete]);
+    const initializeData = async () => {
+      try {
+        const result = await dispatch(fetchUserProfile()).unwrap();
 
+        const hasOcc = !!result.user.occupation;
+        const age = !!result.user.age;
+        const wallet = !!result.user.wallet;
+        const isComplete = hasOcc && age && wallet;
+
+        setProfileState({
+          isComplete,
+          isLoading: false,
+          hasOccupation: hasOcc,
+          hasAge: age,
+          hasWallet: wallet,
+        });
+
+        if (isComplete) {
+          await fetchSurveys();
+          dispatch(clearMessage());
+        }
+      } catch (error) {
+        console.error("Error initializing data:", error);
+        setProfileState((prev) => ({ ...prev, isLoading: false }));
+      }
+    };
+
+    initializeData();
+  }, [dispatch, fetchSurveys]);
+
+  // Handle search and filtering with debounce
   useEffect(() => {
     const filtered = mergedSurveys.filter((survey) =>
       survey.surveyName.toLowerCase().includes(searchTerm.toLowerCase())
@@ -129,34 +135,40 @@ const ActiveSurveys = () => {
     setFilteredSurveys(filtered);
   }, [mergedSurveys, searchTerm]);
 
-  const handlePageChange = (page) => {
-    dispatch(getSurvey({ page, sort: sortBy, order: sortOrder }));
-  };
+  const handlePageChange = useCallback(
+    (page) => {
+      dispatch(getSurvey({ page, sort: sortBy, order: sortOrder }));
+    },
+    [dispatch, sortBy, sortOrder]
+  );
 
-  const handleSortChange = (value) => {
-    dispatch(setSortBy(value));
-    dispatch(
-      setSortOrder(
-        value === "name"
-          ? "asc"
-          : value === "date"
-            ? "desc"
-            : value === "responses"
+  const handleSortChange = useCallback(
+    (value) => {
+      dispatch(setSortBy(value));
+      dispatch(
+        setSortOrder(
+          value === "name"
+            ? "asc"
+            : value === "date"
               ? "desc"
-              : "desc"
-      )
-    );
-  };
+              : value === "responses"
+                ? "desc"
+                : "desc"
+        )
+      );
+    },
+    [dispatch]
+  );
 
-  const formatDate = (dateString) => {
+  const formatDate = useCallback((dateString) => {
     return format(new Date(dateString), "MMM dd, yyyy");
-  };
+  }, []);
 
-  if (isLoading) {
+  if (profileState.isLoading) {
     return <div className="text-center p-8">Loading...</div>;
   }
 
-  if (!profileComplete) {
+  if (!profileState.isComplete) {
     return (
       <div className="min-h-screen bg-white p-8">
         <div className="max-w-3xl mx-auto">
@@ -168,9 +180,9 @@ const ActiveSurveys = () => {
               Please complete your profile before viewing surveys. Make sure to
               add:
               <ul className="list-disc ml-6 mt-2">
-                {!hasOccupation && <li>Your occupation</li>}
-                {!hasAge && <li>Your date of birth</li>}
-                {!hasWallet && <li>connect your solana wallet</li>}
+                {!profileState.hasOccupation && <li>Your occupation</li>}
+                {!profileState.hasAge && <li>Your date of birth</li>}
+                {!profileState.hasWallet && <li>Connect your solana wallet</li>}
               </ul>
               <button
                 onClick={() => navigate("/user/profile")}

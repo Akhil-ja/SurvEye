@@ -11,6 +11,13 @@ import {
   ISurvey,
 } from '../interfaces/common.interface';
 import { AdminRepository } from '../repositories/adminRepository';
+import socketConfig from '../socketConfig';
+interface CreateAnnouncementParams {
+  message: string;
+  title: string;
+  target: 'all' | 'users' | 'creators';
+  createdBy: string;
+}
 
 export class AdminService {
   constructor(private readonly adminRepository: AdminRepository) {}
@@ -245,37 +252,33 @@ export class AdminService {
     }
   }
 
-  // async createAnnouncement(
-  //   message: string,
-  //   title: string,
-  //   target: 'all' | 'users' | 'creators',
-  //   wsManager: WebSocketManager
-  // ): Promise<IAnnouncement> {
-  //   try {
-  //     const announcement = await this.adminRepository.createAnnouncement(
-  //       message,
-  //       title,
-  //       target
-  //     );
+  async createAnnouncement(
+    params: CreateAnnouncementParams
+  ): Promise<IAnnouncement> {
+    try {
+      const announcement = await this.adminRepository.createAnnouncement({
+        ...params,
+        timestamp: new Date(),
+        type: 'admin',
+      });
 
-  //     console.log('Broadcasting announcement...');
-  //     try {
-  //       console.log('Broadcasting message:', { title, message, target });
-  //       wsManager.sendAnnouncement({ title, message, target });
-  //       console.log('Broadcast successful');
-  //     } catch (wsError) {
-  //       console.warn('WebSocket error:', wsError);
-  //     }
+      try {
+        const { title, message, target } = params;
+        socketConfig.sendAnnouncement({ title, message, target });
+        console.log('Announcement broadcasted successfully');
+      } catch (wsError) {
+        console.error('WebSocket broadcast failed:', wsError);
+      }
 
-  //     return announcement;
-  //   } catch (error) {
-  //     console.error('Service Error:', error);
-  //     if (error instanceof AppError) {
-  //       throw error;
-  //     }
-  //     throw new AppError('Failed to create Announcement', 500);
-  //   }
-  // }
+      return announcement;
+    } catch (error) {
+      console.error('Service Error:', error);
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError('Failed to create Announcement', 500);
+    }
+  }
 
   async getAllAnnouncement(): Promise<IAnnouncement[]> {
     return this.adminRepository.getAllAnnouncement();

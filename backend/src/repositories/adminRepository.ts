@@ -19,6 +19,16 @@ import { Survey } from '../models/surveyModel';
 import { SurveyResponse } from '../models/surveyresponse';
 import AdminCut from '../models/adminCutModal';
 import Announcement from '../models/annnouncementModal';
+import { timeStamp } from 'console';
+
+interface AnnouncementData {
+  message: string;
+  title: string;
+  target: string;
+  createdBy: string;
+  timestamp: Date;
+  type: string;
+}
 export class AdminRepository {
   async findByEmail(email: string): Promise<IAdmin | null> {
     return Admin.findOne({ email });
@@ -262,43 +272,31 @@ export class AdminRepository {
     }
   }
 
-  // async createAnnouncement(
-  //   message: string,
-  //   title: string,
-  //   target: string
-  // ): Promise<IAnnouncement> {
-  //   try {
-  //     const newAnnouncement = new Announcement({
-  //       message,
-  //       title,
-  //       target,
-  //       timestamp: new Date(),
-  //       type: 'admin',
-  //     });
+  async createAnnouncement(data: AnnouncementData): Promise<IAnnouncement> {
+    try {
+      const newAnnouncement = new Announcement({
+        ...data,
+        status: 'active',
+      });
 
-  //     const savedAnnouncement = await newAnnouncement.save();
+      const savedAnnouncement = await newAnnouncement.save();
 
-  //     if (!savedAnnouncement) {
-  //       console.error('Failed to save announcement');
-  //       throw new AppError('Failed to create announcement', 400);
-  //     }
+      if (!savedAnnouncement) {
+        throw new AppError('Failed to save announcement', 500);
+      }
 
-  //     return savedAnnouncement.toObject();
-  //   } catch (error) {
-  //     console.error('Repository Error:', error);
-  //     if (error instanceof Error) {
-  //       throw new AppError(error.message, 400);
-  //     }
-  //     throw new AppError('An unexpected error occurred', 500);
-  //   }
-  // }
+      return savedAnnouncement.toObject();
+    } catch (error) {
+      console.error('Repository Error:', error);
+      if (error instanceof Error) {
+        throw new AppError(error.message, 400);
+      }
+      throw new AppError('An unexpected error occurred', 500);
+    }
+  }
 
   async getAllAnnouncement(): Promise<IAnnouncement[]> {
-    const Announcements = await Announcement.find();
-
-    if (!Announcements || Announcements.length === 0) {
-      throw new AppError('No transactions found', 404);
-    }
+    const Announcements = await Announcement.find().sort({ timeStamp: -1 });
 
     return Announcements;
   }

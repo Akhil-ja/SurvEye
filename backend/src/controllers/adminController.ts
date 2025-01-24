@@ -357,53 +357,69 @@ export class AdminController {
     }
   }
 
-  // async createAnnouncement(
-  //   req: any,
-  //   res: Response,
-  //   next: NextFunction
-  // ): Promise<void> {
-  //   try {
-  //     const { message, title, target = 'all' } = req.body;
+  async createAnnouncement(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const { message, title, target = 'all' } = req.body;
 
-  //     if (!message || !title) {
-  //       return next(new AppError('Message and title are required', 400));
-  //     }
+      if (!message || !title) {
+        throw new AppError('Message and title are required', 400);
+      }
 
-  //     console.log('wsManager instance:');
+      const validTargets = ['all', 'users', 'creators'];
+      if (!validTargets.includes(target)) {
+        throw new AppError('Invalid target audience', 400);
+      }
 
-  //     const announcement = await this.adminService.createAnnouncement(
-  //       message,
-  //       title,
-  //       target
-  //     );
+      const announcement = await this.adminService.createAnnouncement({
+        message,
+        title,
+        target,
+        createdBy: 'admin',
+      });
 
-  //     res.status(200).json({
-  //       message: 'Announcement created successfully',
-  //       announcement,
-  //     });
-  //   } catch (error: any) {
-  //     console.error('Error creating Announcement:', error);
-  //     next(new AppError(error.message || 'Failed to create Announcement', 500));
-  //   }
-  // }
+      res.status(201).json({
+        status: 'success',
+        data: {
+          announcement,
+        },
+      });
+    } catch (error: any) {
+      console.error('Controller Error:', error);
+      next(
+        error instanceof AppError ? error : new AppError(error.message, 500)
+      );
+    }
+  }
 
-  // async getAnnouncements(
-  //   req: Request,
-  //   res: Response,
-  //   next: NextFunction
-  // ): Promise<void> {
-  //   try {
-  //     const Announcements = await this.adminService.getAllAnnouncement();
+  async getAnnouncements(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const announcements = await this.adminService.getAllAnnouncement();
 
-  //     res.status(200).json({
-  //       message: 'Announcements fetched successfully',
-  //       Announcements,
-  //     });
-  //   } catch (error) {
-  //     console.error('Error fetching data:', error);
-  //     next(new AppError('Failed to fetch data', 500));
-  //   }
-  // }
+      if (!announcements.length) {
+        res.status(200).json({
+          message: 'No announcements found',
+          announcements: [],
+        });
+        return;
+      }
+
+      res.status(200).json({
+        message: 'announcements fetched successfully',
+        announcements,
+      });
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      next(new AppError('Failed to fetch data', 500));
+    }
+  }
 
   async getSurveys(
     req: Request,
@@ -422,6 +438,7 @@ export class AdminController {
       next(new AppError('Failed to fetch data', 500));
     }
   }
+
   async toggleSurveyStatus(
     req: Request,
     res: Response,

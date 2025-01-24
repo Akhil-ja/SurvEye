@@ -299,7 +299,8 @@ export const getAnnouncement = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await api.get(`/admin/announcements`);
-      return response.data.Announcements;
+
+      return response.data.announcements;
     } catch (error) {
       return rejectWithValue(
         error.response && error.response.data
@@ -617,6 +618,17 @@ const adminSlice = createSlice({
       .addCase(toggleSurveyStatus.rejected, (state, { payload }) => {
         state.isLoading = false;
         state.error = payload;
+      })
+      .addCase("admin/addRealtimeAnnouncement", (state, action) => {
+        console.log("Announcement Payload:", action.payload);
+        state.announcements = [
+          {
+            ...action.payload,
+            _id: Date.now(),
+            timestamp: new Date().toISOString(),
+          },
+          ...state.announcements,
+        ];
       });
   },
 });

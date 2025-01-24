@@ -161,7 +161,7 @@ const CreatorHome = () => {
             <div className="text-center py-8 text-red-500">{error}</div>
           ) : filteredSurveys.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              No active surveys found for this creator.{" "}
+              No active surveys found.{" "}
               <Link
                 to={"/creator/survey"}
                 className="text-blue-500 hover:underline"

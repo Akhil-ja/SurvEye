@@ -14,6 +14,7 @@ import {
   getAllSurveys,
   publishSurvey,
   surveyAnalytics,
+  getNotifications,
 } from '../controllers/creatorController';
 import { checkBlockedUser } from '../middlewares/statusMiddleware';
 import { protect } from '../middlewares/authMiddleware';
@@ -44,6 +45,7 @@ router.get('/survey', protect, checkBlockedUser, getSurvey);
 router.get('/surveys', protect, checkBlockedUser, getAllSurveys);
 router.post('/createsurvey', protect, checkBlockedUser, makeSurvey);
 router.put('/publishsurvey', protect, checkBlockedUser, publishSurvey);
+router.get('/notifications', protect, checkBlockedUser, getNotifications);
 router.get(
   '/survey/:surveyId/analytics',
   protect,

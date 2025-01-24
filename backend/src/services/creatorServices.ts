@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import User from '../models/usersModel';
-import { IUser } from '../interfaces/common.interface';
+import { INotification, IUser } from '../interfaces/common.interface';
 import { generateTokens } from '../utils/jwtUtils';
 import { generateOTP, sendOTP } from '../utils/otpUtils';
 import PendingUser from '../models/pendingUserModel';
@@ -13,6 +13,8 @@ import Category from '../models/categoryModel';
 import Occupation from '../models/occupationModel';
 import { Types } from 'mongoose';
 import { ISurveyResponse } from '../interfaces/common.interface';
+import Notification from '../models/notificationModal';
+import socketConfig from '../socketConfig';
 
 interface QuestionAnalytics {
   questionId: Types.ObjectId;
@@ -191,10 +193,24 @@ export class CreatorService {
       sameSite: 'strict',
     });
 
+    socketConfig.sendNotification({
+      userId: newCreator.id.toString(),
+      title: 'Welcome!!',
+      message: `Welcome to SurvEye.`,
+      type: 'welcome_message',
+    });
+
+    const newNotification = new Notification({
+      title: 'Welcome!!!',
+      message: `Welcome to SurvEye.`,
+      user: new Types.ObjectId(newCreator.id),
+      type: 'welcome_message',
+    });
+    await newNotification.save();
+
     return newCreator;
   }
 
-  // Sign In
   async signIn(
     email: string,
     password: string,
@@ -537,7 +553,7 @@ export class CreatorService {
     );
 
     if (surveys.length === 0) {
-      throw new AppError('No active surveys found for this creator', 404);
+      throw new AppError('No active surveys found.', 404);
     }
 
     return { surveys };
@@ -751,6 +767,20 @@ export class CreatorService {
       .map(([word, count]) => ({ word, count }));
 
     return { topWords };
+  }
+
+  async getNotifications(
+    creatorId: string
+  ): Promise<{ notifications: INotification[] }> {
+    const notifications = await Notification.find({
+      user: creatorId,
+    });
+
+    if (notifications.length === 0) {
+      throw new AppError('No notifications found.', 404);
+    }
+
+    return { notifications };
   }
 
   async getSurveyAnalytics(surveyId: string): Promise<SurveyAnalytics> {

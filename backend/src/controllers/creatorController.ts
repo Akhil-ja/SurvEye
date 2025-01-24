@@ -523,3 +523,30 @@ export const surveyAnalytics = async (
     );
   }
 };
+
+export const getNotifications = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const creatorId = req.user.id;
+
+    const { notifications } = await creatorService.getNotifications(creatorId);
+
+    res.status(200).json({
+      success: true,
+      notifications: notifications,
+    });
+  } catch (error) {
+    console.error(
+      'Error fetching notifications:',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
+    next(
+      error instanceof AppError
+        ? error
+        : new AppError('Failed to fetch notifications', 500)
+    );
+  }
+};

@@ -101,25 +101,6 @@ export default function UserNavbar() {
                     <span>Profile</span>
                   </DropdownMenuItem>
 
-                  {/* Role-based navigation */}
-                  {authInfo.user.role === "creator" ? (
-                    <DropdownMenuItem
-                      className="cursor-pointer"
-                      onClick={() => navigate("/creator/home")}
-                    >
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Creator Dashboard</span>
-                    </DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem
-                      className="cursor-pointer"
-                      onClick={() => navigate("/user/home")}
-                    >
-                      <User className="mr-2 h-4 w-4" />
-                      <span>User Dashboard</span>
-                    </DropdownMenuItem>
-                  )}
-
                   <DropdownMenuItem
                     className="cursor-pointer text-red-600"
                     onClick={handleLogout}
@@ -129,37 +110,18 @@ export default function UserNavbar() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            ) : location.pathname === "/signin" ? (
-              <>
-                <LinkContainer to={"/creator/signup"}>
+            ) : (
+              location.pathname !== "/signin" && (
+                <LinkContainer to={"/signin"}>
                   <Button
                     variant="outline"
-                    className="join-creator-button"
+                    className="signin-button"
                     style={{ color: "black" }}
                   >
-                    Join as Creator
+                    Login
                   </Button>
                 </LinkContainer>
-                <LinkContainer to={"/user/signup"}>
-                  <Button
-                    variant="outline"
-                    className="join-user-button"
-                    style={{ color: "red" }}
-                  >
-                    Join as User
-                  </Button>
-                </LinkContainer>
-              </>
-            ) : (
-              <LinkContainer to={"/signin"}>
-                <Button
-                  variant="outline"
-                  className="signin-button"
-                  style={{ color: "black" }}
-                >
-                  Login
-                </Button>
-              </LinkContainer>
+              )
             )}
           </Box>
         </Toolbar>

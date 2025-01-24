@@ -1,100 +1,61 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bell } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+// import { socketService } from "@/socketIO/socketServices";
 import { getAnnouncement } from "@/slices/adminSlice";
 
 const UserAnnouncements = () => {
-  const [localAnnouncements, setLocalAnnouncements] = useState([]);
+  // const [realtimeAnnouncements, setRealtimeAnnouncements] = useState([]);
   const dispatch = useDispatch();
 
-  const { announcements, isLoading } = useSelector((state) => ({
-    announcements: state.admin.announcements || [],
-    isLoading: state.admin.isLoading,
-  }));
+  const { storedAnnouncements, isLoading, error } = useSelector((state) => {
+    return {
+      storedAnnouncements: state.admin.announcements || [],
+      isLoading: state.admin.isLoading,
+      error: state.admin.error,
+    };
+  });
 
-  // const connectSocket = () => {
-  //   const authInfo = JSON.parse(sessionStorage.getItem("authInfo"));
-  //   const { id: userId, role } = authInfo.user;
-  //   console.log("userid:", userId);
+  useEffect(() => {
+    dispatch(getAnnouncement());
 
-  //   // const token = authInfo.tokens.accessToken;
+    // const handleAnnouncement = (announcement) => {
+    //   setRealtimeAnnouncements((prev) => [
+    //     {
+    //       _id: Date.now(),
+    //       ...announcement,
+    //       timestamp: new Date().toISOString(),
+    //     },
+    //     ...prev,
+    //   ]);
+    // };
 
-  //   const socket = new WebSocket(
-  //     `ws://localhost:3000/?userId=${userId}&role=${role}`
-  //   );
+    // socketService.on("announcement", handleAnnouncement);
 
-  //   socket.onopen = () => {
-  //     console.log("Connected to WebSocket server");
-  //   };
+    return () => {
+      // socketService.off("announcement", handleAnnouncement);
+    };
+  }, [dispatch]);
 
-  //   socket.onerror = (error) => {
-  //     console.error("WebSocket error:", error);
-  //   };
+  const allAnnouncements = [
+    // ...realtimeAnnouncements,
+    ...storedAnnouncements.filter((a) => {
+      // Check if there is a target, and if so, check if it's 'users' or 'all'
+      if (a.target) {
+        return a.target === "users" || a.target === "all";
+      }
+      // If there's no target field, include it by default
+      return true;
+    }),
+  ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-  //   socket.onclose = () => {
-  //     console.log("WebSocket connection closed");
-  //   };
+  if (error) {
+    return <div className="flex justify-center p-4">Error: {error}</div>;
+  }
 
-  //   socket.onmessage = (event) => {
-  //     console.log(event.data);
-  //     const notification = JSON.parse(event.data);
-  //     alert("New announcement received:", notification);
-
-  //     toast.info(
-  //       <div>
-  //         <strong>{notification.title}</strong>
-  //         <p>{notification.message}</p>
-  //       </div>,
-  //       {
-  //         position: "top-right",
-  //         autoClose: 3000,
-  //         hideProgressBar: false,
-  //         closeOnClick: true,
-  //         pauseOnHover: true,
-  //         draggable: true,
-  //         progress: undefined,
-  //       }
-  //     );
-
-  //     setLocalAnnouncements((prev) => [
-  //       {
-  //         _id: Date.now(),
-  //         ...notification,
-  //         timestamp: new Date().toISOString(),
-  //       },
-  //       ...prev,
-  //     ]);
-  //   };
-
-  //   return socket;
-  // };
-
-  // useEffect(() => {
-  //   let socket;
-  //   try {
-  //     socket = connectSocket();
-  //   } catch (error) {
-  //     console.error("WebSocket connection error:", error);
-  //   }
-
-  //   dispatch(getAnnouncement());
-
-  //   return () => {
-  //     if (socket) {
-  //       socket.close();
-  //     }
-  //   };
-  // }, [dispatch]);
-
-  const allAnnouncements = [...localAnnouncements, ...announcements].sort(
-    (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
-  );
-
-  if (isLoading) {
+  if (isLoading && allAnnouncements.length === 0) {
     return (
       <div className="flex justify-center p-4">Loading announcements...</div>
     );
@@ -102,7 +63,6 @@ const UserAnnouncements = () => {
 
   return (
     <div className="p-4 max-w-2xl mx-auto">
-      <ToastContainer />
       <div className="flex items-center gap-2 mb-4">
         <Bell className="h-5 w-5" />
         <h2 className="text-xl font-semibold">Announcements</h2>
@@ -116,7 +76,10 @@ const UserAnnouncements = () => {
         ) : (
           <div className="space-y-4 p-4">
             {allAnnouncements.map((announcement) => (
-              <Card key={announcement._id} className="p-4">
+              <Card
+                key={announcement._id}
+                className="p-4 border-l-4 border-l-blue-500 bg-blue-50"
+              >
                 <div className="font-medium">{announcement.title}</div>
                 <div className="text-sm text-gray-600 mt-1">
                   {announcement.message}

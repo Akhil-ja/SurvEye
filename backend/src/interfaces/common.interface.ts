@@ -157,3 +157,11 @@ export interface IAnnouncement {
   type: string;
   target: string;
 }
+
+export interface INotification {
+  title: string;
+  message: string;
+  user: Types.ObjectId;
+  type: string;
+  timestamp: Date;
+}

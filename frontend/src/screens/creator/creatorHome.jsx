@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { getAllSurveys, clearMessage } from "@/slices/creatorSlice";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Link } from "react-router-dom";
 import {
   Clock,
   AlertCircle,
@@ -47,6 +48,9 @@ const CreatorHome = () => {
       <Alert variant="destructive" className="m-6">
         <AlertCircle className="h-5 w-5 text-red-500" />
         <AlertDescription>{error}</AlertDescription>
+        <Link to={"/creator/survey"} className="text-blue-500 hover:underline">
+          Create a new survey
+        </Link>
       </Alert>
     );
   }
@@ -60,8 +64,9 @@ const CreatorHome = () => {
     );
   }
 
-  // Calculate summary statistics
   const totalSurveys = surveys.data.length;
+  console.log(surveys.data.reduce((sum, survey) => sum + survey.price, 0));
+
   const totalResponses = surveys.data.reduce(
     (sum, survey) => sum + survey.totalResponses,
     0
@@ -70,6 +75,7 @@ const CreatorHome = () => {
     (sum, survey) => sum + survey.sampleSize,
     0
   );
+
   const averagePrice =
     surveys.data.reduce((sum, survey) => sum + survey.price, 0) / totalSurveys;
 

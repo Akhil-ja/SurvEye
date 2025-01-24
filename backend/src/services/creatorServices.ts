@@ -547,10 +547,12 @@ export class CreatorService {
   }
 
   async getAllSurveys(creatorId: string): Promise<{ surveys: ISurvey[] }> {
-    const surveys = await Survey.find({ creator: creatorId }).populate(
-      'categories',
-      'name'
-    );
+    const surveys = await Survey.find({
+      creator: creatorId,
+      questions: { $exists: true, $ne: [] },
+    })
+      .sort({ created_at: -1 })
+      .populate('categories', 'name');
 
     if (surveys.length === 0) {
       throw new AppError('No active surveys found.', 404);

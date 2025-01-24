@@ -21,6 +21,8 @@ import Wallet from '../models/walletModel';
 import bs58 from 'bs58';
 import Transaction from '../models/transactionModel';
 import AdminCut from '../models/adminCutModal';
+import socketConfig from '../socketConfig';
+import Notification from '../models/notificationModal';
 
 interface AuthResponse {
   user: IUser;
@@ -284,7 +286,6 @@ export class UserService {
     if (user.status === 'blocked') {
       throw new AppError('User is blocked', 403);
     }
-    console.log(user.wallet);
 
     const age = moment().diff(moment(user.date_of_birth), 'years');
 
@@ -783,10 +784,28 @@ export class UserService {
       $inc: { totalResponses: 1 },
     });
 
-    if (survey.totalResponses >= survey.sampleSize) {
+    const updatedSurvey = (await Survey.findById(surveyId)) as ISurvey;
+
+    if (updatedSurvey.totalResponses === survey.sampleSize) {
       await Survey.findByIdAndUpdate(surveyId, {
         status: 'completed',
       });
+
+      socketConfig.sendNotification({
+        userId: survey.creator.toString(),
+        title: 'Survey Completed',
+        message: `Your survey "${survey.surveyName}" has reached its target sample size.`,
+        type: 'survey_completion',
+      });
+
+      const newNotification = new Notification({
+        title: 'Survey Completed',
+        message: `Your survey "${survey.surveyName}" has reached its target sample size.`,
+        user: new Types.ObjectId(survey.creator),
+        type: 'survey_completion',
+      });
+
+      await newNotification.save();
     }
 
     return surveyResponse;

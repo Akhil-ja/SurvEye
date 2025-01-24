@@ -1,6 +1,5 @@
+import React, { useState } from "react";
 import FormContainer from "@/components/formContainer";
-import { useState } from "react";
-import React from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,7 +15,6 @@ import { toast } from "react-toastify";
 import { initiateSignUp } from "../../slices/authSlice";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { throttle } from "lodash";
 
 export default function CreatorRegisterScreen() {
   const [creatorName, setCreatorName] = useState("");
@@ -25,12 +23,11 @@ export default function CreatorRegisterScreen() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [industry, setIndustry] = useState("");
+  const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const submitHandler = async (e) => {
-    e.preventDefault();
-
+  const validateForm = () => {
     const trimmedName = creatorName.trim();
     const trimmedEmail = email.trim();
     const trimmedPhoneNumber = phoneNumber.trim();
@@ -47,19 +44,19 @@ export default function CreatorRegisterScreen() {
       !trimmedIndustry
     ) {
       toast.error("All fields are required and cannot be empty.");
-      return;
+      return false;
     }
 
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailPattern.test(trimmedEmail)) {
       toast.error("Please enter a valid email address");
-      return;
+      return false;
     }
 
     const phonePattern = /^\d{10}$/;
     if (!phonePattern.test(trimmedPhoneNumber)) {
       toast.error("Phone number must be 10 digits");
-      return;
+      return false;
     }
 
     const passwordPattern = /^(?=.*\d)[A-Za-z\d]{8,}$/;
@@ -67,21 +64,35 @@ export default function CreatorRegisterScreen() {
       toast.error(
         "Password must be at least 8 characters long and include at least one number."
       );
-      return;
+      return false;
     }
 
     if (trimmedPassword !== trimmedConfirmPassword) {
       toast.error("Passwords do not match");
-      return;
+      return false;
     }
 
-    const userData = {
+    return {
       email: trimmedEmail,
       phoneNumber: trimmedPhoneNumber,
       password: trimmedPassword,
       creatorName: trimmedName,
       industry: trimmedIndustry,
     };
+  };
+
+  const submitHandler = async (e) => {
+    e.preventDefault();
+
+    if (loading) return;
+
+    setLoading(true);
+
+    const userData = validateForm();
+    if (!userData) {
+      setLoading(false);
+      return;
+    }
 
     try {
       const resultAction = await dispatch(
@@ -101,10 +112,10 @@ export default function CreatorRegisterScreen() {
       }
     } catch (err) {
       toast.error(err?.message || "Registration failed");
+    } finally {
+      setLoading(false);
     }
   };
-
-  const throttledSubmitHandler = throttle(submitHandler, 10000);
 
   return (
     <FormContainer>
@@ -114,7 +125,7 @@ export default function CreatorRegisterScreen() {
           <CardDescription>Create your account as a Creator</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={throttledSubmitHandler}>
+          <form onSubmit={submitHandler}>
             <div className="grid w-full items-center gap-4">
               <div className="flex flex-col space-y-1.5">
                 <Label htmlFor="email">Email</Label>
@@ -195,8 +206,9 @@ export default function CreatorRegisterScreen() {
               <Button
                 type="submit"
                 className="bg-orange-500 hover:bg-orange-600 text-white w-full py-2 px-3 mt-4"
+                disabled={loading}
               >
-                Register
+                {loading ? "Registering..." : "Register"}
               </Button>
             </CardFooter>
           </form>

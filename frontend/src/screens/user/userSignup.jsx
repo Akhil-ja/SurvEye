@@ -26,6 +26,7 @@ export default function UserRegisterScreen() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -44,6 +45,7 @@ export default function UserRegisterScreen() {
 
   const submitHandler = async (e) => {
     e.preventDefault();
+    if (loading) return;
 
     const trimmedEmail = email.trim();
     const trimmedPhoneNumber = phoneNumber.trim();
@@ -116,7 +118,7 @@ export default function UserRegisterScreen() {
       lastName: trimmedLastName,
       dateOfBirth: trimmedDateOfBirth,
     };
-
+    setLoading(true);
     try {
       const resultAction = await dispatch(
         initiateSignUp({ role: "user", userData })
@@ -135,6 +137,8 @@ export default function UserRegisterScreen() {
       }
     } catch (err) {
       toast.error(err?.message || "Registration failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -221,9 +225,10 @@ export default function UserRegisterScreen() {
             <CardFooter>
               <Button
                 type="submit"
+                disabled={loading}
                 className="bg-orange-500 hover:bg-orange-600 text-white w-full py-2 px-3 mt-4"
               >
-                Register
+                {loading ? "Registering..." : "Register"}
               </Button>
             </CardFooter>
           </form>

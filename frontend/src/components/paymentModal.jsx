@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 import { useDispatch } from "react-redux";
 import { postWalletTransactions } from "@/slices/sharedSlice";
 
+// eslint-disable-next-line react/prop-types
 export const PaymentModal = ({ price, onPaymentSuccess, onCancel }) => {
   const [isWalletReady, setIsWalletReady] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState("idle");

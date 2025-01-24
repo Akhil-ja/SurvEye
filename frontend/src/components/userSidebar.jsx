@@ -88,7 +88,7 @@ const UserSidebar = () => {
             </li>
             <li>
               <Link
-                to="/user/notification"
+                to="/user/announcements"
                 onClick={handleLinkClick}
                 className="flex items-center space-x-2 py-2 px-4 hover:bg-gray-700 rounded"
               >

@@ -121,7 +121,6 @@ export const processPayout = createAsyncThunk(
   "user/payout",
   async (walletDetails, { rejectWithValue }) => {
     try {
-      console.log(walletDetails);
       const response = await api.post(`/user/wallet/payout`);
 
       return response.message;

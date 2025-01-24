@@ -75,6 +75,7 @@ const AdminSidebar = () => {
                 <BiSolidCategory className="text-xl text-white" />
                 <span className="text-white">Category</span>
               </Link>
+              <li />
               <li>
                 <Link
                   to="/admin/occupation"

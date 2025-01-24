@@ -10,6 +10,7 @@ export const checkBlockStatus = createAsyncThunk(
     } catch (error) {
       if (error.response?.status === 403) {
         sessionStorage.removeItem("authInfo");
+
         dispatch(logout());
       }
       return rejectWithValue(error.response?.data);
@@ -186,7 +187,6 @@ const authSlice = createSlice({
         state.error = action.payload?.message || "sign-up error occured";
       })
 
-      // Handle verifyOTP
       .addCase(verifyOTP.pending, (state) => {
         state.isLoading = true;
       })
@@ -200,13 +200,12 @@ const authSlice = createSlice({
         state.error = action.payload?.message || "Invalid OTP";
       })
 
-      // Handle signIn
       .addCase(signIn.pending, (state) => {
         state.isLoading = true;
       })
       .addCase(signIn.fulfilled, (state, action) => {
         state.authInfo = {
-          user: action.payload.user || action.payload, // Handle both formats
+          user: action.payload.user || action.payload,
           token: action.payload.token,
         };
         state.isLoading = false;
@@ -231,7 +230,6 @@ const authSlice = createSlice({
         state.error = action.payload?.message || "Logout failed";
       })
 
-      // Handle resendOTP
       .addCase(resendOTP.pending, (state) => {
         state.otpResendStatus = "loading";
       })
@@ -253,14 +251,13 @@ const authSlice = createSlice({
         state.forgotPasswordStatus = "otpSent";
         state.message = action.payload.message;
         state.error = null;
-        state.forgotPasswordEmail = action.meta.arg; // Store the email
+        state.forgotPasswordEmail = action.meta.arg;
       })
       .addCase(forgotPasswordSendOTP.rejected, (state, action) => {
         state.forgotPasswordStatus = "failed";
         state.error = action.payload?.message || "Failed to send OTP";
       })
 
-      // Handle verifyForgotPasswordOTP
       .addCase(verifyForgotPasswordOTP.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -278,19 +275,17 @@ const authSlice = createSlice({
         state.forgotPasswordStatus = "failed";
       })
       .addCase(googleAuth.pending, (state) => {
-        state.isLoading = true; // Set isLoading to true when the request is pending
-        state.error = null; // Clear any previous errors
+        state.isLoading = true;
+        state.error = null;
       })
-      // Handle googleAuth.fulfilled
       .addCase(googleAuth.fulfilled, (state, action) => {
-        state.isLoading = false; // Set isLoading to false once the request is fulfilled
-        state.error = null; // Clear any previous error
-        state.authInfo = action.payload; // Save the authInfo (user data and token) into the state
+        state.isLoading = false;
+        state.error = null;
+        state.authInfo = action.payload;
       })
-      // Handle googleAuth.rejected
       .addCase(googleAuth.rejected, (state, action) => {
-        state.isLoading = false; // Set isLoading to false on rejection
-        state.error = action.payload?.message || "Google authentication failed"; // Set the error message
+        state.isLoading = false;
+        state.error = action.payload?.message || "Google authentication failed";
       });
   },
 });

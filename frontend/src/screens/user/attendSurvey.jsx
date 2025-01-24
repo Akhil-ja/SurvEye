@@ -42,7 +42,7 @@ const AttendSurvey = () => {
     return saved ? JSON.parse(saved) : {};
   });
 
-  const [lastUpdated] = useState(() => {
+  useState(() => {
     const saved = sessionStorage.getItem(`${storageKey}_lastUpdated`);
     return saved ? new Date(saved) : new Date();
   });

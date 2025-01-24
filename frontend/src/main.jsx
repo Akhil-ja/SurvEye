@@ -46,6 +46,7 @@ import AdminAnnouncement from "./screens/admin/adminAnnouncement";
 import UserAnnouncements from "./screens/user/userNotifications";
 import SurveyPage from "./screens/admin/surveyPage";
 import SurveyAnalytics from "./screens/creator/surveyAnalytics";
+import CreatorNotification from "./screens/creator/creatorNotification";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -83,6 +84,10 @@ const router = createBrowserRouter(
         <Route path="/creator/surveycreate" element={<MakeSurvey />} />
         <Route path="/creator/surveyinfo" element={<SurveyInfo />} />
         <Route path="/creator/transactions" element={<TransactionsPage />} />
+        <Route
+          path="/creator/notifications"
+          element={<CreatorNotification />}
+        />
         <Route
           path="/creator/analytics/:surveyId"
           element={<SurveyAnalytics />}

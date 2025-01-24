@@ -50,7 +50,6 @@ export const createSurvey = createAsyncThunk(
   "creator/createSurvey",
   async (surveyData, { rejectWithValue }) => {
     try {
-      console.log(surveyData);
       const response = await api.post("creator/survey", surveyData);
       return response.data;
     } catch (error) {
@@ -111,6 +110,23 @@ export const publishSurvey = createAsyncThunk(
   }
 );
 
+// In creatorSlice.js
+export const getNotifications = createAsyncThunk(
+  "creator/getNotifications",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get("/creator/notifications");
+      return {
+        notifications: response.data?.notifications || [],
+      };
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: "Failed to fetch notifications" }
+      );
+    }
+  }
+);
+
 export const getAnalytics = createAsyncThunk(
   "creator/getAnalytics",
   async ({ surveyId }, { rejectWithValue }) => {
@@ -135,6 +151,7 @@ const creatorSlice = createSlice({
     passwordChangeStatus: "idle",
     surveyCreationStatus: "idle",
     surveys: [],
+    notifications: [],
     analyticsData: null,
   },
   reducers: {
@@ -247,6 +264,18 @@ const creatorSlice = createSlice({
       .addCase(getAnalytics.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload?.message || "Failed to fetch analytics";
+      })
+      .addCase(getNotifications.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(getNotifications.fulfilled, (state, { payload }) => {
+        state.isLoading = false;
+        state.notifications = payload.notifications;
+      })
+      .addCase(getNotifications.rejected, (state, { payload }) => {
+        state.isLoading = false;
+        state.error = payload;
       });
   },
 });

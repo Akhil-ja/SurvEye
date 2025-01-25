@@ -1,3 +1,5 @@
+import * as buffer from "buffer";
+window.Buffer = buffer.Buffer;
 import { StrictMode } from "react";
 import React from "react";
 import { createRoot } from "react-dom/client";

@@ -11,7 +11,7 @@ class SocketService {
       return;
     }
 
-    this.socket = io("http://localhost:3000", {
+    this.socket = io(import.meta.env.VITE_PUBLIC_API_URL, {
       transports: ["websocket"],
     });
 

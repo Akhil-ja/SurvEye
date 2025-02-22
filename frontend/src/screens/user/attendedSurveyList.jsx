@@ -30,7 +30,6 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Button } from "@/components/ui/button";
-import { getCategories } from "../../slices/userSlice";
 
 const ActiveSurveysTable = () => {
   const dispatch = useDispatch();

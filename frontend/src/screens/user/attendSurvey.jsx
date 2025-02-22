@@ -92,7 +92,6 @@ const AttendSurvey = () => {
   useEffect(() => {
     if (submissionStatus === "succeeded") {
       clearsessionStorage();
-      toast.success("Survey submitted successfully!");
       navigate("/user/survey");
       dispatch(resetSubmissionStatus());
       dispatch(clearMessage());

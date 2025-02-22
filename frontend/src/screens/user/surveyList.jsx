@@ -53,10 +53,8 @@ const ActiveSurveys = () => {
     hasWallet: false,
   });
 
-  // Memoized fetch surveys function
   const fetchSurveys = useCallback(async () => {
     try {
-      // Use Promise.all to fetch both active and attended surveys simultaneously
       const [activeSurveysResponse, attendedSurveysResponse] =
         await Promise.all([
           dispatch(

@@ -9,18 +9,18 @@ import {
   IAdminCut,
   IAnnouncement,
   ISurvey,
+  CreateAnnouncementParams,
 } from '../interfaces/common.interface';
-import { AdminRepository } from '../repositories/adminRepository';
 import socketConfig from '../socketConfig';
-interface CreateAnnouncementParams {
-  message: string;
-  title: string;
-  target: 'all' | 'users' | 'creators';
-  createdBy: string;
-}
+import { IAdminService } from '../interfaces/IServiceInterface/IAdminServices';
+import { IAdminRepository } from '../interfaces/IRepositoryInterface/IAdminRepository';
+import { ISurveyRepository } from '../interfaces/IRepositoryInterface/ISurveyRepository';
 
-export class AdminService {
-  constructor(private readonly adminRepository: AdminRepository) {}
+export class AdminService implements IAdminService {
+  constructor(
+    private readonly adminRepository: IAdminRepository,
+    private readonly surveyRepository: ISurveyRepository
+  ) {}
 
   async signIn(email: string, password: string, res: Response) {
     const admin = await this.adminRepository.findByEmail(email);
@@ -285,17 +285,18 @@ export class AdminService {
   }
 
   async getAllSurveys(): Promise<ISurvey[]> {
-    return this.adminRepository.getAllSurveys();
+    return this.surveyRepository.getAllSurveys();
   }
 
   async toggleSurveyStatus(SurveyId: string): Promise<ISurvey> {
-    const Survey = await this.adminRepository.findSuryveyById(SurveyId);
+    const survey = await this.surveyRepository.findSurveyById(SurveyId);
 
-    if (!Survey) {
-      throw new AppError('Category not found', 404);
+    if (!survey) {
+      throw new AppError('Survey not found', 404);
     }
 
-    Survey.status = Survey.status === 'active' ? 'draft' : 'active';
-    return this.adminRepository.saveSurvey(Survey);
+    survey.status = survey.status === 'active' ? 'cancelled' : 'active';
+
+    return this.surveyRepository.saveSurvey(survey);
   }
 }

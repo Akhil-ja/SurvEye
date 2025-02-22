@@ -44,7 +44,7 @@ const SurveyPage = () => {
 
   useEffect(() => {
     dispatch(getSurveys());
-    clearMessage();
+    dispatch(clearMessage());
   }, [dispatch]);
 
   useEffect(() => {

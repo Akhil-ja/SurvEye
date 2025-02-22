@@ -1,9 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import { AdminService } from '../services/adminServices';
 import { AppError } from '../utils/AppError';
+import { IAdminService } from '../interfaces/IServiceInterface/IAdminServices';
 
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  private adminService: IAdminService;
+  constructor(adminService: IAdminService) {
+    this.adminService = adminService;
+  }
 
   async signIn(req: Request, res: Response, next: NextFunction): Promise<void> {
     const { email, password } = req.body;

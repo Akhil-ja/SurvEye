@@ -2,11 +2,13 @@ import { Router } from 'express';
 import { AdminController } from '../controllers/adminController';
 import { AdminService } from '../services/adminServices';
 import { AdminRepository } from '../repositories/adminRepository';
+import { SurveyRepository } from '../repositories/surveyRepository';
 
 const router = Router();
 
 const adminRepository = new AdminRepository();
-const adminService = new AdminService(adminRepository);
+const surveyRepository = new SurveyRepository();
+const adminService = new AdminService(adminRepository, surveyRepository);
 const adminController = new AdminController(adminService);
 
 router.post('/signin', (req, res, next) =>
@@ -22,9 +24,9 @@ router.put('/users/toggleStatus', (req, res, next) =>
   adminController.toggleStatus(req, res, next)
 );
 
-router.get('/getcategories/:isActive', (req, res, next) => {
-  adminController.getAllCategories(req, res, next);
-});
+router.get('/getcategories/:isActive', (req, res, next) =>
+  adminController.getAllCategories(req, res, next)
+);
 
 router.put('/category/togglestatus', (req, res, next) => {
   adminController.toggleCategoryStatus(req, res, next);
@@ -39,9 +41,9 @@ router.put('/category', (req, res, next) => {
 });
 
 // Occupation Routes
-router.get('/getoccupation/:isActive', (req, res, next) => {
-  adminController.getAllOccupations(req, res, next);
-});
+router.get('/getoccupation/:isActive', (req, res, next) =>
+  adminController.getAllOccupations(req, res, next)
+);
 router.put('/occupation/toggleStatus', (req, res, next) => {
   adminController.toggleOccupationStatus(req, res, next);
 });

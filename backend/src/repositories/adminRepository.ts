@@ -5,31 +5,18 @@ import {
   ICategory,
   IUser,
   IOccupation,
-  ITransaction,
   IAdminCut,
-  IAnnouncement,
-  ISurvey,
 } from '../interfaces/common.interface';
 import { Types } from 'mongoose';
 import { AppError } from '../utils/AppError';
 import Category from '../models/categoryModel';
 import Occupation from '../models/occupationModel';
-import Transaction from '../models/transactionModel';
 import { Survey } from '../models/surveyModel';
 import { SurveyResponse } from '../models/surveyresponse';
 import AdminCut from '../models/adminCutModal';
-import Announcement from '../models/annnouncementModal';
-import { timeStamp } from 'console';
+import { IAdminRepository } from '../interfaces/IRepositoryInterface/IAdminRepository';
 
-interface AnnouncementData {
-  message: string;
-  title: string;
-  target: string;
-  createdBy: string;
-  timestamp: Date;
-  type: string;
-}
-export class AdminRepository {
+export class AdminRepository implements IAdminRepository {
   async findByEmail(email: string): Promise<IAdmin | null> {
     return Admin.findOne({ email });
   }
@@ -190,15 +177,6 @@ export class AdminRepository {
       throw new AppError('Failed to update occupation', 500);
     }
   }
-  async getAllTransactions(): Promise<ITransaction[]> {
-    const transactions = await Transaction.find({});
-
-    if (!transactions || transactions.length === 0) {
-      throw new AppError('No transactions found', 404);
-    }
-
-    return transactions;
-  }
 
   async getAllData(): Promise<any> {
     const users = await User.find({});
@@ -243,6 +221,14 @@ export class AdminRepository {
     }
   }
 
+  async getAdminCut(): Promise<any> {
+    const Admincut = await AdminCut.find();
+    if (!Admincut) {
+      throw new AppError('No admin cut found', 404);
+    }
+    return Admincut;
+  }
+
   async editAdminCut(percentage: number): Promise<IAdminCut> {
     try {
       if (percentage < 0 || percentage > 100) {
@@ -270,58 +256,5 @@ export class AdminRepository {
       }
       throw new AppError('An unexpected error occurred', 500);
     }
-  }
-
-  async createAnnouncement(data: AnnouncementData): Promise<IAnnouncement> {
-    try {
-      const newAnnouncement = new Announcement({
-        ...data,
-        status: 'active',
-      });
-
-      const savedAnnouncement = await newAnnouncement.save();
-
-      if (!savedAnnouncement) {
-        throw new AppError('Failed to save announcement', 500);
-      }
-
-      return savedAnnouncement.toObject();
-    } catch (error) {
-      console.error('Repository Error:', error);
-      if (error instanceof Error) {
-        throw new AppError(error.message, 400);
-      }
-      throw new AppError('An unexpected error occurred', 500);
-    }
-  }
-
-  async getAllAnnouncement(): Promise<IAnnouncement[]> {
-    const Announcements = await Announcement.find().sort({ timeStamp: -1 });
-
-    return Announcements;
-  }
-
-  async getAllSurveys(): Promise<ISurvey[]> {
-    const Surveys = await Survey.find();
-
-    if (!Surveys || Surveys.length === 0) {
-      throw new AppError('No Surveys found', 404);
-    }
-
-    return Surveys;
-  }
-
-  async findSuryveyById(SurveyId: string): Promise<ISurvey> {
-    const survey = await Survey.findById(SurveyId);
-
-    if (!survey) {
-      throw new AppError('No Surveys found', 404);
-    }
-
-    return survey;
-  }
-
-  async saveSurvey(survey: ISurvey): Promise<ISurvey> {
-    return survey.save();
   }
 }

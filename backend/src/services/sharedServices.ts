@@ -1,6 +1,4 @@
 import { generateOTP, sendOTP } from '../utils/otpUtils';
-import PendingUser from '../models/pendingUserModel';
-import User from '../models/usersModel';
 import { Response, Request } from 'express';
 import { generateTokens } from '../utils/jwtUtils';
 import bcrypt from 'bcryptjs';
@@ -8,22 +6,29 @@ import { ITransaction, IUser } from '../interfaces/common.interface';
 import { AppError } from '../utils/AppError';
 import { generatePassword, sendPassword } from '../utils/passwordUtil';
 import * as web3 from '@solana/web3.js';
-import Wallet from '../models/walletModel';
+import { Types } from 'mongoose';
 import bs58 from 'bs58';
-import { IWallet } from '../interfaces/common.interface';
-import Transaction from '../models/transactionModel';
-interface AuthResponse {
-  user: IUser;
-  tokens: {
-    accessToken: string;
-    refreshToken: string;
-  };
-}
-export class SharedService {
+import { IWallet, AuthResponse } from '../interfaces/common.interface';
+import { ISharedServices } from '../interfaces/IServiceInterface/ISharedServices';
+import { ISurveyRepository } from '../interfaces/IRepositoryInterface/ISurveyRepository';
+import { ITransactionRepository } from '../interfaces/IRepositoryInterface/ITransactionRepository';
+import { userRepository } from '../repositories/userRepository';
+import { IUserRepository } from '../interfaces/IRepositoryInterface/IUserRepository';
+import { IWalletRepository } from '../interfaces/IRepositoryInterface/IWalletRepository';
+
+export class SharedService implements ISharedServices {
+  constructor(
+    private readonly surveyRepository: ISurveyRepository,
+    private readonly transationRepository: ITransactionRepository,
+    private readonly userRepository: IUserRepository,
+    private readonly walletRepository: IWalletRepository
+  ) {}
+
   async resendOTP(
     pendingUserId: string
   ): Promise<{ message: string; otp: string }> {
-    const pendingUser = await PendingUser.findById(pendingUserId);
+    const pendingUser =
+      await this.userRepository.findPendingUserById(pendingUserId);
     if (!pendingUser) {
       throw new AppError('Pending user not found', 404);
     }
@@ -65,7 +70,7 @@ export class SharedService {
     email: string,
     res: Response
   ): Promise<{ message: string }> {
-    const user = await User.findOne({ email });
+    const user = await this.userRepository.findByEmail(email);
     if (!user) {
       throw new AppError('Email not registered', 404);
     }
@@ -94,7 +99,7 @@ export class SharedService {
     email: string,
     res: Response
   ): Promise<{ message: string }> {
-    const user = await User.findOne({ email });
+    const user = await this.userRepository.findByEmail(email);
     if (!user) {
       throw new AppError('Email not registered', 404);
     }
@@ -125,7 +130,7 @@ export class SharedService {
     req: Request,
     res: Response
   ): Promise<AuthResponse> {
-    const user = await User.findOne({ email });
+    const user = await this.userRepository.findByEmail(email);
     if (!user) {
       throw new AppError('Email not registered', 404);
     }
@@ -175,7 +180,7 @@ export class SharedService {
     role?: string;
     res: Response;
   }): Promise<AuthResponse> {
-    let user = await User.findOne({ email: email });
+    let user = await this.userRepository.findByEmail(email);
 
     if (!user) {
       const password = generatePassword();
@@ -183,7 +188,7 @@ export class SharedService {
       const [first_name, ...last_nameParts] = displayName.split(' ');
       const last_name = last_nameParts.join(' ');
 
-      user = new User({
+      user = await userRepository.createUser({
         email,
         role,
         first_name,
@@ -193,7 +198,6 @@ export class SharedService {
         days_active: 0,
       });
 
-      await user.save();
       await sendPassword(email, password);
     }
 
@@ -215,13 +219,14 @@ export class SharedService {
 
     return { user, tokens };
   }
+
   async createWallet(userId: string): Promise<IWallet> {
     const connection = new web3.Connection(
       web3.clusterApiUrl('devnet'),
       'confirmed'
     );
 
-    const user = await User.findById(userId);
+    const user = await userRepository.findById(userId);
     if (!user) {
       throw new Error('User not found');
     }
@@ -233,19 +238,17 @@ export class SharedService {
       10
     );
 
-    const newWallet = new Wallet({
+    const newWallet = await this.walletRepository.createWallet({
       userId,
       publicAddress: wallet.publicKey.toBase58(),
       encryptedPrivateKey,
       network: 'devnet',
     });
 
-    const savedWallet = await newWallet.save();
-
-    user.wallet = savedWallet._id;
+    user.wallet = newWallet._id;
     await user.save();
 
-    return savedWallet;
+    return newWallet;
   }
 
   async addExistingWallet(
@@ -253,15 +256,16 @@ export class SharedService {
     publicAddress: string,
     privateKey: string
   ): Promise<IWallet> {
-    const user = await User.findById(userId);
+    const user = await userRepository.findById(userId);
     if (!user) {
       throw new Error('User not found');
     }
 
-    const existingWallet = await Wallet.findOne({
-      publicAddress,
-      userId,
-    });
+    const existingWallet =
+      await this.walletRepository.findWalletByUserAndAddress(
+        publicAddress,
+        userId
+      );
     if (existingWallet) {
       throw new Error('Wallet with this address already exists for the user');
     }
@@ -277,27 +281,21 @@ export class SharedService {
 
     const encryptedPrivateKey = await bcrypt.hash(privateKey, 10);
 
-    const newWallet = new Wallet({
+    const newWallet = await this.walletRepository.createWallet({
       userId,
       publicAddress,
       encryptedPrivateKey,
       network: 'devnet',
     });
 
-    const savedWallet = await newWallet.save();
-
-    user.wallet = savedWallet._id;
+    user.wallet = newWallet._id as Types.ObjectId;
     await user.save();
 
-    return savedWallet;
+    return newWallet;
   }
 
   async getWallet(userId: string): Promise<IWallet | null> {
-    const user = await User.findById(userId)
-      .populate<{ wallet: IWallet }>('wallet')
-      .lean()
-      .exec();
-
+    const user = await userRepository.findUserWithWallet(userId);
     if (!user) {
       throw new AppError('User not found', 404);
     }
@@ -310,7 +308,8 @@ export class SharedService {
   }
 
   async getTransactions(userId: string): Promise<ITransaction[] | null> {
-    const transactions = await Transaction.find({ user: userId });
+    const transactions =
+      await this.transationRepository.getTransactionsByUser(userId);
     if (!transactions) {
       throw new AppError('transactions not found', 404);
     }
@@ -330,7 +329,8 @@ export class SharedService {
     if (!userId || !amount || !type || !status) {
       throw new AppError('Invalid transaction details', 404);
     }
-    const newTransaction = new Transaction({
+
+    const savedTransaction = await this.transationRepository.makeTransaction({
       user: userId,
       amount,
       type,
@@ -339,8 +339,6 @@ export class SharedService {
       recipient: recipient,
       signature: signature,
     });
-
-    const savedTransaction = await newTransaction.save();
 
     return savedTransaction;
   }

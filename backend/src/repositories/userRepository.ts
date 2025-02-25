@@ -1,75 +1,88 @@
-import User, { IUser } from "../models/usersModel";
-import logger from "../utils/loggerUtils";
+import User from '../models/usersModel';
+import PendingUser from '../models/pendingUserModel';
+import { IUser, IPendingUser, IWallet } from '../interfaces/common.interface';
+import { AppError } from '../utils/AppError';
+import { IUserRepository } from '../interfaces/IRepositoryInterface/IUserRepository';
 
-interface IUserRepository {
-  saveUser(userData: Partial<IUser>): Promise<IUser>;
-  findByEmail(email: string): Promise<IUser | null>;
-  findByRole(role: "user" | "creator"): Promise<IUser[]>;
-  updateUser(
-    userId: string,
-    updatedData: Partial<IUser>
-  ): Promise<IUser | null>;
-  deleteUser(userId: string): Promise<void>;
+export class UserRepository implements IUserRepository {
+  async getAllUsers(): Promise<IUser[]> {
+    const users = await User.find();
+    if (!users || users.length === 0) {
+      throw new AppError('No users found', 404);
+    }
+    return users;
+  }
+
+  async findByEmail(email: string): Promise<IUser | null> {
+    return User.findOne({ email });
+  }
+
+  async findByPhone(phoneNumber: string): Promise<IUser | null> {
+    return User.findOne({ phoneNumber });
+  }
+  async findById(userId: string): Promise<IUser | null> {
+    return User.findById(userId);
+  }
+
+  async findByIdExcludingPassword(userId: string): Promise<IUser | null> {
+    return User.findById(userId).select('-password');
+  }
+
+  async createUser(data: any): Promise<IUser> {
+    const user = new User(data);
+    return await user.save();
+  }
+
+  async findUserWithWallet(userId: string): Promise<any> {
+    return User.findById(userId)
+      .populate<{ wallet: IWallet }>('wallet')
+      .lean()
+      .exec();
+  }
+
+  async findUserWithWalletWithoutLean(userId: string): Promise<IUser | null> {
+    return User.findById(userId).populate('wallet').exec();
+  }
+
+  async findUserWithOccupation(userId: string): Promise<IUser | null> {
+    return User.findById(userId)
+      .select('-password')
+      .populate('occupation', 'name');
+  }
+
+  /*** PENDING USER OPERATIONS ***/
+
+  async findPendingUsersByEmail(email: string): Promise<IPendingUser[]> {
+    return PendingUser.find({ email });
+  }
+
+  async deletePendingUsersByEmail(email: string): Promise<void> {
+    await PendingUser.deleteMany({ email });
+  }
+
+  async findPendingUsersByPhone(phoneNumber: string): Promise<IPendingUser[]> {
+    return PendingUser.find({ phoneNumber });
+  }
+
+  async deletePendingUsersByPhone(phoneNumber: string): Promise<void> {
+    await PendingUser.deleteMany({ phoneNumber });
+  }
+
+  async createPendingUser(data: any): Promise<IPendingUser> {
+    const pendingUser = new PendingUser(data);
+
+    return await pendingUser.save();
+  }
+
+  async findPendingUserById(
+    pendingUserId: string
+  ): Promise<IPendingUser | null> {
+    return PendingUser.findById(pendingUserId);
+  }
+
+  async deletePendingUserById(pendingUserId: string): Promise<void> {
+    await PendingUser.deleteOne({ _id: pendingUserId });
+  }
 }
 
-const userRepository: IUserRepository = {
-  saveUser: async (userData: Partial<IUser>): Promise<IUser> => {
-    try {
-      const newUser = new User(userData);
-      await newUser.save();
-      logger.info(`User saved: ${newUser.id}`);
-      return newUser;
-    } catch (error) {
-      logger.error(`Error saving user: ${error}`);
-      throw error;
-    }
-  },
-
-  findByEmail: async (email: string): Promise<IUser | null> => {
-    try {
-      return await User.findOne({ email });
-    } catch (error) {
-      logger.error(`Error finding user by email: ${error}`);
-      throw error;
-    }
-  },
-
-  findByRole: async (role: "user" | "creator"): Promise<IUser[]> => {
-    try {
-      return await User.find({ role });
-    } catch (error) {
-      logger.error(`Error finding users by role: ${error}`);
-      throw error;
-    }
-  },
-
-  updateUser: async (
-    userId: string,
-    updatedData: Partial<IUser>
-  ): Promise<IUser | null> => {
-    try {
-      const updatedUser = await User.findByIdAndUpdate(userId, updatedData, {
-        new: true,
-      });
-      if (updatedUser) {
-        logger.info(`User updated: ${userId}`);
-      }
-      return updatedUser;
-    } catch (error) {
-      logger.error(`Error updating user: ${error}`);
-      throw error;
-    }
-  },
-
-  deleteUser: async (userId: string): Promise<void> => {
-    try {
-      await User.findByIdAndDelete(userId);
-      logger.info(`User deleted: ${userId}`);
-    } catch (error) {
-      logger.error(`Error deleting user: ${error}`);
-      throw error;
-    }
-  },
-};
-
-export default userRepository;
+export const userRepository = new UserRepository();

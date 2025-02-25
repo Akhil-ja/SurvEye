@@ -3,12 +3,25 @@ import { AdminController } from '../controllers/adminController';
 import { AdminService } from '../services/adminServices';
 import { AdminRepository } from '../repositories/adminRepository';
 import { SurveyRepository } from '../repositories/surveyRepository';
+import { AnnouncementRepository } from '../repositories/announcementRepository';
+import { TransactionRepository } from '../repositories/transactionRepository';
+import { CategoryRepository } from '../repositories/categoryRepository';
 
 const router = Router();
 
 const adminRepository = new AdminRepository();
 const surveyRepository = new SurveyRepository();
-const adminService = new AdminService(adminRepository, surveyRepository);
+const announcementRepository = new AnnouncementRepository();
+const transactionRepository = new TransactionRepository();
+const categoryRepository = new CategoryRepository();
+
+const adminService = new AdminService(
+  adminRepository,
+  surveyRepository,
+  announcementRepository,
+  transactionRepository,
+  categoryRepository
+);
 const adminController = new AdminController(adminService);
 
 router.post('/signin', (req, res, next) =>

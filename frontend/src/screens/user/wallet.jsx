@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, CopyIcon } from "lucide-react";
@@ -40,6 +40,7 @@ const WalletView = () => {
   const [privateKey, setPrivateKey] = useState("");
 
   const [isPayoutDialogOpen, setPayoutDialogOpen] = useState(false);
+  const [isProcessingPayout, setIsProcessingPayout] = useState(false);
 
   useEffect(() => {
     dispatch(getWallet());
@@ -58,8 +59,11 @@ const WalletView = () => {
     }
   };
 
-  const handlePayout = async () => {
+  const handlePayout = useCallback(async () => {
+    if (isProcessingPayout) return;
+
     try {
+      setIsProcessingPayout(true);
       await dispatch(processPayout()).unwrap();
 
       toast.success("Payout processed successfully");
@@ -69,8 +73,10 @@ const WalletView = () => {
       dispatch(getWalletTransactions());
     } catch (error) {
       toast.error(error || "Failed to process payout");
+    } finally {
+      setIsProcessingPayout(false);
     }
-  };
+  }, [dispatch, isProcessingPayout]);
 
   const handleAddWallet = async () => {
     try {
@@ -124,8 +130,7 @@ const WalletView = () => {
         <div className="text-center mb-4">
           <h2 className="text-xl font-semibold">No Wallet Found</h2>
           <p className="text-gray-600 mt-2">
-            You don&apos;t have a wallet yet. Please create or add an existing
-            wallet.
+            You don&apos;t have a wallet yet. Please Add an existing wallet.
           </p>
         </div>
 
@@ -139,14 +144,14 @@ const WalletView = () => {
             <ChevronRight className="h-4 w-4" />
           </Button>
 
-          <Button
+          {/* <Button
             variant="outline"
             className="w-full justify-between"
             onClick={() => setCreateWalletDialogOpen(true)}
           >
             <span>Create New Wallet</span>
             <ChevronRight className="h-4 w-4" />
-          </Button>
+          </Button> */}
         </div>
 
         {/* Add Wallet Dialog */}
@@ -186,7 +191,7 @@ const WalletView = () => {
         </Dialog>
 
         {/* Create Wallet Dialog */}
-        <Dialog
+        {/* <Dialog
           open={isCreateWalletDialogOpen}
           onOpenChange={(open) => setCreateWalletDialogOpen(open)}
         >
@@ -202,7 +207,7 @@ const WalletView = () => {
               Create Wallet
             </Button>
           </DialogContent>
-        </Dialog>
+        </Dialog> */}
       </div>
     );
   }
@@ -257,10 +262,13 @@ const WalletView = () => {
             <Button
               variant="outline"
               onClick={() => setPayoutDialogOpen(false)}
+              disabled={isProcessingPayout}
             >
               Cancel
             </Button>
-            <Button onClick={handlePayout}>Confirm Payout</Button>
+            <Button onClick={handlePayout} disabled={isProcessingPayout}>
+              {isProcessingPayout ? "Processing..." : "Confirm Payout"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -270,7 +278,7 @@ const WalletView = () => {
         <CardContent className="p-0">
           <div className="p-4">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">Transaction History</h3>
+              <h3 className="text-lg font-semibold"></h3>
               {transactions.length > 4 && (
                 <Link
                   to="/user/wallet/history"
@@ -294,7 +302,7 @@ const WalletView = () => {
                       </div>
                       <div className="text-sm text-gray-500">
                         {new Date(transaction.createdAt).toLocaleString(
-                          "en-US",
+                          "en-GB",
                           {
                             year: "numeric",
                             month: "2-digit",
@@ -313,7 +321,7 @@ const WalletView = () => {
                       }`}
                     >
                       {transaction.type === "credit" ? "-" : "+"}
-                      {transaction.amount} USD
+                      {transaction.amount.toFixed(4)} SOL
                     </div>
                   </div>
                 ))}

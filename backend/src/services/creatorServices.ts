@@ -1,88 +1,42 @@
 import bcrypt from 'bcrypt';
-import User from '../models/usersModel';
-import { INotification, IUser } from '../interfaces/common.interface';
 import { generateTokens } from '../utils/jwtUtils';
 import { generateOTP, sendOTP } from '../utils/otpUtils';
-import PendingUser from '../models/pendingUserModel';
 import { Request, Response } from 'express';
 import { AppError } from '../utils/AppError';
 import { ISurvey } from '../models/surveyModel';
 import { Survey } from '../models/surveyModel';
-import { SurveyResponse } from '../models/surveyresponse';
-import Category from '../models/categoryModel';
 import Occupation from '../models/occupationModel';
 import { Types } from 'mongoose';
-import { ISurveyResponse } from '../interfaces/common.interface';
-import Notification from '../models/notificationModal';
+import {
+  ISurveyResponse,
+  QuestionAnalytics,
+  SurveyAnalytics,
+  TextAnalytics,
+  OptionAnalytics,
+  IIncomingSurveyData,
+  IIncomingPage,
+  RatingAnalytics,
+  INotification,
+  IUser,
+  AuthResponse,
+} from '../interfaces/common.interface';
 import socketConfig from '../socketConfig';
+import { ISurveyRepository } from '../interfaces/IRepositoryInterface/ISurveyRepository';
+import { ICreatorService } from '../interfaces/IServiceInterface/ICreatorServices';
+import { INotificationRepository } from '../interfaces/IRepositoryInterface/INotificationRepository';
+import { IUserRepository } from '../interfaces/IRepositoryInterface/IUserRepository';
+import { ISurveyResponseRepository } from '../interfaces/IRepositoryInterface/ISurveyResponseRepository';
+import { ICategoryRepository } from '../interfaces/IRepositoryInterface/ICategoryRepository';
 
-interface QuestionAnalytics {
-  questionId: Types.ObjectId;
-  questionText: string;
-  questionType: string;
-  totalResponses: number;
-  analytics:
-    | SingleChoiceAnalytics
-    | MultiChoiceAnalytics
-    | RatingAnalytics
-    | TextAnalytics;
-}
+export class CreatorService implements ICreatorService {
+  constructor(
+    private readonly surveyRepository: ISurveyRepository,
+    private readonly notificationRepository: INotificationRepository,
+    private readonly userRepository: IUserRepository,
+    private readonly surveyResponseRepository: ISurveyResponseRepository,
+    private readonly categoryRepository: ICategoryRepository
+  ) {}
 
-interface OptionAnalytics {
-  optionId: Types.ObjectId;
-  optionText: string;
-  count: number;
-  percentage: number;
-}
-
-interface SingleChoiceAnalytics {
-  options: OptionAnalytics[];
-}
-
-interface MultiChoiceAnalytics {
-  options: OptionAnalytics[];
-}
-
-interface RatingAnalytics {
-  averageRating: number;
-  ratingDistribution: { [key: number]: number };
-}
-
-interface TextAnalytics {
-  topWords: Array<{ word: string; count: number }>;
-}
-
-interface SurveyAnalytics {
-  surveyId: string;
-  surveyName: string;
-  totalResponses: number;
-  sampleSize: number;
-  questionsAnalytics: QuestionAnalytics[];
-}
-
-interface AuthResponse {
-  user: IUser;
-  tokens: {
-    accessToken: string;
-    refreshToken: string;
-  };
-}
-interface IIncomingQuestion {
-  type: 'mcq' | 'checkbox' | 'text' | 'rating';
-  question: string;
-  options: string[];
-}
-
-interface IIncomingPage {
-  questions: IIncomingQuestion[];
-}
-
-interface IIncomingSurveyData {
-  surveyId: string;
-  pages: IIncomingPage[];
-}
-
-export class CreatorService {
   async initiateSignUp(creatorData: {
     email: string;
     phoneNumber: string;
@@ -92,27 +46,28 @@ export class CreatorService {
   }): Promise<{ message: string; pendingUserId: string }> {
     const { email, phoneNumber, password, creatorName, industry } = creatorData;
 
-    const existingCreatorByEmail = await User.findOne({ email });
+    const existingCreatorByEmail = await this.userRepository.findByEmail(email);
     if (existingCreatorByEmail) {
       throw new AppError('Creator already exists with this email.', 400);
     }
 
-    const existingCreatorByPhone = await User.findOne({ phoneNumber });
+    const existingCreatorByPhone =
+      await this.userRepository.findByPhone(phoneNumber);
     if (existingCreatorByPhone) {
       throw new AppError('Creator already exists with this phone number.', 400);
     }
 
-    const existingPendingCreatorByEmail = await PendingUser.find({ email });
+    const existingPendingCreatorByEmail =
+      await this.userRepository.findPendingUsersByEmail(email);
     if (existingPendingCreatorByEmail.length > 0) {
-      await PendingUser.deleteMany({ email });
+      await this.userRepository.deletePendingUsersByEmail(email);
       console.log(`Deleted duplicate pending signups for ${email}`);
     }
 
-    const existingPendingCreatorByPhone = await PendingUser.find({
-      phoneNumber,
-    });
+    const existingPendingCreatorByPhone =
+      await this.userRepository.findPendingUsersByPhone(phoneNumber);
     if (existingPendingCreatorByPhone.length > 0) {
-      await PendingUser.deleteMany({ phoneNumber });
+      await this.userRepository.deletePendingUsersByPhone(phoneNumber);
       console.log(`Deleted duplicate pending signups for ${phoneNumber}`);
     }
 
@@ -120,7 +75,7 @@ export class CreatorService {
     const otp = generateOTP();
     const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
-    const pendingCreator = new PendingUser({
+    const pendingCreator = await this.userRepository.createPendingUser({
       email,
       phoneNumber,
       password: hashedPassword,
@@ -130,8 +85,6 @@ export class CreatorService {
       otp,
       otpExpires,
     });
-
-    await pendingCreator.save();
     await sendOTP(email, otp);
     console.log(`The OTP for ${email} is ${otp}`);
 
@@ -147,7 +100,8 @@ export class CreatorService {
     otp: string,
     res: Response
   ): Promise<IUser> {
-    const pendingCreator = await PendingUser.findById(pendingUserId);
+    const pendingCreator =
+      await this.userRepository.findPendingUserById(pendingUserId);
     if (!pendingCreator) {
       throw new AppError('Invalid or expired signup request', 400);
     }
@@ -162,7 +116,7 @@ export class CreatorService {
 
     const phoneNumber = pendingCreator.phoneNumber || undefined;
 
-    const newCreator = new User({
+    const newCreator = await this.userRepository.createUser({
       email: pendingCreator.email,
       phoneNumber: phoneNumber,
       password: pendingCreator.password,
@@ -170,12 +124,11 @@ export class CreatorService {
       creator_name: pendingCreator.creatorName,
       industry: pendingCreator.industry,
       created_at: new Date(),
-      wallets: [],
+      wallet: null,
       days_active: 0,
     });
 
-    await newCreator.save();
-    await PendingUser.deleteOne({ _id: pendingUserId });
+    this.userRepository.deletePendingUserById(pendingUserId);
 
     const tokens = generateTokens(newCreator.id, newCreator.role);
 
@@ -200,13 +153,12 @@ export class CreatorService {
       type: 'welcome_message',
     });
 
-    const newNotification = new Notification({
+    await this.notificationRepository.create({
       title: 'Welcome!!!',
       message: `Welcome to SurvEye.`,
       user: new Types.ObjectId(newCreator.id),
       type: 'welcome_message',
     });
-    await newNotification.save();
 
     return newCreator;
   }
@@ -217,7 +169,7 @@ export class CreatorService {
     res: Response,
     req: Request
   ): Promise<AuthResponse> {
-    const user = await User.findOne({ email });
+    const user = await this.userRepository.findByEmail(email);
 
     if (!user) {
       throw new AppError('User not found', 404);
@@ -257,7 +209,7 @@ export class CreatorService {
   }
 
   async sendOTPForForgotPassword(email: string, res: Response): Promise<void> {
-    const user = await User.findOne({ email });
+    const user = await this.userRepository.findByEmail(email);
     if (!user) {
       throw new AppError('Email not registered', 404);
     }
@@ -290,7 +242,7 @@ export class CreatorService {
     res: Response,
     req: Request
   ): Promise<AuthResponse> {
-    const user = await User.findOne({ email });
+    const user = await this.userRepository.findByEmail(email);
 
     if (!user) {
       throw new AppError('Email not registered', 404);
@@ -336,7 +288,7 @@ export class CreatorService {
   }
 
   async getProfile(userId: string): Promise<any> {
-    const creator = await User.findById(userId).select('-password');
+    const creator = await this.userRepository.findByIdExcludingPassword(userId);
 
     if (!creator) {
       throw new AppError('Creator not found', 404);
@@ -367,7 +319,7 @@ export class CreatorService {
       industry?: string;
     }
   ): Promise<IUser> {
-    const creator = await User.findById(userId);
+    const creator = await this.userRepository.findById(userId);
 
     if (!creator) {
       throw new AppError('Creator not found', 404);
@@ -409,7 +361,7 @@ export class CreatorService {
       newPassword?: string;
     }
   ): Promise<IUser> {
-    const creator = await User.findById(userId);
+    const creator = await this.userRepository.findById(userId);
 
     if (!creator) {
       throw new AppError('Creator not found', 404);
@@ -482,7 +434,7 @@ export class CreatorService {
       isAllOccupations: boolean;
     }
   ): Promise<ISurvey> {
-    const creator = await User.findById(creatorId);
+    const creator = await this.userRepository.findById(creatorId);
 
     if (!creator) {
       throw new AppError('Creator not found', 404);
@@ -496,9 +448,9 @@ export class CreatorService {
       throw new AppError('Creator is blocked', 403);
     }
 
-    const categoryCount = await Category.countDocuments({
-      _id: { $in: surveyData.categories },
-    });
+    const categoryCount = await this.categoryRepository.countCategoriesByIds(
+      surveyData.categories
+    );
     if (categoryCount !== surveyData.categories.length) {
       throw new AppError('One or more categories are invalid', 400);
     }
@@ -524,7 +476,6 @@ export class CreatorService {
       questions: surveyData.questions,
       occupations: surveyData.occupations,
       isAllOccupations: surveyData.isAllOccupations,
-
       created_at: new Date(),
       updated_at: new Date(),
     });
@@ -535,28 +486,14 @@ export class CreatorService {
   }
 
   async getSurvey(surveyId: string): Promise<ISurvey> {
-    const survey = await Survey.findById(surveyId)
-      .populate('categories')
-      .populate('occupations');
-
-    if (!survey) {
-      throw new AppError('Survey not found', 404);
+    if (!surveyId) {
+      throw new AppError('Survey ID is required', 400);
     }
-
-    return survey;
+    return await this.surveyRepository.findSurveyById(surveyId);
   }
 
   async getAllSurveys(creatorId: string): Promise<{ surveys: ISurvey[] }> {
-    const surveys = await Survey.find({
-      creator: creatorId,
-      questions: { $exists: true, $ne: [] },
-    })
-      .sort({ created_at: -1 })
-      .populate('categories', 'name');
-
-    if (surveys.length === 0) {
-      throw new AppError('No active surveys found.', 404);
-    }
+    const surveys = await this.surveyRepository.findCreatorSurveys(creatorId);
 
     return { surveys };
   }
@@ -612,7 +549,8 @@ export class CreatorService {
     let isPublished = false;
 
     if (surveyId) {
-      const existingSurvey = await Survey.findById(surveyId);
+      const existingSurvey =
+        await this.surveyRepository.findSurveyById(surveyId);
       if (!existingSurvey) {
         throw new Error('Survey not found');
       }
@@ -638,10 +576,7 @@ export class CreatorService {
   }
 
   async publishSurvey(surveyId: string): Promise<ISurvey> {
-    const survey = await Survey.findById(surveyId).populate(
-      'categories',
-      'name'
-    );
+    const survey = await this.surveyRepository.findSurveyById(surveyId);
 
     if (!survey) {
       throw new AppError('Survey not found', 404);
@@ -659,7 +594,9 @@ export class CreatorService {
   private async getResponsesBySurveyId(
     surveyId: string
   ): Promise<ISurveyResponse[]> {
-    return await SurveyResponse.find({ survey: surveyId });
+    return await this.surveyResponseRepository.findResponsesBySurveyId(
+      surveyId
+    );
   }
 
   private calculateOptionAnalytics(
@@ -774,9 +711,8 @@ export class CreatorService {
   async getNotifications(
     creatorId: string
   ): Promise<{ notifications: INotification[] }> {
-    const notifications = await Notification.find({
-      user: creatorId,
-    });
+    const notifications =
+      await this.notificationRepository.getByUser(creatorId);
 
     if (notifications.length === 0) {
       throw new AppError('No notifications found.', 404);
@@ -786,7 +722,7 @@ export class CreatorService {
   }
 
   async getSurveyAnalytics(surveyId: string): Promise<SurveyAnalytics> {
-    const survey = await Survey.findById<ISurvey>(surveyId);
+    const survey = await this.surveyRepository.findSurveyById(surveyId);
     if (!survey) {
       throw new Error('Survey not found');
     }
@@ -846,5 +782,3 @@ export class CreatorService {
     };
   }
 }
-
-export const creatorService = new CreatorService();

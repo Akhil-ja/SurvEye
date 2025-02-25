@@ -22,7 +22,7 @@ const userSchema = new Schema<IUser>({
   },
   creator_name: { type: String, unique: true, sparse: true },
   industry: { type: String },
-  wallet: { type: Schema.Types.ObjectId, ref: 'Wallet' },
+  wallet: { type: Schema.Types.ObjectId, ref: 'Wallet', default: null },
   date_of_birth: { type: Date },
   days_active: { type: Number, default: 0 },
   status: {

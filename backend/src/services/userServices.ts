@@ -1,38 +1,41 @@
 import bcrypt from 'bcrypt';
-import User from '../models/usersModel';
+import { Types } from 'mongoose';
 import { IUser } from '../interfaces/common.interface';
 import { generateTokens } from '../utils/jwtUtils';
-import PendingUser from '../models/pendingUserModel';
 import { generateOTP, sendOTP } from '../utils/otpUtils';
 import { Request, Response } from 'express';
 import { AppError } from '../utils/AppError';
 import { ISurvey } from '../models/surveyModel';
 import { Survey } from '../models/surveyModel';
-import { SurveyResponse } from '../models/surveyresponse';
-import { Types } from 'mongoose';
 import { ResponseData } from '../types/responseSurveyTypes';
 import moment from 'moment';
-import { ICategory } from '../interfaces/common.interface';
+import { ICategory, AuthResponse } from '../interfaces/common.interface';
 import Category from '../models/categoryModel';
 import Occupation from '../models/occupationModel';
 import mongoose from 'mongoose';
 import * as web3 from '@solana/web3.js';
-import Wallet from '../models/walletModel';
 import bs58 from 'bs58';
-import Transaction from '../models/transactionModel';
 import AdminCut from '../models/adminCutModal';
 import socketConfig from '../socketConfig';
-import Notification from '../models/notificationModal';
+import { IUserService } from '../interfaces/IServiceInterface/IUserServices';
+import { ISurveyRepository } from '../interfaces/IRepositoryInterface/ISurveyRepository';
+import { INotificationRepository } from '../interfaces/IRepositoryInterface/INotificationRepository';
+import { ITransactionRepository } from '../interfaces/IRepositoryInterface/ITransactionRepository';
+import { IUserRepository } from '../interfaces/IRepositoryInterface/IUserRepository';
+import { ISurveyResponseRepository } from '../interfaces/IRepositoryInterface/ISurveyResponseRepository';
+import { IWalletRepository } from '../interfaces/IRepositoryInterface/IWalletRepository';
+import { ICategoryRepository } from '../interfaces/IRepositoryInterface/ICategoryRepository';
+export class UserService implements IUserService {
+  constructor(
+    private readonly surveyRepository: ISurveyRepository,
+    private readonly notificationRepository: INotificationRepository,
+    private readonly transationRepository: ITransactionRepository,
+    private readonly userRepository: IUserRepository,
+    private readonly surveyResponseRepository: ISurveyResponseRepository,
+    private readonly walletRepository: IWalletRepository,
+    private readonly categoryRepository: ICategoryRepository
+  ) {}
 
-interface AuthResponse {
-  user: IUser;
-  tokens: {
-    accessToken: string;
-    refreshToken: string;
-  };
-}
-
-export class UserService {
   async initiateSignUp(userData: {
     email: string;
     phoneNumber: string;
@@ -42,16 +45,15 @@ export class UserService {
     lastName: string;
     dateOfBirth?: string;
   }): Promise<{ message: string; pendingUserId: string }> {
-    const existingUser = await User.findOne({ email: userData.email });
+    const existingUser = await this.userRepository.findByEmail(userData.email);
     if (existingUser) {
       throw new AppError('User already exists', 400);
     }
 
-    const existingPendingUser = await PendingUser.find({
-      email: userData.email,
-    });
+    const existingPendingUser =
+      await this.userRepository.findPendingUsersByEmail(userData.email);
     if (existingPendingUser.length > 0) {
-      await PendingUser.deleteMany({ email: userData.email });
+      await this.userRepository.deletePendingUsersByEmail(userData.email);
       console.log(`Deleted duplicate pending signups for ${userData.email}`);
     }
 
@@ -59,7 +61,7 @@ export class UserService {
     const otp = generateOTP();
     const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
-    const pendingUser = new PendingUser({
+    const pendingUser = await this.userRepository.createPendingUser({
       ...userData,
       password: hashedPassword,
       otp,
@@ -69,7 +71,6 @@ export class UserService {
         : undefined,
     });
 
-    await pendingUser.save();
     await sendOTP(userData.email, otp);
     console.log(`The OTP for ${userData.email} is ${otp}`);
 
@@ -84,7 +85,8 @@ export class UserService {
     otp: string,
     res: Response
   ): Promise<IUser> {
-    const pendingUser = await PendingUser.findById(pendingUserId);
+    const pendingUser =
+      await this.userRepository.findPendingUserById(pendingUserId);
     if (!pendingUser) {
       throw new AppError('Invalid or expired signup request', 400);
     }
@@ -99,7 +101,7 @@ export class UserService {
 
     const phoneNumber = pendingUser.phoneNumber || undefined;
 
-    const newUser = new User({
+    const newUser = await this.userRepository.createUser({
       email: pendingUser.email,
       phoneNumber: phoneNumber,
       password: pendingUser.password,
@@ -108,12 +110,12 @@ export class UserService {
       last_name: pendingUser.lastName,
       date_of_birth: pendingUser.dateOfBirth,
       created_at: new Date(),
-      wallets: [],
+      wallet: null,
       days_active: 0,
     });
 
     await newUser.save();
-    await PendingUser.deleteOne({ _id: pendingUserId });
+    await this.userRepository.deletePendingUserById(pendingUserId);
 
     const tokens = generateTokens(newUser.id, newUser.role);
 
@@ -140,7 +142,7 @@ export class UserService {
     res: Response,
     req: Request
   ): Promise<AuthResponse> {
-    const user = await User.findOne({ email });
+    const user = await this.userRepository.findByEmail(email);
 
     if (!user) {
       throw new AppError('Email not registered', 404);
@@ -180,7 +182,7 @@ export class UserService {
   }
 
   async sendOTPForForgotPassword(email: string, res: Response): Promise<void> {
-    const user = await User.findOne({ email });
+    const user = await this.userRepository.findByEmail(email);
     if (!user) {
       throw new AppError('Email not registered', 404);
     }
@@ -212,7 +214,7 @@ export class UserService {
     res: Response,
     req: Request
   ): Promise<AuthResponse> {
-    const user = await User.findOne({ email });
+    const user = await this.userRepository.findByEmail(email);
 
     if (!user) {
       throw new AppError('Email not registered', 404);
@@ -271,9 +273,7 @@ export class UserService {
   }
 
   async getProfile(userId: string): Promise<any> {
-    const user = await User.findById(userId)
-      .select('-password')
-      .populate('occupation', 'name');
+    const user = await this.userRepository.findUserWithOccupation(userId);
 
     if (!user) {
       throw new AppError('User not found', 404);
@@ -311,7 +311,7 @@ export class UserService {
       occupation?: string;
     }
   ): Promise<IUser> {
-    const user = await User.findById(userId);
+    const user = await this.userRepository.findById(userId);
 
     if (!user) {
       throw new AppError('User not found', 404);
@@ -387,7 +387,7 @@ export class UserService {
       newPassword?: string;
     }
   ): Promise<IUser> {
-    const user = await User.findById(userId);
+    const user = await this.userRepository.findById(userId);
 
     if (!user) {
       throw new AppError('User not found', 404);
@@ -457,7 +457,7 @@ export class UserService {
     let userOccupation;
 
     if (userId) {
-      const user = await User.findById(userId).lean();
+      const user = await this.userRepository.findById(userId);
       if (!user) {
         throw new AppError('User not found', 404);
       }
@@ -503,13 +503,11 @@ export class UserService {
       let query: any = {};
 
       if (attended && userId) {
-        const attendedSurveyResponses = await SurveyResponse.find(
-          { user: userId },
-          'survey'
-        ).lean();
+        const attendedSurveyResponses =
+          await this.surveyResponseRepository.findAttendedSurveys(userId);
 
         const attendedSurveyIds = attendedSurveyResponses.map(
-          (response) => response.survey
+          (response: any) => response.survey
         );
 
         query = {
@@ -590,23 +588,24 @@ export class UserService {
     userId: string,
     responses: ResponseData[]
   ) {
-    const user = await User.findById(userId).populate('wallet').exec();
+    const user =
+      await this.userRepository.findUserWithWalletWithoutLean(userId);
 
     if (!user) {
       throw new AppError('user not found', 400);
     }
 
     if (!user.wallet) {
-      const newWallet = new Wallet({
-        userId: user._id,
+      const newWallet = await this.walletRepository.createWallet({
+        userId: user._id as string,
         network: 'devnet',
       });
-      await newWallet.save();
+
       user.wallet = newWallet._id;
       await user.save();
     }
 
-    const survey = (await Survey.findById(surveyId)) as ISurvey | null;
+    const survey = await Survey.findById(surveyId);
     if (!survey) {
       throw new AppError('Survey not found', 404);
     }
@@ -623,11 +622,11 @@ export class UserService {
       throw new AppError('Survey is not within its active duration', 400);
     }
 
-    const existingResponse = await SurveyResponse.findOne({
-      survey: new Types.ObjectId(surveyId),
-      user: new Types.ObjectId(userId),
-    });
-
+    const existingResponse =
+      await this.surveyResponseRepository.findExistingResponse(
+        surveyId,
+        userId
+      );
     if (existingResponse) {
       throw new AppError(
         'You have already submitted a response to this survey',
@@ -651,7 +650,7 @@ export class UserService {
     const formattedAnswers = await Promise.all(
       responses.map(async (response) => {
         const question = survey.questions.find(
-          (q) => q._id.toString() === response.questionId
+          (q) => q._id.toString() === response.questionId.toString()
         );
 
         if (!question) {
@@ -766,22 +765,27 @@ export class UserService {
 
     const payoutAmount = parseFloat((remainingAmount / sampleSize).toFixed(3));
 
-    await Wallet.findByIdAndUpdate(user.wallet._id, {
-      $inc: {
-        payout: payoutAmount,
-      },
-    });
+    await this.walletRepository.incrementPayout(
+      user.wallet._id.toString(),
+      payoutAmount
+    );
 
-    const surveyResponse = new SurveyResponse({
-      survey: surveyId,
-      user: userId,
+    const surveyResponse = this.surveyResponseRepository.createSurveyResponse({
+      survey: new Types.ObjectId(surveyId),
+      user: new Types.ObjectId(userId),
       answers: formattedAnswers,
       completedAt: new Date(),
     });
-    await surveyResponse.save();
 
     await Survey.findByIdAndUpdate(surveyId, {
       $inc: { totalResponses: 1 },
+    });
+
+    socketConfig.sendNotification({
+      userId: userId,
+      title: 'Survey Reward',
+      message: `You have earned ${payoutAmount} for completing the survey "${survey.surveyName}".`,
+      type: 'survey_reward',
     });
 
     const updatedSurvey = (await Survey.findById(surveyId)) as ISurvey;
@@ -795,17 +799,15 @@ export class UserService {
         userId: survey.creator.toString(),
         title: 'Survey Completed',
         message: `Your survey "${survey.surveyName}" has reached its target sample size.`,
-        type: 'survey_completion',
+        type: 'reward',
       });
 
-      const newNotification = new Notification({
+      const newNotification = await this.notificationRepository.create({
         title: 'Survey Completed',
         message: `Your survey "${survey.surveyName}" has reached its target sample size.`,
         user: new Types.ObjectId(survey.creator),
         type: 'survey_completion',
       });
-
-      await newNotification.save();
     }
 
     return surveyResponse;
@@ -815,9 +817,9 @@ export class UserService {
     let categories: ICategory[];
 
     if (active) {
-      categories = await Category.find({ status: active });
+      categories = await this.categoryRepository.getCategoriesByStatus(active);
     } else {
-      categories = await Category.find({});
+      categories = await this.categoryRepository.getAllCategoriesUnfiltered();
     }
 
     if (!categories || categories.length === 0) {
@@ -884,7 +886,7 @@ export class UserService {
       throw new Error('Transaction failed');
     }
 
-    await Transaction.create({
+    await this.transationRepository.makeTransaction({
       user: userId,
       type: 'credit',
       sender: senderPublicKey.toBase58(),
@@ -903,15 +905,14 @@ export class UserService {
       'confirmed'
     );
 
-    const user = await User.findById(userId).populate('wallet').exec();
+    const user =
+      await this.userRepository.findUserWithWalletWithoutLean(userId);
     if (!user || !user.wallet) {
       throw new AppError('User or wallet not found', 404);
     }
 
-    const wallet = await Wallet.findOneAndUpdate(
-      { _id: user.wallet._id, isPayoutLocked: false },
-      { isPayoutLocked: true },
-      { new: true }
+    const wallet = await this.walletRepository.lockPayout(
+      user.wallet._id.toString()
     );
     if (!wallet) {
       throw new AppError('Payout is already in progress for this user', 400);
@@ -919,7 +920,7 @@ export class UserService {
 
     const senderPrivateKey = process.env.ADMIN_PRIVATE_KEY;
     if (!senderPrivateKey) {
-      await Wallet.findByIdAndUpdate(wallet._id, { isPayoutLocked: false });
+      await this.walletRepository.unlockPayout(wallet.id);
       throw new AppError('Admin private key is missing', 500);
     }
 
@@ -934,7 +935,7 @@ export class UserService {
     const feeInLamports = 5000;
 
     if (balanceInSol < amountInSol + feeInLamports / web3.LAMPORTS_PER_SOL) {
-      await Wallet.findByIdAndUpdate(wallet._id, { isPayoutLocked: false });
+      await this.walletRepository.unlockPayout(wallet._id.toString());
       throw new AppError(
         `Insufficient balance. Current balance: ${balanceInSol.toFixed(4)} SOL, Required: ${(amountInSol + feeInLamports / web3.LAMPORTS_PER_SOL).toFixed(4)} SOL`,
         400
@@ -971,7 +972,7 @@ export class UserService {
       wallet.isPayoutLocked = false;
       await wallet.save();
 
-      await Transaction.create({
+      await this.transationRepository.makeTransaction({
         user: userId,
         type: 'payout',
         sender: senderPublicKey,
@@ -984,10 +985,8 @@ export class UserService {
       return signature;
     } catch (error) {
       console.error('Error during transaction:', error);
-      await Wallet.findByIdAndUpdate(wallet._id, { isPayoutLocked: false });
+      await this.walletRepository.unlockPayout(wallet._id.toString());
       throw new AppError('Transaction failed, please try again', 500);
     }
   }
 }
-
-export const userService = new UserService();

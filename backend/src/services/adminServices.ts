@@ -15,11 +15,17 @@ import socketConfig from '../socketConfig';
 import { IAdminService } from '../interfaces/IServiceInterface/IAdminServices';
 import { IAdminRepository } from '../interfaces/IRepositoryInterface/IAdminRepository';
 import { ISurveyRepository } from '../interfaces/IRepositoryInterface/ISurveyRepository';
+import { IAnnouncementRepository } from '../interfaces/IRepositoryInterface/IAnnouncementRepository';
+import { ITransactionRepository } from '../interfaces/IRepositoryInterface/ITransactionRepository';
+import { ICategoryRepository } from '../interfaces/IRepositoryInterface/ICategoryRepository';
 
 export class AdminService implements IAdminService {
   constructor(
     private readonly adminRepository: IAdminRepository,
-    private readonly surveyRepository: ISurveyRepository
+    private readonly surveyRepository: ISurveyRepository,
+    private readonly announcementRepository: IAnnouncementRepository,
+    private readonly transactionRepository: ITransactionRepository,
+    private readonly categoryRepository: ICategoryRepository
   ) {}
 
   async signIn(email: string, password: string, res: Response) {
@@ -77,18 +83,18 @@ export class AdminService implements IAdminService {
   }
 
   async getAllCategories(active: boolean): Promise<ICategory[]> {
-    return this.adminRepository.getAllCategories(active);
+    return this.categoryRepository.getAllCategories(active);
   }
 
   async toggleCategoryStatus(CategoryId: string): Promise<ICategory> {
-    const category = await this.adminRepository.findCategoryById(CategoryId);
+    const category = await this.categoryRepository.findCategoryById(CategoryId);
 
     if (!category) {
       throw new AppError('Category not found', 404);
     }
 
     category.status = category.status === true ? false : true;
-    return this.adminRepository.saveCategory(category);
+    return this.categoryRepository.saveCategory(category);
   }
 
   async createCategory(categoryData: Partial<ICategory>): Promise<ICategory> {
@@ -103,7 +109,7 @@ export class AdminService implements IAdminService {
       };
 
       const category =
-        await this.adminRepository.createCategory(newCategoryData);
+        await this.categoryRepository.createCategory(newCategoryData);
       return category;
     } catch (error) {
       if (error instanceof AppError) {
@@ -118,7 +124,7 @@ export class AdminService implements IAdminService {
   ): Promise<ICategory> {
     try {
       const existingCategory =
-        await this.adminRepository.findCategoryById(categoryId);
+        await this.categoryRepository.findCategoryById(categoryId);
       if (!existingCategory) {
         throw new AppError('Category not found', 404);
       }
@@ -134,7 +140,7 @@ export class AdminService implements IAdminService {
         throw new AppError('Category description cannot be empty', 400);
       }
 
-      const updatedCategory = await this.adminRepository.updateCategory(
+      const updatedCategory = await this.categoryRepository.updateCategory(
         categoryId,
         categoryData
       );
@@ -224,7 +230,7 @@ export class AdminService implements IAdminService {
     }
   }
   async getAllTransactions(): Promise<ITransaction[]> {
-    return this.adminRepository.getAllTransactions();
+    return this.transactionRepository.getAllTransactions();
   }
   async getAllData(): Promise<any> {
     return this.adminRepository.getAllData();
@@ -256,11 +262,13 @@ export class AdminService implements IAdminService {
     params: CreateAnnouncementParams
   ): Promise<IAnnouncement> {
     try {
-      const announcement = await this.adminRepository.createAnnouncement({
-        ...params,
-        timestamp: new Date(),
-        type: 'admin',
-      });
+      const announcement = await this.announcementRepository.createAnnouncement(
+        {
+          ...params,
+          timestamp: new Date(),
+          type: 'admin',
+        }
+      );
 
       try {
         const { title, message, target } = params;
@@ -281,7 +289,7 @@ export class AdminService implements IAdminService {
   }
 
   async getAllAnnouncement(): Promise<IAnnouncement[]> {
-    return this.adminRepository.getAllAnnouncement();
+    return this.announcementRepository.getAllAnnouncement();
   }
 
   async getAllSurveys(): Promise<ISurvey[]> {

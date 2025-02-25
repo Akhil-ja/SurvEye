@@ -32,7 +32,7 @@ const CreatorHome = () => {
 
   useEffect(() => {
     dispatch(getAllSurveys());
-    clearMessage();
+    dispatch(clearMessage());
   }, [dispatch]);
 
   if (isLoading) {

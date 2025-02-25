@@ -136,7 +136,7 @@ const WalletTransactionHistory = () => {
                     }`}
                   >
                     {transaction.type === "payout" ? "-" : "+"}
-                    {transaction.amount} SOL
+                    {transaction.amount.toFixed(2)} SOL
                   </div>
                 </div>
               ))}

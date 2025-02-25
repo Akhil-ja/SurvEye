@@ -11,7 +11,7 @@ export interface IUser extends Document {
   last_name?: string;
   creator_name?: string;
   industry?: string;
-  wallet: Types.ObjectId;
+  wallet: Types.ObjectId | null;
   date_of_birth?: Date;
   days_active: number;
   status: 'active' | 'blocked';
@@ -125,7 +125,8 @@ export interface IOccupation extends Document {
   status: boolean;
 }
 
-export interface IWallet {
+export interface IWallet extends Document {
+  _id: Types.ObjectId;
   userId: Types.ObjectId;
   publicAddress: string;
   encryptedPrivateKey: string;
@@ -164,4 +165,87 @@ export interface INotification {
   user: Types.ObjectId;
   type: string;
   timestamp: Date;
+}
+
+export interface CreateAnnouncementParams {
+  message: string;
+  title: string;
+  target: 'all' | 'users' | 'creators';
+  createdBy: string;
+}
+
+export interface AnnouncementData {
+  message: string;
+  title: string;
+  target: 'all' | 'users' | 'creators';
+  createdBy: string;
+  timestamp: Date;
+  type: string;
+}
+
+export interface AuthResponse {
+  user: IUser;
+  tokens: {
+    accessToken: string;
+    refreshToken: string;
+  };
+}
+
+export interface SurveyAnalytics {
+  surveyId: string;
+  surveyName: string;
+  totalResponses: number;
+  sampleSize: number;
+  questionsAnalytics: QuestionAnalytics[];
+}
+
+export interface QuestionAnalytics {
+  questionId: Types.ObjectId;
+  questionText: string;
+  questionType: string;
+  totalResponses: number;
+  analytics:
+    | SingleChoiceAnalytics
+    | MultiChoiceAnalytics
+    | RatingAnalytics
+    | TextAnalytics;
+}
+
+export interface OptionAnalytics {
+  optionId: Types.ObjectId;
+  optionText: string;
+  count: number;
+  percentage: number;
+}
+
+export interface SingleChoiceAnalytics {
+  options: OptionAnalytics[];
+}
+
+export interface MultiChoiceAnalytics {
+  options: OptionAnalytics[];
+}
+
+export interface RatingAnalytics {
+  averageRating: number;
+  ratingDistribution: { [key: number]: number };
+}
+
+export interface TextAnalytics {
+  topWords: Array<{ word: string; count: number }>;
+}
+
+export interface IIncomingQuestion {
+  type: 'mcq' | 'checkbox' | 'text' | 'rating';
+  question: string;
+  options: string[];
+}
+
+export interface IIncomingPage {
+  questions: IIncomingQuestion[];
+}
+
+export interface IIncomingSurveyData {
+  surveyId: string;
+  pages: IIncomingPage[];
 }

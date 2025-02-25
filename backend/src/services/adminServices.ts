@@ -49,9 +49,9 @@ export class AdminService implements IAdminService {
 
     res.cookie('Admin_jwt', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true,
       maxAge: 3600000,
-      sameSite: 'strict',
+      sameSite: 'none',
     });
 
     const { password: _, ...adminInfo } = admin.toObject();
@@ -62,8 +62,8 @@ export class AdminService implements IAdminService {
   async logout(res: Response): Promise<void> {
     res.clearCookie('Admin_jwt', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: true,
+      sameSite: 'none',
     });
   }
 

@@ -54,14 +54,14 @@ export class SharedService implements ISharedServices {
 
     res.clearCookie('user_accessToken', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: true,
+      sameSite: 'none',
     });
 
     res.clearCookie('user_refreshToken', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: true,
+      sameSite: 'none',
     });
   }
 
@@ -82,9 +82,9 @@ export class SharedService implements ISharedServices {
 
     res.cookie('resetOTP', hashedOTP, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true,
       maxAge: 10 * 60 * 1000,
-      sameSite: 'strict',
+      sameSite: 'none',
     });
 
     await sendOTP(email, otp);
@@ -111,9 +111,9 @@ export class SharedService implements ISharedServices {
 
     res.cookie('resetOTP', hashedOTP, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true,
       maxAge: 10 * 60 * 1000,
-      sameSite: 'strict',
+      sameSite: 'none',
     });
 
     await sendOTP(email, otp);
@@ -151,16 +151,16 @@ export class SharedService implements ISharedServices {
 
     res.cookie('user_accessToken', tokens.accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true,
       maxAge: 15 * 60 * 1000,
-      sameSite: 'strict',
+      sameSite: 'none',
     });
 
     res.cookie('user_refreshToken', tokens.refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      sameSite: 'strict',
+      sameSite: 'none',
     });
 
     return {
@@ -205,16 +205,16 @@ export class SharedService implements ISharedServices {
 
     res.cookie('user_accessToken', tokens.accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true,
       maxAge: 15 * 60 * 1000,
-      sameSite: 'strict',
+      sameSite: 'none',
     });
 
     res.cookie('user_refreshToken', tokens.refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      sameSite: 'strict',
+      sameSite: 'none',
     });
 
     return { user, tokens };

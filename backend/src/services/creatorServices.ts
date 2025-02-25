@@ -134,16 +134,16 @@ export class CreatorService implements ICreatorService {
 
     res.cookie('user_accessToken', tokens.accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true,
       maxAge: 15 * 60 * 1000,
-      sameSite: 'strict',
+      sameSite: 'none',
     });
 
     res.cookie('user_refreshToken', tokens.refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      sameSite: 'strict',
+      sameSite: 'none',
     });
 
     socketConfig.sendNotification({
@@ -193,16 +193,16 @@ export class CreatorService implements ICreatorService {
 
     res.cookie('user_accessToken', tokens.accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true,
       maxAge: 15 * 60 * 1000,
-      sameSite: 'strict',
+      sameSite: 'none',
     });
 
     res.cookie('user_refreshToken', tokens.refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      sameSite: 'strict',
+      sameSite: 'none',
     });
 
     return { user, tokens };
@@ -227,9 +227,9 @@ export class CreatorService implements ICreatorService {
 
     res.cookie('resetOTP', otp, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true,
       maxAge: 10 * 60 * 1000,
-      sameSite: 'strict',
+      sameSite: 'none',
     });
 
     await sendOTP(user.email, otp);
@@ -272,16 +272,16 @@ export class CreatorService implements ICreatorService {
 
     res.cookie('user_accessToken', tokens.accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true,
       maxAge: 15 * 60 * 1000,
-      sameSite: 'strict',
+      sameSite: 'none',
     });
 
     res.cookie('user_refreshToken', tokens.refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      sameSite: 'strict',
+      sameSite: 'none',
     });
 
     return { user, tokens };

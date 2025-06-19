@@ -42,7 +42,7 @@ export class AdminService implements IAdminService {
     }
 
     const token = jwt.sign(
-      { id: admin._id, email: admin.email },
+      { id: admin._id, email: admin.email, role: 'admin' },
       process.env.JWT_SECRET as string,
       { expiresIn: '1h' }
     );

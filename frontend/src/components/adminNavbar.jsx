@@ -7,13 +7,13 @@ import React from "react";
 const AdminNavbar = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const adminInfo = JSON.parse(sessionStorage.getItem("adminInfo"));
+  const adminInfo = JSON.parse(localStorage.getItem("adminInfo"));
 
   const handleLogout = () => {
     if (adminInfo) {
       dispatch(adminLogout());
-      sessionStorage.removeItem("adminInfo");
-      sessionStorage.removeItem("token");
+      localStorage.removeItem("adminInfo");
+      localStorage.removeItem("token");
       navigate("/admin/signin");
     }
   };

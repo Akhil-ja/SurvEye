@@ -11,7 +11,7 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     if (originalRequest._retry) {
-      sessionStorage.removeItem("authInfo");
+      localStorage.removeItem("authInfo");
       window.location.href = "/signin";
       return Promise.reject(error);
     }
@@ -23,14 +23,14 @@ api.interceptors.response.use(
         await api.post("/api/auth/refresh-token");
         return api(originalRequest);
       } catch (refreshError) {
-        sessionStorage.removeItem("authInfo");
+        localStorage.removeItem("authInfo");
         window.location.href = "/signin";
         return Promise.reject(refreshError);
       }
     }
 
     if (error.response?.data?.shouldReLogin) {
-      sessionStorage.removeItem("authInfo");
+      localStorage.removeItem("authInfo");
       window.location.href = "/signin";
       return Promise.reject(error);
     }

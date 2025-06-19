@@ -14,7 +14,7 @@ import MessageReceiver from "./components/MessageReceiver";
 import { socketService } from "./socketIO/socketServices";
 
 const App = () => {
-  const authInfo = sessionStorage.getItem("authInfo");
+  const authInfo = localStorage.getItem("authInfo");
 
   useEffect(() => {
     if (authInfo) {

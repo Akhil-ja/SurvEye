@@ -42,8 +42,8 @@ const OTPVerificationScreen = () => {
   const submitHandler = async (e) => {
     e.preventDefault();
 
-    const pendingUserId = sessionStorage.getItem("pendingUserId");
-    const userRole = sessionStorage.getItem("userRole");
+    const pendingUserId = localStorage.getItem("pendingUserId");
+    const userRole = localStorage.getItem("userRole");
 
     if (!pendingUserId) {
       toast.error("No pending user ID found. Please sign up first.");
@@ -60,8 +60,8 @@ const OTPVerificationScreen = () => {
       );
 
       if (verifyOTP.fulfilled.match(resultAction)) {
-        sessionStorage.removeItem("pendingUserId");
-        sessionStorage.removeItem("userRole");
+        localStorage.removeItem("pendingUserId");
+        localStorage.removeItem("userRole");
         toast.success(
           resultAction.payload.message || "OTP verified successfully!"
         );
@@ -79,7 +79,7 @@ const OTPVerificationScreen = () => {
 
   // Resend OTP handler
   const handleResendOTP = async () => {
-    const pendingUserId = sessionStorage.getItem("pendingUserId");
+    const pendingUserId = localStorage.getItem("pendingUserId");
 
     if (!pendingUserId) {
       toast.error("No pending user ID found. Please sign up first.");

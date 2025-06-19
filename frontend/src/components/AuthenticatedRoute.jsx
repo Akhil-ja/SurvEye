@@ -3,7 +3,7 @@ import React from "react";
 
 export const AuthenticatedRoute = () => {
   try {
-    const authInfo = JSON.parse(sessionStorage.getItem("authInfo"));
+    const authInfo = JSON.parse(localStorage.getItem("authInfo"));
     const currentPath = window.location.pathname;
 
     const publicOnlyRoutes = [
@@ -17,7 +17,7 @@ export const AuthenticatedRoute = () => {
       if (publicOnlyRoutes.includes(currentPath)) {
         const role = authInfo.user?.role;
         if (!role) {
-          sessionStorage.removeItem("authInfo");
+          localStorage.removeItem("authInfo");
           return <Navigate to="/signin" replace />;
         }
         return <Navigate to={`/${role}/home`} replace />;
@@ -31,7 +31,7 @@ export const AuthenticatedRoute = () => {
     return <Outlet />;
   } catch (error) {
     console.error("Error parsing auth info:", error);
-    sessionStorage.removeItem("authInfo");
+    localStorage.removeItem("authInfo");
     return <Navigate to="/signin" replace />;
   }
 };

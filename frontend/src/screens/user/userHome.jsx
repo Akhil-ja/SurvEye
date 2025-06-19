@@ -24,7 +24,7 @@ const UserHome = () => {
   const handleLogout = () => {
     if (authInfo && authInfo.user) {
       dispatch(logout());
-      sessionStorage.removeItem("authInfo");
+      localStorage.removeItem("authInfo");
       setTimeout(() => {
         navigate("/signin");
       }, 100);

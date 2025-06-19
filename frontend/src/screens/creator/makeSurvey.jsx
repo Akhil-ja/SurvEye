@@ -65,7 +65,7 @@ const SurveyBuilder = () => {
         .catch((error) => console.error("Error fetching survey:", error));
     }
 
-    const savedPages = sessionStorage.getItem(`surveyProgress-${surveyId}`);
+    const savedPages = localStorage.getItem(`surveyProgress-${surveyId}`);
     if (savedPages) {
       try {
         setPages(JSON.parse(savedPages));
@@ -77,7 +77,7 @@ const SurveyBuilder = () => {
   }, [dispatch, surveyId]);
 
   useEffect(() => {
-    sessionStorage.setItem(`surveyProgress-${surveyId}`, JSON.stringify(pages));
+    localStorage.setItem(`surveyProgress-${surveyId}`, JSON.stringify(pages));
   }, [pages, currentPage, surveyId]);
 
   const surveyData = {
@@ -222,7 +222,7 @@ const SurveyBuilder = () => {
       return;
     }
 
-    sessionStorage.removeItem(`surveyProgress-${surveyId}`);
+    localStorage.removeItem(`surveyProgress-${surveyId}`);
     dispatch(
       submitSurvey({
         surveyData: surveyData,
@@ -233,7 +233,7 @@ const SurveyBuilder = () => {
       .unwrap()
       .then(() => {
         toast.success("Survey Saved succesfully");
-        sessionStorage.removeItem(`surveyProgress-${surveyId}`);
+        localStorage.removeItem(`surveyProgress-${surveyId}`);
         navigate(`/creator/surveylist`);
       })
       .catch((error) => {
@@ -253,7 +253,7 @@ const SurveyBuilder = () => {
   };
 
   const completeSurveySubmission = () => {
-    sessionStorage.removeItem(`surveyProgress-${surveyId}`);
+    localStorage.removeItem(`surveyProgress-${surveyId}`);
     dispatch(
       submitSurvey({
         surveyData: surveyData,
@@ -264,7 +264,7 @@ const SurveyBuilder = () => {
       .unwrap()
       .then(() => {
         toast.success("Survey submitted");
-        sessionStorage.removeItem(`surveyProgress-${surveyId}`);
+        localStorage.removeItem(`surveyProgress-${surveyId}`);
 
         navigate(`/creator/surveyinfo?surveyId=${surveyId}`);
       })

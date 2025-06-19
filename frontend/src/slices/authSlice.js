@@ -9,7 +9,7 @@ export const checkBlockStatus = createAsyncThunk(
       return response.data;
     } catch (error) {
       if (error.response?.status === 403) {
-        sessionStorage.removeItem("authInfo");
+        localStorage.removeItem("authInfo");
 
         dispatch(logout());
       }
@@ -41,7 +41,7 @@ export const verifyOTP = createAsyncThunk(
         role,
         otp,
       });
-      sessionStorage.setItem("authInfo", JSON.stringify(response.data));
+      localStorage.setItem("authInfo", JSON.stringify(response.data));
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -56,7 +56,7 @@ export const signIn = createAsyncThunk(
   async ({ role, credentials }, { rejectWithValue }) => {
     try {
       const response = await api.post(`/${role}/signin`, credentials);
-      sessionStorage.setItem("authInfo", JSON.stringify(response.data));
+      localStorage.setItem("authInfo", JSON.stringify(response.data));
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data);
@@ -83,7 +83,7 @@ export const logout = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       await api.post("/logout");
-      sessionStorage.removeItem("authInfo");
+      localStorage.removeItem("authInfo");
       return null;
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -113,7 +113,7 @@ export const verifyForgotPasswordOTP = createAsyncThunk(
         email,
         otp,
       });
-      sessionStorage.setItem("authInfo", JSON.stringify(response.data));
+      localStorage.setItem("authInfo", JSON.stringify(response.data));
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -128,7 +128,7 @@ export const googleAuth = createAsyncThunk(
   async ({ credentials }, { rejectWithValue }) => {
     try {
       const response = await api.post(`/googleAuth`, credentials);
-      sessionStorage.setItem("authInfo", JSON.stringify(response.data));
+      localStorage.setItem("authInfo", JSON.stringify(response.data));
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -139,7 +139,7 @@ export const googleAuth = createAsyncThunk(
 );
 
 const getInitialAuthState = () => {
-  const authInfo = sessionStorage.getItem("authInfo");
+  const authInfo = localStorage.getItem("authInfo");
   return authInfo ? JSON.parse(authInfo) : null;
 };
 

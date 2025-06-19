@@ -33,17 +33,17 @@ const AttendSurvey = () => {
   const storageKey = `${LOCAL_STORAGE_KEY_PREFIX}${surveyId}`;
 
   const [currentPage, setCurrentPage] = useState(() => {
-    const saved = sessionStorage.getItem(`${storageKey}_page`);
+    const saved = localStorage.getItem(`${storageKey}_page`);
     return saved ? parseInt(saved) : 1;
   });
 
   const [answers, setAnswers] = useState(() => {
-    const saved = sessionStorage.getItem(`${storageKey}_answers`);
+    const saved = localStorage.getItem(`${storageKey}_answers`);
     return saved ? JSON.parse(saved) : {};
   });
 
   useState(() => {
-    const saved = sessionStorage.getItem(`${storageKey}_lastUpdated`);
+    const saved = localStorage.getItem(`${storageKey}_lastUpdated`);
     return saved ? new Date(saved) : new Date();
   });
 
@@ -53,12 +53,9 @@ const AttendSurvey = () => {
   const submissionStatus = useSelector(selectSubmissionStatus);
 
   useEffect(() => {
-    sessionStorage.setItem(`${storageKey}_answers`, JSON.stringify(answers));
-    sessionStorage.setItem(`${storageKey}_page`, currentPage.toString());
-    sessionStorage.setItem(
-      `${storageKey}_lastUpdated`,
-      new Date().toISOString()
-    );
+    localStorage.setItem(`${storageKey}_answers`, JSON.stringify(answers));
+    localStorage.setItem(`${storageKey}_page`, currentPage.toString());
+    localStorage.setItem(`${storageKey}_lastUpdated`, new Date().toISOString());
   }, [answers, currentPage, storageKey]);
 
   useEffect(() => {
@@ -91,17 +88,17 @@ const AttendSurvey = () => {
 
   useEffect(() => {
     if (submissionStatus === "succeeded") {
-      clearsessionStorage();
+      clearlocalStorage();
       navigate("/user/survey");
       dispatch(resetSubmissionStatus());
       dispatch(clearMessage());
     }
   }, [submissionStatus, navigate, dispatch]);
 
-  const clearsessionStorage = () => {
-    sessionStorage.removeItem(`${storageKey}_answers`);
-    sessionStorage.removeItem(`${storageKey}_page`);
-    sessionStorage.removeItem(`${storageKey}_lastUpdated`);
+  const clearlocalStorage = () => {
+    localStorage.removeItem(`${storageKey}_answers`);
+    localStorage.removeItem(`${storageKey}_page`);
+    localStorage.removeItem(`${storageKey}_lastUpdated`);
   };
 
   const handleAnswer = (questionId, answer) => {
@@ -152,7 +149,7 @@ const AttendSurvey = () => {
   //           <Button
   //             variant="outline"
   //             size="sm"
-  //             onClick={clearsessionStorage}
+  //             onClick={clearlocalStorage}
   //             className="text-blue-700 hover:text-blue-800"
   //           >
   //             Clear Progress

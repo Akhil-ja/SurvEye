@@ -21,12 +21,12 @@ export default function UserNavbar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const authInfo = JSON.parse(sessionStorage.getItem("authInfo"));
+  const authInfo = JSON.parse(localStorage.getItem("authInfo"));
 
   const handleLogout = () => {
     if (authInfo && authInfo.user) {
       dispatch(logout());
-      sessionStorage.removeItem("authInfo");
+      localStorage.removeItem("authInfo");
       setTimeout(() => {
         navigate("/signin");
       }, 100);

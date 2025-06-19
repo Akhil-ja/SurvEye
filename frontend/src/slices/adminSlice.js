@@ -419,8 +419,8 @@ const adminSlice = createSlice({
         state.adminInfo = payload.admin;
         state.token = payload.token;
         state.isAuthenticated = true;
-        sessionStorage.setItem("adminInfo", JSON.stringify(payload.admin));
-        sessionStorage.setItem("token", payload.token);
+        localStorage.setItem("adminInfo", JSON.stringify(payload.admin));
+        localStorage.setItem("token", payload.token);
       })
       .addCase(adminSignIn.rejected, (state, { payload }) => {
         state.isLoading = false;
@@ -436,8 +436,8 @@ const adminSlice = createSlice({
         state.token = null;
         state.isAuthenticated = false;
         state.users = [];
-        sessionStorage.removeItem("adminInfo");
-        sessionStorage.removeItem("token");
+        localStorage.removeItem("adminInfo");
+        localStorage.removeItem("token");
       })
       .addCase(adminLogout.rejected, (state, { payload }) => {
         state.isLoading = false;

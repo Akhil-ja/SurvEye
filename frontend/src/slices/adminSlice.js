@@ -65,12 +65,13 @@ export const getUsers = createAsyncThunk(
 // Toggle User Status
 export const toggleUserStatus = createAsyncThunk(
   "admin/toggleUserStatus",
-  async (userId, { rejectWithValue, getState, dispatch }) => {
+  async (userId, { rejectWithValue }) => {
+    //getState,dispatch
     try {
       const response = await api.put(`/admin/users/toggleStatus?id=${userId}`);
 
-      const { filters, pagination } = getState().admin;
-      dispatch(getUsers({ ...filters, ...pagination }));
+      // const { filters, pagination } = getState().admin;
+      // dispatch(getUsers({ ...filters, ...pagination }));
 
       return response.data.user;
     } catch (error) {
@@ -334,7 +335,8 @@ export const toggleSurveyStatus = createAsyncThunk(
       const response = await api.put(
         `/admin/surveys/toggle-status?surveyId=${surveyId}`
       );
-      return response.data.survey;
+
+      return response.data.category;
     } catch (error) {
       return rejectWithValue(
         error.response && error.response.data
@@ -545,6 +547,52 @@ const adminSlice = createSlice({
         state.isLoading = false;
         state.error = payload;
       })
+      .addCase(toggleOccupationStatus.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(toggleOccupationStatus.fulfilled, (state, { payload }) => {
+        state.isLoading = false;
+        const index = state.occupations.findIndex(
+          (occupation) => occupation._id === payload._id
+        );
+        if (index !== -1) {
+          state.occupations[index] = payload;
+        }
+      })
+      .addCase(toggleOccupationStatus.rejected, (state, { payload }) => {
+        state.isLoading = false;
+        state.error = payload;
+      })
+      .addCase(createOccupation.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(createOccupation.fulfilled, (state, { payload }) => {
+        state.isLoading = false;
+        state.occupations.push(payload);
+      })
+      .addCase(createOccupation.rejected, (state, { payload }) => {
+        state.isLoading = false;
+        state.error = payload;
+      })
+      .addCase(updateOccupation.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateOccupation.fulfilled, (state, { payload }) => {
+        state.isLoading = false;
+        const index = state.occupations.findIndex(
+          (occupation) => occupation._id === payload._id
+        );
+        if (index !== -1) {
+          state.occupations[index] = payload;
+        }
+      })
+      .addCase(updateOccupation.rejected, (state, { payload }) => {
+        state.isLoading = false;
+        state.error = payload;
+      })
       .addCase(getTransactions.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -606,21 +654,22 @@ const adminSlice = createSlice({
         state.error = payload || "Something went wrong";
       })
       .addCase(toggleSurveyStatus.pending, (state) => {
-        state.isLoading = true;
         state.error = null;
       })
       .addCase(toggleSurveyStatus.fulfilled, (state, { payload }) => {
         state.isLoading = false;
-        state.surveys = state.surveys.map((survey) =>
-          survey._id === payload._id ? payload : survey
+        const index = state.surveys.findIndex(
+          (survey) => survey._id === payload._id
         );
+        if (index !== -1) {
+          state.surveys[index] = payload;
+        }
       })
       .addCase(toggleSurveyStatus.rejected, (state, { payload }) => {
         state.isLoading = false;
         state.error = payload;
       })
       .addCase("admin/addRealtimeAnnouncement", (state, action) => {
-        console.log("Announcement Payload:", action.payload);
         state.announcements = [
           {
             ...action.payload,

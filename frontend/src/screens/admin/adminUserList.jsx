@@ -1,4 +1,4 @@
-import { useEffect, useState, React } from "react";
+import { useEffect, useState, React, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getUsers, toggleUserStatus } from "../../slices/adminSlice";
 import {
@@ -24,6 +24,7 @@ import { Search } from "lucide-react";
 const AdminUserList = () => {
   const dispatch = useDispatch();
   const { users, isLoading } = useSelector((state) => state.admin);
+
   const [filters, setFilters] = useState({
     role: "all",
     status: "all",
@@ -33,31 +34,40 @@ const AdminUserList = () => {
   const itemsPerPage = 10;
 
   useEffect(() => {
-    dispatch(getUsers());
-  }, [dispatch]);
+    if (users.length === 0) {
+      dispatch(getUsers());
+    }
+  }, [dispatch, users.length]);
 
   const handleToggleStatus = (userId) => {
     dispatch(toggleUserStatus(userId));
   };
 
-  const filteredUsers = users.filter((user) => {
-    const matchesRole = filters.role === "all" || user.role === filters.role;
-    const matchesStatus =
-      filters.status === "all" || user.status === filters.status;
-    const matchesSearch =
-      user.email.toLowerCase().includes(filters.search.toLowerCase()) ||
-      (user.name &&
-        user.name.toLowerCase().includes(filters.search.toLowerCase()));
+  const filteredUsers = useMemo(() => {
+    return users.filter((user) => {
+      const matchesRole = filters.role === "all" || user.role === filters.role;
+      const matchesStatus =
+        filters.status === "all" || user.status === filters.status;
+      const matchesSearch =
+        user.email.toLowerCase().includes(filters.search.toLowerCase()) ||
+        (user.name &&
+          user.name.toLowerCase().includes(filters.search.toLowerCase())) ||
+        (user.first_name &&
+          `${user.first_name} ${user.last_name}`
+            .toLowerCase()
+            .includes(filters.search.toLowerCase()));
 
-    return matchesRole && matchesStatus && matchesSearch;
-  });
+      return matchesRole && matchesStatus && matchesSearch;
+    });
+  }, [users, filters]);
 
-  // Pagination
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
-  const paginatedUsers = filteredUsers.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const paginatedUsers = useMemo(() => {
+    return filteredUsers.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    );
+  }, [filteredUsers, currentPage]);
 
   const pageNumbers = [];
   for (let i = 1; i <= totalPages; i++) {
@@ -145,7 +155,7 @@ const AdminUserList = () => {
                 </TableCell>
                 <TableCell className="capitalize">{user.role}</TableCell>
                 <TableCell>
-                  {new Date(user.createdAt).toLocaleDateString()}
+                  {new Date(user.created_at).toLocaleDateString()}
                 </TableCell>
                 <TableCell>
                   <span

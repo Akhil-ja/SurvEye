@@ -39,8 +39,10 @@ const OccupationPage = () => {
   });
 
   useEffect(() => {
-    dispatch(getOccupations());
-  }, [dispatch]);
+    if (!occupations || occupations.length === 0) {
+      dispatch(getOccupations());
+    }
+  }, [dispatch, occupations]);
 
   useEffect(() => {
     if (error) {
@@ -105,7 +107,6 @@ const OccupationPage = () => {
         if (!result.error) {
           setIsDialogOpen(false);
           toast.success("Occupation updated successfully!");
-          dispatch(getOccupations());
         }
       });
     } else {
@@ -113,7 +114,6 @@ const OccupationPage = () => {
         if (!result.error) {
           setIsDialogOpen(false);
           toast.success("Occupation created successfully!");
-          dispatch(getOccupations());
         }
       });
     }
@@ -123,7 +123,6 @@ const OccupationPage = () => {
     dispatch(toggleOccupationStatus(occupationId)).then((result) => {
       if (!result.error) {
         toast.success("Occupation status updated successfully!");
-        dispatch(getOccupations());
       }
     });
   };

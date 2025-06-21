@@ -39,8 +39,8 @@ const SurveyPage = () => {
   const [formattedSurveys, setFormattedSurveys] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [surveysPerPage] = useState(10);
-  const [sortBy, setSortBy] = useState("cost");
-  const [sortOrder, setSortOrder] = useState("highest");
+  const [sortBy, setSortBy] = useState("date");
+  const [sortOrder, setSortOrder] = useState("newest");
 
   useEffect(() => {
     dispatch(getSurveys());
@@ -65,31 +65,39 @@ const SurveyPage = () => {
   }, [surveys]);
 
   useEffect(() => {
-    const sortedSurveys = [...formattedSurveys].sort((a, b) => {
-      if (sortBy === "cost") {
-        return sortOrder === "highest"
-          ? b.amount - a.amount
-          : a.amount - b.amount;
-      } else if (sortBy === "date") {
-        const dateA = new Date(a.startDate);
-        const dateB = new Date(b.startDate);
-        return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
-      }
-      return 0;
-    });
-    setFormattedSurveys(sortedSurveys);
+    if (formattedSurveys.length > 0) {
+      const sortedSurveys = [...formattedSurveys].sort((a, b) => {
+        if (sortBy === "cost") {
+          return sortOrder === "highest"
+            ? b.amount - a.amount
+            : a.amount - b.amount;
+        } else if (sortBy === "date") {
+          const dateA = new Date(a.startDate);
+          const dateB = new Date(b.startDate);
+          return sortOrder === "newest" ? dateB - dateA : dateA - dateB;
+        }
+        return 0;
+      });
+      setFormattedSurveys(sortedSurveys);
+    }
   }, [sortBy, sortOrder]);
 
   const handleToggleStatus = async (surveyId, currentStatus) => {
     try {
-      await dispatch(toggleSurveyStatus(surveyId)).then(dispatch(getSurveys()));
-      toast.success(
-        `Survey ${
-          currentStatus === "active" ? "deactivated" : "activated"
-        } successfully`
-      );
+      const result = await dispatch(toggleSurveyStatus(surveyId));
+
+      if (toggleSurveyStatus.fulfilled.match(result)) {
+        toast.success(
+          `Survey ${
+            currentStatus === "active" ? "deactivated" : "activated"
+          } successfully`
+        );
+      } else {
+        toast.error(result.payload || "Failed to toggle survey status");
+      }
     } catch (error) {
-      toast.error(error || "Failed to toggle survey status");
+      toast.error("Failed to toggle survey status");
+      console.log(error);
     }
   };
 

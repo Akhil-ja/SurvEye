@@ -16,7 +16,7 @@ export class SurveyRepository implements ISurveyRepository {
   }
 
   async getAllSurveys(): Promise<ISurvey[]> {
-    const surveys = await Survey.find();
+    const surveys = await Survey.find().sort({ created_at: -1 });
 
     if (!surveys || surveys.length === 0) {
       throw new AppError('No Surveys found', 404);

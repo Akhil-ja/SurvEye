@@ -1,5 +1,6 @@
 import { Schema, model } from 'mongoose';
 import { ITransaction } from '../interfaces/common.interface';
+import mapper from '../utils/mapping';
 
 const transactionSchema = new Schema<ITransaction>(
   {
